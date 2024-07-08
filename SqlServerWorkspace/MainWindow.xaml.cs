@@ -1,7 +1,8 @@
 ﻿using SqlServerWorkspace.DataModels;
+using SqlServerWorkspace.Enums;
 
-using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace SqlServerWorkspace
 {
@@ -11,9 +12,6 @@ namespace SqlServerWorkspace
 	public partial class MainWindow : Window
 	{
 		List<TreeNode> databaseNodes = [];
-
-		static string _monacoHtmlPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "index.html");
-		static string _userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SqlServerWorkspace");
 
 		public MainWindow()
 		{
@@ -30,55 +28,94 @@ namespace SqlServerWorkspace
 
 		void LoadDatabaseTree()
 		{
-			var databaseNode = new TreeNode("gaten");
-			var tableNode = new TreeNode("Table");
-			var viewNode = new TreeNode("View");
-			var functionNode = new TreeNode("Function");
-			var procedureNode = new TreeNode("Procedure");
+			var databaseNode = new TreeNode("gaten", TreeNodeType.DatabaseNode, "");
+
+			var tableNode = new TreeNode("Table", TreeNodeType.TableTitleNode, "");
+			var viewNode = new TreeNode("View", TreeNodeType.ViewTitleNode, "");
+			var functionNode = new TreeNode("Function", TreeNodeType.FunctionTitleNode, "");
+			var procedureNode = new TreeNode("Procedure", TreeNodeType.ProcedureTitleNode, "");
 
 			SqlManager.Init("localhost", "gaten");
 
 			var tableNames = SqlManager.SelectTableNames();
 			foreach (var tableName in tableNames)
 			{
-				tableNode.Children.Add(new TreeNode(tableName));
+				tableNode.Children.Add(new TreeNode(tableName, TreeNodeType.TableNode, ""));
 			}
 			databaseNode.Children.Add(tableNode);
 
 			var viewNames = SqlManager.SelectViewNames();
 			foreach (var viewName in viewNames)
 			{
-				viewNode.Children.Add(new TreeNode(viewName));
+				viewNode.Children.Add(new TreeNode(viewName, TreeNodeType.ViewNode, ""));
 			}
 			databaseNode.Children.Add(viewNode);
 
 			var functionNames = SqlManager.SelectFunctionNames();
 			foreach (var functionName in functionNames)
 			{
-				functionNode.Children.Add(new TreeNode(functionName));
+				functionNode.Children.Add(new TreeNode(functionName, TreeNodeType.FunctionNode, ""));
 			}
 			databaseNode.Children.Add(functionNode);
 
 			var procedureNames = SqlManager.SelectProcedureNames();
 			foreach (var procedureName in procedureNames)
 			{
-				procedureNode.Children.Add(new TreeNode(procedureName));
+				procedureNode.Children.Add(new TreeNode(procedureName, TreeNodeType.ProcedureNode, ""));
 			}
 			databaseNode.Children.Add(procedureNode);
 
 			databaseNodes.Add(databaseNode);
 		}
 
-		private async void DatabaseTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+		private void DatabaseTreeViewItem_Selected(object sender, RoutedEventArgs e)
 		{
-			if (e.NewValue is not TreeNode clickNode)
+			if (sender is not TreeViewItem item)
 			{
 				return;
 			}
 
-			var objectName = clickNode.Name;
+			if (item.DataContext is not TreeNode treeNode)
+			{
+				return;
+			}
 
-			await ContentsTabControl.CreateNewOrOpenTab(objectName);
+			switch (treeNode.Type)
+			{
+				case TreeNodeType.DatabaseNode:
+				case TreeNodeType.TableTitleNode:
+				case TreeNodeType.ViewTitleNode:
+				case TreeNodeType.FunctionTitleNode:
+				case TreeNodeType.ProcedureTitleNode:
+					item.IsExpanded = !item.IsExpanded;
+					break;
+
+				default:
+					break;
+			}
+
+			item.IsSelected = false;
+		}
+
+		private async void DatabaseTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+		{
+			if (e.NewValue is not TreeNode treeNode)
+			{
+				return;
+			}
+
+			switch (treeNode.Type)
+			{
+				case TreeNodeType.TableNode:
+				case TreeNodeType.ViewNode:
+				case TreeNodeType.FunctionNode:
+				case TreeNodeType.ProcedureNode:
+					await ContentsTabControl.CreateNewOrOpenTab(treeNode);
+					break;
+
+				default:
+					break;
+			}
 		}
 	}
 }

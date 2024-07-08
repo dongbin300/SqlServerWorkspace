@@ -4,6 +4,10 @@
              xmlns:local="clr-namespace:SqlServerWorkspace"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <Style TargetType="{x:Type TextBlock}" x:Key="TreeViewText">
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Height" Value="20" />
+        </Style>
     </Application.Resources>
 </Application>

@@ -9,41 +9,39 @@
         Title="SQL Server Workspace" Height="800" Width="1200">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="Auto" MinWidth="200"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <TreeView x:Name="DatabaseTreeView" SelectedItemChanged="DatabaseTreeView_SelectedItemChanged">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                    <TextBlock Text="{Binding Name}" />
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
             <TreeView.ItemContainerStyle>
                 <Style TargetType="TreeViewItem">
                     <EventSetter Event="Loaded" Handler="DatabaseTreeViewItem_Loaded"/>
+                    <EventSetter Event="Selected" Handler="DatabaseTreeViewItem_Selected"/>
                 </Style>
             </TreeView.ItemContainerStyle>
         </TreeView>
-        <Grid Grid.Column="1">
+        <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Center"/>
+        <Grid Grid.Column="2">
             <!--<Grid.RowDefinitions>
                 <RowDefinition Height="1*"/>
                 <RowDefinition Height="1*"/>
             </Grid.RowDefinitions>-->
             <TabControl x:Name="ContentsTabControl">
-                <!--<TabItem Header="Tab1">
-                    <Grid>
-                        <wv2:WebView2 x:Name="textEditorView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                    </Grid>
-                </TabItem>
-
-                <TabItem Header="Tab2">
-                    <Grid>
-                        <TextBlock Text="Content of Tab 2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Grid>
-                </TabItem>-->
             </TabControl>
             <!--<Grid Grid.Row="1" x:Name="contentgrid">
-                
+                <Path Width="48" Height="48" Stroke="Purple" StrokeThickness="2">
+                    <Path.Data>
+                        M 12 0 L 24 6 L 24 18 L 12 24 L 0 18 L 0 6 Z
+                        M 0 6 L 12 12 L 24 6
+                        M 12 15 L 12 24 Z
+                    </Path.Data>
+                </Path>
             </Grid>-->
         </Grid>
     </Grid>

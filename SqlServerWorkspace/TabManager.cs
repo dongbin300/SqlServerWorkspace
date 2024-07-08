@@ -1,6 +1,9 @@
 ﻿using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 
+using SqlServerWorkspace.DataModels;
+using SqlServerWorkspace.Enums;
+
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,8 +23,10 @@ namespace SqlServerWorkspace
 			webView.CoreWebView2.NavigateToString(File.ReadAllText(_monacoHtmlPath));
 		}
 
-		public static async Task CreateNewOrOpenTab(this TabControl tabControl, string header)
+		public static async Task CreateNewOrOpenTab(this TabControl tabControl, TreeNode treeNode)
 		{
+			var header = treeNode.Name;
+			var type = treeNode.Type;
 			var tabItem = GetTabItem(tabControl, header);
 
 			// Open
@@ -38,29 +43,50 @@ namespace SqlServerWorkspace
 			};
 			tabControl.Items.Add(newTabItem);
 
-			var webView = new WebView2
+			switch (type)
 			{
-				HorizontalAlignment = HorizontalAlignment.Stretch,
-				VerticalAlignment = VerticalAlignment.Stretch
-			};
+				case TreeNodeType.TableNode:
+					var dataGrid = new DataGrid
+					{
+						IsReadOnly = true,
+						ItemsSource = SqlManager.Select("*", header).DefaultView
+					};
+					newTabItem.Content = dataGrid;
+					newTabItem.IsSelected = true;
+					newTabItem.UpdateLayout();
+					break;
 
-			newTabItem.Content = webView;
-			newTabItem.IsSelected = true;
-			newTabItem.UpdateLayout();
+				case TreeNodeType.ViewNode:
+				case TreeNodeType.FunctionNode:
+				case TreeNodeType.ProcedureNode:
+					var webView = new WebView2
+					{
+						HorizontalAlignment = HorizontalAlignment.Stretch,
+						VerticalAlignment = VerticalAlignment.Stretch
+					};
 
-			var env = await CoreWebView2Environment.CreateAsync(null, _userDataFolder);
-			await webView.EnsureCoreWebView2Async(env);
-			webView.CoreWebView2.Settings.IsScriptEnabled = true;
-			webView.CoreWebView2.NavigateToString(File.ReadAllText(_monacoHtmlPath));
+					newTabItem.Content = webView;
+					newTabItem.IsSelected = true;
+					newTabItem.UpdateLayout();
 
-			webView.NavigationCompleted += async (sender, args) =>
-			{
-				if (args.IsSuccess)
-				{
-					var text = SqlManager.GetObject(header).Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");
-					await SetEditorText(tabControl, header, text);
-				}
-			};
+					var env = await CoreWebView2Environment.CreateAsync(null, _userDataFolder);
+					await webView.EnsureCoreWebView2Async(env);
+					webView.CoreWebView2.Settings.IsScriptEnabled = true;
+					webView.CoreWebView2.NavigateToString(File.ReadAllText(_monacoHtmlPath));
+
+					webView.NavigationCompleted += async (sender, args) =>
+					{
+						if (args.IsSuccess)
+						{
+							var text = SqlManager.GetObject(header).Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");
+							await SetEditorText(tabControl, header, text);
+						}
+					};
+					break;
+
+				default:
+					break;
+			}
 		}
 
 		public static TabItem? GetTabItem(this TabControl tabControl, string header)
