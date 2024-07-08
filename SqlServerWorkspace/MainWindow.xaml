@@ -18,8 +18,17 @@
                     <TextBlock Text="{Binding Name}" />
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="TreeViewItem">
+                    <EventSetter Event="Loaded" Handler="DatabaseTreeViewItem_Loaded"/>
+                </Style>
+            </TreeView.ItemContainerStyle>
         </TreeView>
         <Grid Grid.Column="1">
+            <!--<Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>-->
             <TabControl x:Name="ContentsTabControl">
                 <!--<TabItem Header="Tab1">
                     <Grid>
@@ -33,6 +42,9 @@
                     </Grid>
                 </TabItem>-->
             </TabControl>
+            <!--<Grid Grid.Row="1" x:Name="contentgrid">
+                
+            </Grid>-->
         </Grid>
     </Grid>
 </Window>

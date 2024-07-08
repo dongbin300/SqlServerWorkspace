@@ -1,11 +1,7 @@
-﻿using Microsoft.Web.WebView2.Core;
-using Microsoft.Web.WebView2.Wpf;
-
-using SqlServerWorkspace.DataModels;
+﻿using SqlServerWorkspace.DataModels;
 
 using System.IO;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace SqlServerWorkspace
 {
@@ -16,12 +12,20 @@ namespace SqlServerWorkspace
 	{
 		List<TreeNode> databaseNodes = [];
 
+		static string _monacoHtmlPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "index.html");
+		static string _userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SqlServerWorkspace");
+
 		public MainWindow()
 		{
 			InitializeComponent();
 
 			LoadDatabaseTree();
 			DatabaseTreeView.ItemsSource = databaseNodes;
+		}
+
+		private void DatabaseTreeViewItem_Loaded(object sender, RoutedEventArgs e)
+		{
+			DatabaseTreeView.ExpandAll(DatabaseTreeView);
 		}
 
 		void LoadDatabaseTree()
@@ -73,11 +77,8 @@ namespace SqlServerWorkspace
 			}
 
 			var objectName = clickNode.Name;
-			await ContentsTabControl.CreateNewTab(objectName);
 
-			var text = SqlManager.GetObject(objectName).Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");
-
-			await ContentsTabControl.SetEditorText(objectName, text);
+			await ContentsTabControl.CreateNewOrOpenTab(objectName);
 		}
 	}
 }
