@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SqlServerWorkspace"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        xmlns:dock="https://github.com/Dirkster99/AvalonDock"
         mc:Ignorable="d"
         Title="SQL Server Workspace" Height="800" Width="1200">
     <Grid>
@@ -31,21 +32,28 @@
         </TreeView>
         <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Center"/>
         <Grid Grid.Column="2">
-            <!--<Grid.RowDefinitions>
-                <RowDefinition Height="1*"/>
-                <RowDefinition Height="1*"/>
-            </Grid.RowDefinitions>-->
-            <TabControl x:Name="ContentsTabControl">
-            </TabControl>
-            <!--<Grid Grid.Row="1" x:Name="contentgrid">
-                <Path Width="48" Height="48" Stroke="Purple" StrokeThickness="2">
-                    <Path.Data>
-                        M 12 0 L 24 6 L 24 18 L 12 24 L 0 18 L 0 6 Z
-                        M 0 6 L 12 12 L 24 6
-                        M 12 15 L 12 24 Z
-                    </Path.Data>
-                </Path>
-            </Grid>-->
+            <dock:DockingManager x:Name="DockManager">
+                <dock:LayoutRoot>
+                    <dock:LayoutPanel Orientation="Horizontal">
+                        
+                        <!-- 왼쪽 영역: 탭 그룹 -->
+                        <dock:LayoutDocumentPaneGroup>
+                            <dock:LayoutDocumentPane x:Name="EntryPane">
+                                <!-- 여기서 탭 추가 -->
+                            </dock:LayoutDocumentPane>
+                        </dock:LayoutDocumentPaneGroup>
+                        
+                        <!-- 오른쪽 영역: 도킹된 창 -->
+                        <!--<dock:LayoutAnchorablePaneGroup>
+                            <dock:LayoutAnchorablePane>
+                                <dock:LayoutAnchorable Title="Properties" CanClose="False">
+                                    <TextBlock Text="Properties Pane"/>
+                                </dock:LayoutAnchorable>
+                            </dock:LayoutAnchorablePane>
+                        </dock:LayoutAnchorablePaneGroup>-->
+                    </dock:LayoutPanel>
+                </dock:LayoutRoot>
+            </dock:DockingManager>
         </Grid>
     </Grid>
 </Window>

@@ -1,4 +1,6 @@
-﻿using Microsoft.Web.WebView2.Core;
+﻿using AvalonDock.Layout;
+
+using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 
 using SqlServerWorkspace.DataModels;
@@ -15,33 +17,25 @@ namespace SqlServerWorkspace
 		static readonly string _monacoHtmlPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "index.html");
 		static readonly string _userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SqlServerWorkspace");
 
-		public static async Task SetWebView(this TabControl tabControl, WebView2 webView)
-		{
-			var env = await CoreWebView2Environment.CreateAsync(null, _userDataFolder);
-			await webView.EnsureCoreWebView2Async(env);
-			webView.CoreWebView2.Settings.IsScriptEnabled = true;
-			webView.CoreWebView2.NavigateToString(File.ReadAllText(_monacoHtmlPath));
-		}
-
-		public static async Task CreateNewOrOpenTab(this TabControl tabControl, TreeNode treeNode)
+		public static async Task CreateNewOrOpenTab(this LayoutDocumentPane layoutDocumentPane, TreeNode treeNode)
 		{
 			var header = treeNode.Name;
 			var type = treeNode.Type;
-			var tabItem = GetTabItem(tabControl, header);
+			var layoutContent = GetLayoutContent(layoutDocumentPane, header);
 
 			// Open
-			if (tabItem != null)
+			if (layoutContent != null)
 			{
-				tabItem.IsSelected = true;
+				layoutContent.IsSelected = true;
 				return;
 			}
 
 			// Create New
-			var newTabItem = new TabItem
+			var newLayoutContent = new LayoutDocument
 			{
-				Header = new TextBlock { Text = header }
+				Title = header
 			};
-			tabControl.Items.Add(newTabItem);
+			layoutDocumentPane.Children.Add(newLayoutContent);
 
 			switch (type)
 			{
@@ -49,11 +43,11 @@ namespace SqlServerWorkspace
 					var dataGrid = new DataGrid
 					{
 						IsReadOnly = true,
-						ItemsSource = SqlManager.Select("*", header).DefaultView
+						ItemsSource = SqlManager.Select("*", header).DefaultView,
+						Style = (Style)Application.Current.FindResource("LightDataGrid")
 					};
-					newTabItem.Content = dataGrid;
-					newTabItem.IsSelected = true;
-					newTabItem.UpdateLayout();
+					newLayoutContent.Content = dataGrid;
+					newLayoutContent.IsSelected = true;
 					break;
 
 				case TreeNodeType.ViewNode:
@@ -65,9 +59,8 @@ namespace SqlServerWorkspace
 						VerticalAlignment = VerticalAlignment.Stretch
 					};
 
-					newTabItem.Content = webView;
-					newTabItem.IsSelected = true;
-					newTabItem.UpdateLayout();
+					newLayoutContent.Content = webView;
+					newLayoutContent.IsSelected = true;
 
 					var env = await CoreWebView2Environment.CreateAsync(null, _userDataFolder);
 					await webView.EnsureCoreWebView2Async(env);
@@ -79,7 +72,7 @@ namespace SqlServerWorkspace
 						if (args.IsSuccess)
 						{
 							var text = SqlManager.GetObject(header).Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");
-							await SetEditorText(tabControl, header, text);
+							await SetEditorText(layoutDocumentPane, header, text);
 						}
 					};
 					break;
@@ -89,28 +82,28 @@ namespace SqlServerWorkspace
 			}
 		}
 
-		public static TabItem? GetTabItem(this TabControl tabControl, string header)
+		public static LayoutContent? GetLayoutContent(this LayoutDocumentPane layoutDocumentPane, string header)
 		{
-			foreach (TabItem tabItem in tabControl.Items)
+			foreach (var layoutContent in layoutDocumentPane.Children)
 			{
-				if ((tabItem.Header as TextBlock)?.Text == header)
+				if (layoutContent.Title == header)
 				{
-					return tabItem;
+					return layoutContent;
 				}
 			}
 			return null;
 		}
 
-		public static async Task SetEditorText(this TabControl tabControl, string tabHeader, string text)
+		public static async Task SetEditorText(this LayoutDocumentPane layoutDocumentPane, string title, string text)
 		{
-			var tabItem = tabControl.GetTabItem(tabHeader);
+			var layoutContent = layoutDocumentPane.GetLayoutContent(title);
 
-			if (tabItem == null)
+			if (layoutContent == null)
 			{
 				return;
 			}
 
-			if (tabItem.Content is not WebView2 textEditorView)
+			if (layoutContent.Content is not WebView2 textEditorView)
 			{
 				return;
 			}

@@ -112,7 +112,7 @@ namespace SqlServerWorkspace
 				case TreeNodeType.ViewNode:
 				case TreeNodeType.FunctionNode:
 				case TreeNodeType.ProcedureNode:
-					await ContentsTabControl.CreateNewOrOpenTab(treeNode);
+					await EntryPane.CreateNewOrOpenTab(treeNode);
 					break;
 
 				default:
