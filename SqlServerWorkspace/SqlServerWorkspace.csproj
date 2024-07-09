@@ -9,13 +9,22 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Resources\Icons\function.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="Resources\Icons\function.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
 	  <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.1" />
 	  <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2592.51" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <Folder Include="NewFolder\" />
-	  <Folder Include="Resources\Icons\" />
 	</ItemGroup>
 
 </Project>

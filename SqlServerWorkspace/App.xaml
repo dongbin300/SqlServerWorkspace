@@ -9,5 +9,66 @@
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Height" Value="20" />
         </Style>
+
+        <Style TargetType="{x:Type DataGrid}" x:Key="LightDataGrid">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#AAAAAA" />
+            <Setter Property="VerticalGridLinesBrush" Value="#AAAAAA" />
+            <!--<Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#FFF7F7F7"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#FFDDDDDD"/>
+            <Setter Property="VerticalGridLinesBrush" Value="#FFDDDDDD"/>
+            <Setter Property="GridLinesVisibility" Value="All"/>-->
+            <!--<Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="CanUserResizeRows" Value="False"/>-->
+            <Setter Property="ColumnHeaderHeight" Value="30"/>
+            <Setter Property="RowHeight" Value="30"/>
+            <Setter Property="ColumnHeaderStyle">
+                <Setter.Value>
+                    <Style TargetType="{x:Type DataGridColumnHeader}">
+                        <Setter Property="Background" Value="#E2E2E2"/>
+                        <Setter Property="Foreground" Value="Black"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="BorderBrush" Value="#AAAAAA"/>
+                        <Setter Property="BorderThickness" Value="0,0,1,0"/>
+                        <Setter Property="Padding" Value="5"/>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="CellStyle">
+                <Setter.Value>
+                    <Style TargetType="{x:Type DataGridCell}">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="Foreground" Value="Black"/>
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Padding" Value="5"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="DataGridCell">
+                                    <Grid Background="{TemplateBinding Background}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#EAEAEA"/>
+                                <Setter Property="Foreground" Value="Black"/>
+                                <Setter Property="BorderBrush" Value="Black"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        
     </Application.Resources>
 </Application>
