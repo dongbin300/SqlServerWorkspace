@@ -7,12 +7,14 @@ using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace SqlServerWorkspace
 {
-	public static class TabManager
+	public static partial class TabManager
 	{
 		static readonly string _monacoHtmlPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "index.html");
 		static readonly string _userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SqlServerWorkspace");
@@ -58,6 +60,23 @@ namespace SqlServerWorkspace
 						HorizontalAlignment = HorizontalAlignment.Stretch,
 						VerticalAlignment = VerticalAlignment.Stretch
 					};
+					webView.KeyDown += async (s, e) =>
+					{
+						switch (e.Key)
+						{
+							case Key.F6:
+								var editorText = await webView.GetEditorText();
+								var result = SqlManager.Execute(editorText);
+								if (!string.IsNullOrEmpty(result))
+								{
+									MessageBox.Show(result);
+								}
+								break;
+
+							default:
+								break;
+						}
+					};
 
 					newLayoutContent.Content = webView;
 					newLayoutContent.IsSelected = true;
@@ -71,7 +90,10 @@ namespace SqlServerWorkspace
 					{
 						if (args.IsSuccess)
 						{
-							var text = SqlManager.GetObject(header).Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");
+							var text = SqlManager.GetObject(header);
+							text = CreateProcedureRegex().Replace(text, "ALTER PROCEDURE");
+							text = CreateFunctionRegex().Replace(text, "ALTER FUNCTION");
+							text = text.Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");
 							await SetEditorText(layoutDocumentPane, header, text);
 						}
 					};
@@ -111,5 +133,10 @@ namespace SqlServerWorkspace
 			var script = $"setEditorText('{text}');";
 			await textEditorView.CoreWebView2.ExecuteScriptAsync(script);
 		}
+
+		[GeneratedRegex(@"\bcreate\s+procedure\b", RegexOptions.IgnoreCase)]
+		private static partial Regex CreateProcedureRegex();
+		[GeneratedRegex(@"\bcreate\s+function\b", RegexOptions.IgnoreCase)]
+		private static partial Regex CreateFunctionRegex();
 	}
 }

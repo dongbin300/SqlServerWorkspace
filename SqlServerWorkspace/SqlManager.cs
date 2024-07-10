@@ -73,7 +73,7 @@ namespace SqlServerWorkspace
 			}
 			catch (Exception ex)
 			{
-				return ex.ToString();
+				return ex.Message.ToString();
 			}
 		}
 
