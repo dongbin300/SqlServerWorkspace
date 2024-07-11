@@ -1,0 +1,47 @@
+﻿<Window x:Class="SqlServerWorkspace.Views.ConnectionView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="ConnectionView" Height="240" Width="400">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="120"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Rectangle Grid.Row="0" Fill="#CC96F8" Opacity="0.5"/>
+        <Rectangle Grid.Row="1" Fill="#CC96F8" Opacity="0.5"/>
+        <Rectangle Grid.Row="2" Fill="#CC96F8" Opacity="0.5"/>
+        <Rectangle Grid.Row="3" Fill="#CC96F8" Opacity="0.5"/>
+        <Rectangle Grid.Row="4" Fill="#CC96F8" Opacity="0.5"/>
+        <TextBlock Grid.Row="0">Server</TextBlock>
+        <TextBlock Grid.Row="1">Authentication</TextBlock>
+        <TextBlock Grid.Row="2">Database</TextBlock>
+        <TextBlock Grid.Row="3">User</TextBlock>
+        <TextBlock Grid.Row="4">Password</TextBlock>
+        <TextBox Grid.Row="0" Grid.Column="1" x:Name="ServerTextBox"/>
+        <ComboBox Grid.Row="1" Grid.Column="1" x:Name="AuthenticationComboBox" SelectionChanged="AuthenticationComboBox_SelectionChanged">
+            <ComboBoxItem>SQL Server Authentication</ComboBoxItem>
+            <ComboBoxItem>Windows Authentication</ComboBoxItem>
+        </ComboBox>
+        <TextBox Grid.Row="2" Grid.Column="1" x:Name="DatabaseTextBox"/>
+        <TextBox Grid.Row="3" Grid.Column="1" x:Name="UserTextBox"/>
+        <TextBox Grid.Row="4" Grid.Column="1" x:Name="PasswordTextBox"/>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="6" Grid.ColumnSpan="2" HorizontalAlignment="Center">
+            <Button x:Name="OkButton" Width="100" Click="OkButton_Click">OK</Button>
+            <Button x:Name="CancelButton" Width="100" Click="CancelButton_Click">Cancel</Button>
+        </StackPanel>
+    </Grid>
+</Window>

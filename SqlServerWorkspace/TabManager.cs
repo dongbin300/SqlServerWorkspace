@@ -3,6 +3,7 @@
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 
+using SqlServerWorkspace.Data;
 using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 
@@ -19,7 +20,7 @@ namespace SqlServerWorkspace
 		static readonly string _monacoHtmlPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "index.html");
 		static readonly string _userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SqlServerWorkspace");
 
-		public static async Task CreateNewOrOpenTab(this LayoutDocumentPane layoutDocumentPane, TreeNode treeNode)
+		public static async Task CreateNewOrOpenTab(this LayoutDocumentPane layoutDocumentPane, SqlManager manager, TreeNode treeNode)
 		{
 			var header = treeNode.Name;
 			var type = treeNode.Type;
@@ -45,7 +46,7 @@ namespace SqlServerWorkspace
 					var dataGrid = new DataGrid
 					{
 						IsReadOnly = true,
-						ItemsSource = SqlManager.Select("*", header).DefaultView,
+						ItemsSource = manager.Select("*", header).DefaultView,
 						Style = (Style)Application.Current.FindResource("LightDataGrid")
 					};
 					newLayoutContent.Content = dataGrid;
@@ -66,7 +67,7 @@ namespace SqlServerWorkspace
 						{
 							case Key.F6:
 								var editorText = await webView.GetEditorText();
-								var result = SqlManager.Execute(editorText);
+								var result = manager.Execute(editorText);
 								if (!string.IsNullOrEmpty(result))
 								{
 									MessageBox.Show(result);
@@ -90,7 +91,7 @@ namespace SqlServerWorkspace
 					{
 						if (args.IsSuccess)
 						{
-							var text = SqlManager.GetObject(header);
+							var text = manager.GetObject(header);
 							text = CreateProcedureRegex().Replace(text, "ALTER PROCEDURE");
 							text = CreateFunctionRegex().Replace(text, "ALTER FUNCTION");
 							text = text.Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");

@@ -9,51 +9,73 @@
         mc:Ignorable="d"
         Title="SQL Server Workspace" Height="800" Width="1200">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" MinWidth="200"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <TreeView x:Name="DatabaseTreeView" SelectedItemChanged="DatabaseTreeView_SelectedItemChanged" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard">
-            <TreeView.ItemTemplate>
-                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                    <StackPanel Orientation="Horizontal">
-                        <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,5,0"/>
-                        <TextBlock Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
-                    </StackPanel>
-                </HierarchicalDataTemplate>
-            </TreeView.ItemTemplate>
-            <TreeView.ItemContainerStyle>
-                <Style TargetType="TreeViewItem">
-                    <EventSetter Event="Loaded" Handler="DatabaseTreeViewItem_Loaded"/>
-                    <EventSetter Event="Selected" Handler="DatabaseTreeViewItem_Selected"/>
-                </Style>
-            </TreeView.ItemContainerStyle>
-        </TreeView>
-        <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Center"/>
-        <Grid Grid.Column="2">
-            <dock:DockingManager x:Name="DockManager">
-                <dock:LayoutRoot>
-                    <dock:LayoutPanel Orientation="Horizontal">
-                        
-                        <!-- 왼쪽 영역: 탭 그룹 -->
-                        <dock:LayoutDocumentPaneGroup>
-                            <dock:LayoutDocumentPane x:Name="EntryPane">
-                                <!-- 여기서 탭 추가 -->
-                            </dock:LayoutDocumentPane>
-                        </dock:LayoutDocumentPaneGroup>
-                        
-                        <!-- 오른쪽 영역: 도킹된 창 -->
-                        <!--<dock:LayoutAnchorablePaneGroup>
-                            <dock:LayoutAnchorablePane>
-                                <dock:LayoutAnchorable Title="Properties" CanClose="False">
-                                    <TextBlock Text="Properties Pane"/>
-                                </dock:LayoutAnchorable>
-                            </dock:LayoutAnchorablePane>
-                        </dock:LayoutAnchorablePaneGroup>-->
-                    </dock:LayoutPanel>
-                </dock:LayoutRoot>
-            </dock:DockingManager>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="26"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- MENU -->
+        <Menu Grid.Row="0" VerticalAlignment="Top" Height="26">
+            <MenuItem Header="_File" Height="26">
+                <MenuItem Header="_Connect" Click="Connect_Click"/>
+                <Separator/>
+                <MenuItem Header="_Exit" Click="Exit_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="200"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- CONNECTION TREE VIEW -->
+            <TreeView x:Name="DatabaseTreeView" SelectedItemChanged="DatabaseTreeView_SelectedItemChanged" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard">
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,5,0"/>
+                            <TextBlock Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="Tag" Value="{Binding Path}"/>
+                        <EventSetter Event="Loaded" Handler="DatabaseTreeViewItem_Loaded"/>
+                        <EventSetter Event="Selected" Handler="DatabaseTreeViewItem_Selected"/>
+                    </Style>
+                </TreeView.ItemContainerStyle>
+            </TreeView>
+
+            <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Center"/>
+
+            <!-- CONTENTS -->
+            <Grid Grid.Column="2">
+                <dock:DockingManager x:Name="DockManager">
+                    <dock:LayoutRoot>
+                        <dock:LayoutPanel Orientation="Horizontal">
+
+                            <!-- 왼쪽 영역: 탭 그룹 -->
+                            <dock:LayoutDocumentPaneGroup>
+                                <dock:LayoutDocumentPane x:Name="EntryPane">
+                                    <!-- 여기서 탭 추가 -->
+                                </dock:LayoutDocumentPane>
+                            </dock:LayoutDocumentPaneGroup>
+
+                            <!-- 오른쪽 영역: 도킹된 창 -->
+                            <!--<dock:LayoutAnchorablePaneGroup>
+                    <dock:LayoutAnchorablePane>
+                        <dock:LayoutAnchorable Title="Properties" CanClose="False">
+                            <TextBlock Text="Properties Pane"/>
+                        </dock:LayoutAnchorable>
+                    </dock:LayoutAnchorablePane>
+                </dock:LayoutAnchorablePaneGroup>-->
+                        </dock:LayoutPanel>
+                    </dock:LayoutRoot>
+                </dock:DockingManager>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

@@ -1,55 +1,40 @@
 ﻿using Microsoft.Data.SqlClient;
 
+using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
+using SqlServerWorkspace.Extensions;
 
 using System.Data;
 using System.Text;
+using System.Text.Json.Serialization;
 
-namespace SqlServerWorkspace
+namespace SqlServerWorkspace.Data
 {
-	public static class SqlManager
-	{
-		private static AuthenticationType _authenticationType = AuthenticationType.None;
+	public class SqlManager(AuthenticationType authenticationType, string server)
+    {
+		public AuthenticationType AuthenticationType { get; set; } = authenticationType;
+		public string Server { get; set; } = server;
+		public string User { get; set; } = string.Empty;
+		public string Password { get; set; } = string.Empty;
+		public string Database { get; set; } = string.Empty;
 
-		private static string _server = string.Empty;
-		private static string _user = string.Empty;
-		private static string _password = string.Empty;
-		private static string _database = string.Empty;
+		[JsonIgnore]
+		public List<TreeNode> Nodes { get; set; } = [];
 
-		public static void Init(string server, string user, string password)
-		{
-			_authenticationType = AuthenticationType.SqlServerAuthentication;
-			_server = server;
-			_user = user;
-			_password = password;
-		}
-
-		public static void Init(string server, string database)
-		{
-			_authenticationType = AuthenticationType.WindowsAuthentication;
-			_server = server;
-			_database = database;
-		}
-
-		public static void SetDatabase(string name)
-		{
-			_database = name;
-		}
-
-		public static string GetConnectionString()
+		public string GetConnectionString()
 		{
 			var _connectionString = string.Empty;
-			switch (_authenticationType)
+			switch (AuthenticationType)
 			{
 				case AuthenticationType.WindowsAuthentication:
-					_connectionString = $"Data Source={_server};Initial Catalog={_database};Integrated Security=True;Encrypt=False";
+					_connectionString = $"Data Source={Server};Initial Catalog={Database};Integrated Security=True;Encrypt=False";
 					break;
 
 				case AuthenticationType.SqlServerAuthentication:
-					_connectionString = $"Server={_server};User Id={_user};Password={_password};";
-					if (_database != string.Empty)
+					_connectionString = $"Server={Server};User Id={User};Password={Password};TrustServerCertificate=True;";
+					if (Database != string.Empty)
 					{
-						_connectionString += $"Database={_database};";
+						_connectionString += $"Database={Database};";
 					}
 					break;
 
@@ -59,7 +44,7 @@ namespace SqlServerWorkspace
 			return _connectionString;
 		}
 
-		public static string Execute(string query)
+		public string Execute(string query)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
 			var command = new SqlCommand(query, connection);
@@ -77,7 +62,7 @@ namespace SqlServerWorkspace
 			}
 		}
 
-		public static DataTable Select(string fieldName, string tableName, string condition = "", string order = "")
+		public DataTable Select(string fieldName, string tableName, string condition = "", string order = "")
 		{
 			using var connection = new SqlConnection(GetConnectionString());
 			var query = $"SELECT {fieldName} FROM {tableName}";
@@ -108,37 +93,32 @@ namespace SqlServerWorkspace
 			}
 		}
 
-		public static IEnumerable<string> Field(this DataTable dataTable, string fieldName)
-		{
-			return dataTable.Rows.Cast<DataRow>().Where(row => row[fieldName] != DBNull.Value).Select(row => row[fieldName].ToString());
-		}
-
-		public static IEnumerable<string> SelectDatabaseNames()
+		public IEnumerable<string> SelectDatabaseNames()
 		{
 			return Select("name", "sys.databases", "", "name").Field("name");
 		}
 
-		public static IEnumerable<string> SelectTableNames()
+		public IEnumerable<string> SelectTableNames()
 		{
 			return Select("table_name", "INFORMATION_SCHEMA.TABLES", "TABLE_TYPE = 'BASE TABLE'", "table_name").Field("table_name");
 		}
 
-		public static IEnumerable<string> SelectViewNames()
+		public IEnumerable<string> SelectViewNames()
 		{
 			return Select("table_name", "INFORMATION_SCHEMA.VIEWS").Field("table_name");
 		}
 
-		public static IEnumerable<string> SelectFunctionNames()
+		public IEnumerable<string> SelectFunctionNames()
 		{
 			return Select("name", "sys.objects", "type IN ('FN', 'IF', 'TF', 'FS', 'FT')", "name").Field("name");
 		}
 
-		public static IEnumerable<string> SelectProcedureNames()
+		public IEnumerable<string> SelectProcedureNames()
 		{
 			return Select("routine_name", "INFORMATION_SCHEMA.ROUTINES", "ROUTINE_TYPE = 'PROCEDURE'", "routine_name").Field("routine_name");
 		}
 
-		public static string GetTableInfo(string tableName)
+		public string GetTableInfo(string tableName)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
 			string query = "SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" + tableName + "'";
@@ -168,7 +148,7 @@ namespace SqlServerWorkspace
 			}
 		}
 
-		public static string GetObject(string objectName)
+		public string GetObject(string objectName)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
 			string query = $"SELECT OBJECT_DEFINITION(OBJECT_ID('{objectName}'))";
@@ -192,7 +172,7 @@ namespace SqlServerWorkspace
 			}
 		}
 
-		public static IEnumerable<string> GetRecentlyModifiedItems(string periodHour)
+		public IEnumerable<string> GetRecentlyModifiedItems(string periodHour)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
 			string query = $"DECLARE @ago DATETIME; SET @ago = DATEADD(HOUR, -{periodHour}, GETDATE()); SELECT 'Table' AS Type, name AS Name, modify_date AS ModDate FROM sys.tables WHERE modify_date >= @ago UNION ALL SELECT 'Procedure' AS Type, name AS Name, modify_date AS ModDate FROM sys.procedures WHERE modify_date >= @ago UNION ALL SELECT 'Function' AS Type, name AS Name, modify_date AS ModDate FROM sys.objects WHERE type_desc = 'SQL_SCALAR_FUNCTION' and modify_date >= @ago ORDER BY Type, Name;";
