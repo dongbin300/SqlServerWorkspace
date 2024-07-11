@@ -73,7 +73,6 @@ namespace SqlServerWorkspace
 					{
 						case TreeNodeType.ServerNode:
 							selectedItem.IsExpanded = !selectedItem.IsExpanded;
-							
 							break;
 
 						default:
@@ -111,7 +110,7 @@ namespace SqlServerWorkspace
 					break;
 
 				case TreeNodeType.DatabaseNode:
-					if(selectedNode.Children.Count == 0)
+					if (selectedNode.Children.Count == 0)
 					{
 						TreeViewManager.MakeDatabaseTree(selectedNode);
 						Refresh();
@@ -119,7 +118,7 @@ namespace SqlServerWorkspace
 					break;
 
 				case TreeNodeType.TableTitleNode:
-					if(selectedNode.Children.Count == 0)
+					if (selectedNode.Children.Count == 0)
 					{
 						TreeViewManager.MakeTableTree(manager, selectedNode);
 						Refresh();
@@ -158,7 +157,7 @@ namespace SqlServerWorkspace
 		private void Connect_Click(object sender, RoutedEventArgs e)
 		{
 			var view = new ConnectionView();
-			if(view.ShowDialog() ?? false)
+			if (view.ShowDialog() ?? false)
 			{
 				Refresh();
 			}

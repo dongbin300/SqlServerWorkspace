@@ -67,6 +67,7 @@ namespace SqlServerWorkspace
 						{
 							case Key.F6:
 								var editorText = await webView.GetEditorText();
+								editorText = editorText.Replace("\n", "\r\n");
 								var result = manager.Execute(editorText);
 								if (!string.IsNullOrEmpty(result))
 								{

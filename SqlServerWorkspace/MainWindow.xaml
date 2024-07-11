@@ -8,6 +8,13 @@
         xmlns:dock="https://github.com/Dirkster99/AvalonDock"
         mc:Ignorable="d"
         Title="SQL Server Workspace" Height="800" Width="1200">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/AvalonDock.Themes.VS2013;component/DarkBrushs.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="26"/>
@@ -54,6 +61,9 @@
             <!-- CONTENTS -->
             <Grid Grid.Column="2">
                 <dock:DockingManager x:Name="DockManager">
+                    <dock:DockingManager.Theme>
+                        <dock:Vs2013DarkTheme/>
+                    </dock:DockingManager.Theme>
                     <dock:LayoutRoot>
                         <dock:LayoutPanel Orientation="Horizontal">
 
