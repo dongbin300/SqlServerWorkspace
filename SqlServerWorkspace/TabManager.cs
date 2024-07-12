@@ -7,17 +7,19 @@ using SqlServerWorkspace.Data;
 using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 
+using System.Data;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace SqlServerWorkspace
 {
 	public static partial class TabManager
 	{
-		static readonly string _monacoHtmlPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "index.html");
+		static readonly string _monacoHtmlPath = Path.Combine("Resources", "monaco.html");
 		static readonly string _userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SqlServerWorkspace");
 
 		public static async Task CreateNewOrOpenTab(this LayoutDocumentPane layoutDocumentPane, SqlManager manager, TreeNode treeNode)
@@ -43,12 +45,48 @@ namespace SqlServerWorkspace
 			switch (type)
 			{
 				case TreeNodeType.TableNode:
+					var table = manager.Select("*", header);
 					var dataGrid = new DataGrid
 					{
 						IsReadOnly = true,
-						ItemsSource = manager.Select("*", header).DefaultView,
-						Style = (Style)Application.Current.FindResource("LightDataGrid")
+						AutoGenerateColumns = false,
+						ItemsSource = table.DefaultView,
+						Style = (Style)Application.Current.FindResource("DarkDataGrid")
 					};
+
+					foreach (DataColumn column in table.Columns)
+					{
+						var dataGridColumn = new DataGridTextColumn
+						{
+							Header = column.ColumnName,
+							Binding = new Binding(column.ColumnName)
+						};
+
+						if (column.DataType == typeof(DateTime))
+						{
+							dataGridColumn.Binding.StringFormat = "yyyy-MM-dd HH:mm:ss";
+						}
+
+						var headerTemplate = new DataTemplate();
+						var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
+						textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding());
+						headerTemplate.VisualTree = textBlockFactory;
+						dataGridColumn.HeaderTemplate = headerTemplate;
+
+						dataGrid.Columns.Add(dataGridColumn);
+					}
+
+					//var rowNumberColumn = new DataGridTextColumn
+					//{
+					//	Header = "#",
+					//	Binding = new Binding
+					//	{
+					//		Path = new PropertyPath("Items.IndexOf"),
+					//		RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor) { AncestorType = typeof(DataGridRow) }
+					//	}
+					//};
+					//dataGrid.Columns.Insert(0, rowNumberColumn);
+
 					newLayoutContent.Content = dataGrid;
 					newLayoutContent.IsSelected = true;
 					break;

@@ -1,4 +1,6 @@
-﻿using SqlServerWorkspace.DataModels;
+﻿using AvalonDock.Controls;
+
+using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
 
@@ -19,6 +21,14 @@ namespace SqlServerWorkspace
 
 			ResourceManager.Init();
 			Refresh();
+
+			if (EntryPane.Parent is LayoutDocumentPaneGroupControl paneGroup)
+			{
+				paneGroup.ContextMenu = new ContextMenu
+				{
+					Style = (Style)Resources["MonacoContextMenu"]
+				};
+			}
 		}
 
 		public void Refresh()
@@ -166,6 +176,31 @@ namespace SqlServerWorkspace
 		private void Exit_Click(object sender, RoutedEventArgs e)
 		{
 			Environment.Exit(0);
+		}
+
+		private void DatabaseTreeViewFilterTextBox_TextChanged(object sender, TextChangedEventArgs e)
+		{
+			var keyword = DatabaseTreeViewFilterTextBox.Text;
+
+			if(keyword.Length < 1)
+			{
+				Refresh();
+				return;
+			}
+
+			var items = ResourceManager.Connections.Select(x => x.Nodes);
+
+			List<TreeNode> filteredItems = [];
+			foreach(var item in items)
+			{
+				foreach(var topNode in item)
+				{
+					var nodes = topNode.Search(keyword);
+					filteredItems.AddRange(nodes);
+				}
+			}
+
+			DatabaseTreeView.ItemsSource = filteredItems;
 		}
 	}
 }

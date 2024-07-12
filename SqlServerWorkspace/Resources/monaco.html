@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Monaco Editor in WebView2</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs/loader.js"></script>
+    <style>
+        html,
+        body,
+        #editor {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="editor"></div>
+    <script>
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            monaco.languages.register({
+                id: 'sql',
+                extensions: ['.sql'],
+                aliases: ['SQL', 'sql'],
+                mimetypes: ['text/sql']
+            });
+
+            monaco.editor.defineTheme('DarkTheme', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    { token: 'comment', foreground: '87c38a' },
+                    { token: 'keyword', foreground: '569cd6' },
+                    { token: 'number', foreground: 'b5cea8' },
+                ],
+                colors: {
+                    'editor.background': '#1e1e1e',
+                    'editor.foreground': '#d4d4d4',
+                }
+            });
+            
+            var editor = monaco.editor.create(document.getElementById('editor'), {
+                value: "",
+                language: "sql",
+                theme: "DarkTheme"
+            });
+
+            window.setEditorText = function (text) {
+                text = text.replace(/\\n/g, '\n');
+                editor.setValue(text);
+            };
+
+            window.getEditorText = function() {
+                return editor.getValue();
+            };
+        });
+    </script>
+</body>
+
+</html>

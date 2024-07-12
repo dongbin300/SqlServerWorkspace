@@ -11,11 +11,11 @@ namespace SqlServerWorkspace.Views
 	/// ConnectionView.xaml에 대한 상호 작용 논리
 	/// </summary>
 	public partial class ConnectionView : Window
-    {
-        public ConnectionView()
-        {
-            InitializeComponent();
-        }
+	{
+		public ConnectionView()
+		{
+			InitializeComponent();
+		}
 
 		private void OkButton_Click(object sender, RoutedEventArgs e)
 		{
@@ -23,7 +23,7 @@ namespace SqlServerWorkspace.Views
 			var server = ServerTextBox.Text;
 			var database = DatabaseTextBox.Text;
 			var user = UserTextBox.Text;
-			var password = PasswordTextBox.Text;
+			var password = PasswordTextBox.Password;
 			SqlManager connectionInfo = default!;
 			switch (authenticationType)
 			{
@@ -55,9 +55,9 @@ namespace SqlServerWorkspace.Views
 
 		private void CancelButton_Click(object sender, RoutedEventArgs e)
 		{
-            DialogResult = false;
-            Close();
-        }
+			DialogResult = false;
+			Close();
+		}
 
 		private void AuthenticationComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{

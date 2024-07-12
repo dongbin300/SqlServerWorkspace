@@ -10,10 +10,14 @@
 
 	<ItemGroup>
 	  <None Remove="Resources\Icons\function.png" />
+	  <None Remove="Resources\monaco.html" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <Content Include="Resources\Icons\function.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Resources\monaco.html">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
 	</ItemGroup>

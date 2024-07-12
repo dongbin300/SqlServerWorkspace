@@ -23,69 +23,87 @@
 
         <!-- MENU -->
         <Menu Grid.Row="0" VerticalAlignment="Top" Height="26">
-            <MenuItem Header="_File" Height="26">
-                <MenuItem Header="_Connect" Click="Connect_Click"/>
-                <Separator/>
-                <MenuItem Header="_Exit" Click="Exit_Click"/>
+            <MenuItem Header="File" Style="{StaticResource MainMenuItem}">
+                <MenuItem Header="Connect" Style="{StaticResource SubMenuItem}" Click="Connect_Click"/>
+                <Separator Style="{StaticResource SubMenuSeparator}"/>
+                <MenuItem Header="Exit" Style="{StaticResource SubMenuItem}" Click="Exit_Click"/>
             </MenuItem>
         </Menu>
 
+        <!-- AVALONDOCK LAYOUT -->
         <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="200"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+            <dock:DockingManager>
+                <dock:DockingManager.Theme>
+                    <dock:Vs2013DarkTheme/>
+                </dock:DockingManager.Theme>
+                <dock:LayoutRoot>
+                    <dock:LayoutPanel Orientation="Horizontal">
 
-            <!-- CONNECTION TREE VIEW -->
-            <TreeView x:Name="DatabaseTreeView" SelectedItemChanged="DatabaseTreeView_SelectedItemChanged" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard">
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,5,0"/>
-                            <TextBlock Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
-                        </StackPanel>
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>
-                <TreeView.ItemContainerStyle>
-                    <Style TargetType="TreeViewItem">
-                        <Setter Property="Tag" Value="{Binding Path}"/>
-                        <EventSetter Event="Loaded" Handler="DatabaseTreeViewItem_Loaded"/>
-                        <EventSetter Event="Selected" Handler="DatabaseTreeViewItem_Selected"/>
-                    </Style>
-                </TreeView.ItemContainerStyle>
-            </TreeView>
+                        <!--<dock:LayoutAnchorablePane>
+                            <dock:LayoutAnchorable>
+                                
+                            </dock:LayoutAnchorable>
+                        </dock:LayoutAnchorablePane>-->
+                        
+                        <!-- 1. LEFT-SIDE DATABASE HIERARCHY TREE VIEW -->
+                        <dock:LayoutAnchorablePane Name="DatabasePane" DockWidth="300" ScrollViewer.HorizontalScrollBarVisibility="Visible">
+                            <dock:LayoutAnchorable>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="24"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
 
-            <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Center"/>
+                                    <TextBox x:Name="DatabaseTreeViewFilterTextBox" TextChanged="DatabaseTreeViewFilterTextBox_TextChanged"/>
 
-            <!-- CONTENTS -->
-            <Grid Grid.Column="2">
-                <dock:DockingManager x:Name="DockManager">
-                    <dock:DockingManager.Theme>
-                        <dock:Vs2013DarkTheme/>
-                    </dock:DockingManager.Theme>
-                    <dock:LayoutRoot>
-                        <dock:LayoutPanel Orientation="Horizontal">
+                                    <TreeView x:Name="DatabaseTreeView" Grid.Row="1" SelectedItemChanged="DatabaseTreeView_SelectedItemChanged" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard" Foreground="{StaticResource DarkForeground}" Background="{StaticResource DarkBackground}">
+                                        <TreeView.ItemTemplate>
+                                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,5,0"/>
+                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
+                                                </StackPanel>
+                                            </HierarchicalDataTemplate>
+                                        </TreeView.ItemTemplate>
 
-                            <!-- 왼쪽 영역: 탭 그룹 -->
-                            <dock:LayoutDocumentPaneGroup>
-                                <dock:LayoutDocumentPane x:Name="EntryPane">
-                                    <!-- 여기서 탭 추가 -->
-                                </dock:LayoutDocumentPane>
-                            </dock:LayoutDocumentPaneGroup>
+                                        <TreeView.ItemContainerStyle>
+                                            <Style TargetType="TreeViewItem">
+                                                <Setter Property="Tag" Value="{Binding Path}"/>
+                                                <EventSetter Event="Loaded" Handler="DatabaseTreeViewItem_Loaded"/>
+                                                <EventSetter Event="Selected" Handler="DatabaseTreeViewItem_Selected"/>
+                                                <!--<Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TreeViewItem">
+                        <Border x:Name="_border" Background="Transparent">
+                            <Grid>
+                                <ContentPresenter x:Name="PART_Header" ContentSource="Header" Margin="2"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="_border" Property="Background" Value="#414141"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>-->
+                                            </Style>
+                                        </TreeView.ItemContainerStyle>
+                                    </TreeView>
+                                </Grid>
+                            </dock:LayoutAnchorable>
+                        </dock:LayoutAnchorablePane>
 
-                            <!-- 오른쪽 영역: 도킹된 창 -->
-                            <!--<dock:LayoutAnchorablePaneGroup>
-                    <dock:LayoutAnchorablePane>
-                        <dock:LayoutAnchorable Title="Properties" CanClose="False">
-                            <TextBlock Text="Properties Pane"/>
-                        </dock:LayoutAnchorable>
-                    </dock:LayoutAnchorablePane>
-                </dock:LayoutAnchorablePaneGroup>-->
-                        </dock:LayoutPanel>
-                    </dock:LayoutRoot>
-                </dock:DockingManager>
-            </Grid>
+                        <!-- 2. CONTENTS TAB GROUP -->
+                        <dock:LayoutDocumentPaneGroup>
+                            <dock:LayoutDocumentPane x:Name="EntryPane">
+                                <!-- ADD TAB HERE -->
+                            </dock:LayoutDocumentPane>
+                        </dock:LayoutDocumentPaneGroup>
+                        
+                    </dock:LayoutPanel>
+                </dock:LayoutRoot>
+            </dock:DockingManager>
         </Grid>
     </Grid>
 </Window>
