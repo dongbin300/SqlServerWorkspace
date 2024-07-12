@@ -19,6 +19,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="26"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="40"/>
         </Grid.RowDefinitions>
 
         <!-- MENU -->
@@ -104,6 +105,10 @@
                     </dock:LayoutPanel>
                 </dock:LayoutRoot>
             </dock:DockingManager>
+        </Grid>
+
+        <Grid Grid.Row="2">
+            <TextBlock x:Name="StatusTextBlock" Text="{Binding StatusText}" Style="{StaticResource StatusText}"/>
         </Grid>
     </Grid>
 </Window>

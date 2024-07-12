@@ -6,6 +6,7 @@ using Microsoft.Web.WebView2.Wpf;
 using SqlServerWorkspace.Data;
 using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
+using SqlServerWorkspace.Views.Controls;
 
 using System.Data;
 using System.IO;
@@ -21,6 +22,14 @@ namespace SqlServerWorkspace
 	{
 		static readonly string _monacoHtmlPath = Path.Combine("Resources", "monaco.html");
 		static readonly string _userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SqlServerWorkspace");
+
+		public static async Task Init(this WebView2 webView)
+		{
+			var env = await CoreWebView2Environment.CreateAsync(null, _userDataFolder);
+			await webView.EnsureCoreWebView2Async(env);
+			webView.CoreWebView2.Settings.IsScriptEnabled = true;
+			webView.CoreWebView2.NavigateToString(File.ReadAllText(_monacoHtmlPath));
+		}
 
 		public static async Task CreateNewOrOpenTab(this LayoutDocumentPane layoutDocumentPane, SqlManager manager, TreeNode treeNode)
 		{
@@ -45,36 +54,44 @@ namespace SqlServerWorkspace
 			switch (type)
 			{
 				case TreeNodeType.TableNode:
-					var table = manager.Select("*", header);
-					var dataGrid = new DataGrid
+					var tableViewControl = new TableViewControl()
 					{
-						IsReadOnly = true,
-						AutoGenerateColumns = false,
-						ItemsSource = table.DefaultView,
-						Style = (Style)Application.Current.FindResource("DarkDataGrid")
+						Manager = manager,
+						Header = header
 					};
+					//var table = manager.Select("*", header);
+					//var dataGrid = new DataGrid
+					//{
+					//	ItemsSource = table.DefaultView,
+					//	Style = (Style)Application.Current.FindResource("DarkDataGrid")
+					//};
 
-					foreach (DataColumn column in table.Columns)
-					{
-						var dataGridColumn = new DataGridTextColumn
-						{
-							Header = column.ColumnName,
-							Binding = new Binding(column.ColumnName)
-						};
+					//foreach (DataColumn column in table.Columns)
+					//{
+					//	var binding = new Binding(column.ColumnName)
+					//	{
+					//		//Converter = (IValueConverter)Application.Current.FindResource("DBNullToNullStringConverter")
+					//	};
 
-						if (column.DataType == typeof(DateTime))
-						{
-							dataGridColumn.Binding.StringFormat = "yyyy-MM-dd HH:mm:ss";
-						}
+					//	if (column.DataType == typeof(DateTime))
+					//	{
+					//		binding.StringFormat = "yyyy-MM-dd HH:mm:ss";
+					//	}
 
-						var headerTemplate = new DataTemplate();
-						var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-						textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding());
-						headerTemplate.VisualTree = textBlockFactory;
-						dataGridColumn.HeaderTemplate = headerTemplate;
+					//	var dataGridColumn = new DataGridTextColumn
+					//	{
+					//		Header = column.ColumnName,
+					//		Binding = binding
+					//	};
 
-						dataGrid.Columns.Add(dataGridColumn);
-					}
+					//	var headerTemplate = new DataTemplate();
+					//	var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
+					//	textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding());
+					//	headerTemplate.VisualTree = textBlockFactory;
+					//	dataGridColumn.HeaderTemplate = headerTemplate;
+
+					//	dataGrid.Columns.Add(dataGridColumn);
+					//}
 
 					//var rowNumberColumn = new DataGridTextColumn
 					//{
@@ -87,7 +104,7 @@ namespace SqlServerWorkspace
 					//};
 					//dataGrid.Columns.Insert(0, rowNumberColumn);
 
-					newLayoutContent.Content = dataGrid;
+					newLayoutContent.Content = tableViewControl;
 					newLayoutContent.IsSelected = true;
 					break;
 
@@ -103,7 +120,7 @@ namespace SqlServerWorkspace
 					{
 						switch (e.Key)
 						{
-							case Key.F6:
+							case Key.F5:
 								var editorText = await webView.GetEditorText();
 								editorText = editorText.Replace("\n", "\r\n");
 								var result = manager.Execute(editorText);
@@ -121,10 +138,7 @@ namespace SqlServerWorkspace
 					newLayoutContent.Content = webView;
 					newLayoutContent.IsSelected = true;
 
-					var env = await CoreWebView2Environment.CreateAsync(null, _userDataFolder);
-					await webView.EnsureCoreWebView2Async(env);
-					webView.CoreWebView2.Settings.IsScriptEnabled = true;
-					webView.CoreWebView2.NavigateToString(File.ReadAllText(_monacoHtmlPath));
+					await webView.Init();
 
 					webView.NavigationCompleted += async (sender, args) =>
 					{
@@ -133,8 +147,7 @@ namespace SqlServerWorkspace
 							var text = manager.GetObject(header);
 							text = CreateProcedureRegex().Replace(text, "ALTER PROCEDURE");
 							text = CreateFunctionRegex().Replace(text, "ALTER FUNCTION");
-							text = text.Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");
-							await SetEditorText(layoutDocumentPane, header, text);
+							await layoutDocumentPane.SetEditorText(header, text);
 						}
 					};
 					break;
@@ -165,13 +178,19 @@ namespace SqlServerWorkspace
 				return;
 			}
 
-			if (layoutContent.Content is not WebView2 textEditorView)
+			if (layoutContent.Content is not WebView2 webView)
 			{
 				return;
 			}
 
+			await webView.SetEditorText(text);
+		}
+
+		public static async Task SetEditorText(this WebView2 webView, string text)
+		{
+			text = text.Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");
 			var script = $"setEditorText('{text}');";
-			await textEditorView.CoreWebView2.ExecuteScriptAsync(script);
+			await webView.CoreWebView2.ExecuteScriptAsync(script);
 		}
 
 		[GeneratedRegex(@"\bcreate\s+procedure\b", RegexOptions.IgnoreCase)]

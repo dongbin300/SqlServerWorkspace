@@ -19,6 +19,12 @@
 <body>
     <div id="editor"></div>
     <script>
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'F5') {
+                event.preventDefault();
+            }
+        });
+
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs' } });
         require(['vs/editor/editor.main'], function () {
             monaco.languages.register({

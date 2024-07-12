@@ -7,6 +7,7 @@ using SqlServerWorkspace.Extensions;
 using System.Data;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Windows.Controls;
 
 namespace SqlServerWorkspace.Data
 {
@@ -62,18 +63,9 @@ namespace SqlServerWorkspace.Data
 			}
 		}
 
-		public DataTable Select(string fieldName, string tableName, string condition = "", string order = "")
+		public DataTable Select(string query)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
-			var query = $"SELECT {fieldName} FROM {tableName}";
-			if (condition != string.Empty)
-			{
-				query += $" WHERE {condition}";
-			}
-			if (order != string.Empty)
-			{
-				query += $" ORDER BY {order}";
-			}
 			var command = new SqlCommand(query, connection);
 
 			try
@@ -91,6 +83,21 @@ namespace SqlServerWorkspace.Data
 			{
 				throw;
 			}
+		}
+
+		public DataTable Select(string fieldName, string tableName, string condition = "", string order = "")
+		{
+			var query = $"SELECT {fieldName} FROM {tableName}";
+			if (condition != string.Empty)
+			{
+				query += $" WHERE {condition}";
+			}
+			if (order != string.Empty)
+			{
+				query += $" ORDER BY {order}";
+			}
+
+			return Select(query);
 		}
 
 		public IEnumerable<string> SelectDatabaseNames()

@@ -95,7 +95,8 @@ namespace SqlServerWorkspace
 			var tableNames = manager.SelectTableNames();
 			foreach (var tableName in tableNames)
 			{
-				tableTitleNode.Children.Add(new TreeNode(tableName, TreeNodeType.TableNode, tableTitleNode.Path.CombinePath(tableName)));
+				var node = new TreeNode(tableName, TreeNodeType.TableNode, tableTitleNode.Path.CombinePath(tableName));
+				tableTitleNode.Children.Add(node);
 			}
 		}
 
@@ -105,7 +106,8 @@ namespace SqlServerWorkspace
 			var viewNames = manager.SelectViewNames();
 			foreach (var viewName in viewNames)
 			{
-				viewTitleNode.Children.Add(new TreeNode(viewName, TreeNodeType.ViewNode, viewTitleNode.Path.CombinePath(viewName)));
+				var node = new TreeNode(viewName, TreeNodeType.ViewNode, viewTitleNode.Path.CombinePath(viewName));
+				viewTitleNode.Children.Add(node);
 			}
 		}
 
@@ -115,7 +117,8 @@ namespace SqlServerWorkspace
 			var functionNames = manager.SelectFunctionNames();
 			foreach (var functionName in functionNames)
 			{
-				functionTitleNode.Children.Add(new TreeNode(functionName, TreeNodeType.FunctionNode, functionTitleNode.Path.CombinePath(functionName)));
+				var node = new TreeNode(functionName, TreeNodeType.FunctionNode, functionTitleNode.Path.CombinePath(functionName), ResourceManager.FunctionIcon);
+				functionTitleNode.Children.Add(node);
 			}
 		}
 
@@ -125,7 +128,8 @@ namespace SqlServerWorkspace
 			var procedureNames = manager.SelectProcedureNames();
 			foreach (var procedureName in procedureNames)
 			{
-				procedureTitleNode.Children.Add(new TreeNode(procedureName, TreeNodeType.ProcedureNode, procedureTitleNode.Path.CombinePath(procedureName)));
+				var node = new TreeNode(procedureName, TreeNodeType.ProcedureNode, procedureTitleNode.Path.CombinePath(procedureName));
+				procedureTitleNode.Children.Add(node);
 			}
 		}
 	}
