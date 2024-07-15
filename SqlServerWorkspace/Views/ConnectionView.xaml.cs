@@ -15,6 +15,8 @@ namespace SqlServerWorkspace.Views
 		public ConnectionView()
 		{
 			InitializeComponent();
+
+			AuthenticationComboBox.SelectedIndex = 0;
 		}
 
 		private void OkButton_Click(object sender, RoutedEventArgs e)

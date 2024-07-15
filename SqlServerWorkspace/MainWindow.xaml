@@ -7,7 +7,8 @@
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         xmlns:dock="https://github.com/Dirkster99/AvalonDock"
         mc:Ignorable="d"
-        Title="SQL Server Workspace" Height="800" Width="1200">
+        Title="SQL Server Workspace" Height="800" Width="1200"
+        Icon="/Resources/Icons/ssw.png">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -58,10 +59,13 @@
                                     <TextBox x:Name="DatabaseTreeViewFilterTextBox" TextChanged="DatabaseTreeViewFilterTextBox_TextChanged"/>
 
                                     <TreeView x:Name="DatabaseTreeView" Grid.Row="1" SelectedItemChanged="DatabaseTreeView_SelectedItemChanged" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard" Foreground="{StaticResource DarkForeground}" Background="{StaticResource DarkBackground}">
+                                        
                                         <TreeView.ItemTemplate>
                                             <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,5,0"/>
+                                                    <Path Data="{Binding SvgData}" Width="16" Height="16" StrokeThickness="1" Stretch="Uniform" Margin="0,0,3,0"
+                                                          Stroke="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}"
+                                                          Fill="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}"/>
                                                     <TextBlock Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
                                                 </StackPanel>
                                             </HierarchicalDataTemplate>

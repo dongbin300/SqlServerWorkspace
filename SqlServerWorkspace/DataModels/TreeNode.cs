@@ -1,16 +1,18 @@
 ﻿using SqlServerWorkspace.Enums;
 
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace SqlServerWorkspace.DataModels
 {
-	public class TreeNode(string name, TreeNodeType type, string path, BitmapImage? iconSource = null)
+	public class TreeNode(string name, TreeNodeType type, string path, string? svgData = null, string? svgColor = null)
 	{
 		public string Name { get; set; } = name;
 		public TreeNodeType Type { get; set; } = type;
 		public List<TreeNode> Children { get; set; } = [];
 		public string Path { get; set; } = path;
-		public BitmapImage Icon { get; set; } = iconSource ?? default!;
+		public string SvgData { get; set; } = svgData ?? string.Empty;
+		public string SvgColor { get; set; } = svgColor ?? string.Empty;
 
 		public string GetParentName()
 		{
@@ -39,7 +41,7 @@ namespace SqlServerWorkspace.DataModels
 
 			TreeNode CloneNode(TreeNode node)
 			{
-				return new TreeNode(node.Name, node.Type, node.Path, node.Icon);
+				return new TreeNode(node.Name, node.Type, node.Path, node.SvgData, node.SvgColor);
 			}
 
 			void SearchInternal(TreeNode sourceNode, TreeNode targetNode)
@@ -54,7 +56,7 @@ namespace SqlServerWorkspace.DataModels
 					}
 					else
 					{
-						var matchedChild = new TreeNode(child.Name, child.Type, child.Path, child.Icon);
+						var matchedChild = new TreeNode(child.Name, child.Type, child.Path, child.SvgData, child.SvgColor);
 						SearchInternal(child, matchedChild);
 						if (matchedChild.Children.Count > 0)
 						{

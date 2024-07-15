@@ -6,15 +6,19 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
+		<ApplicationIcon>ssw.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="Resources\Icons\function.png" />
+	  <None Remove="Resources\Icons\ssw.png" />
 	  <None Remove="Resources\monaco.html" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Content Include="Resources\Icons\function.png">
+	  <Content Include="Resources\Icons\ssw.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="ssw.ico">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
 	  <Content Include="Resources\monaco.html">

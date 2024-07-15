@@ -16,6 +16,9 @@
         <StackPanel Orientation="Horizontal">
             <Button x:Name="RunButton" Width="80" Click="RunButton_Click">Run</Button>
             <Button x:Name="SaveButton" Width="80" Click="SaveButton_Click">Save</Button>
+            <Button x:Name="InfoButton" Width="80" Click="InfoButton_Click">Info</Button>
+            <Button x:Name="ColumnInfoButton" Width="80" Click="ColumnInfoButton_Click">Column Info</Button>
+            <Button x:Name="MergeButton" Width="80" Click="MergeButton_Click">Merge</Button>
         </StackPanel>
 
         <wv:WebView2 Grid.Row="1" x:Name="WebView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" NavigationCompleted="WebView_NavigationCompleted" KeyDown="WebView_KeyDown"/>

@@ -8,12 +8,9 @@ using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views.Controls;
 
-using System.Data;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 
 namespace SqlServerWorkspace
@@ -25,10 +22,17 @@ namespace SqlServerWorkspace
 
 		public static async Task Init(this WebView2 webView)
 		{
-			var env = await CoreWebView2Environment.CreateAsync(null, _userDataFolder);
-			await webView.EnsureCoreWebView2Async(env);
-			webView.CoreWebView2.Settings.IsScriptEnabled = true;
-			webView.CoreWebView2.NavigateToString(File.ReadAllText(_monacoHtmlPath));
+			try
+			{
+				var env = await CoreWebView2Environment.CreateAsync(null, _userDataFolder);
+				await webView.EnsureCoreWebView2Async(env);
+				webView.CoreWebView2.Settings.IsScriptEnabled = true;
+				webView.CoreWebView2.NavigateToString(File.ReadAllText(_monacoHtmlPath));
+			}
+			catch (ArgumentException)
+			{
+
+			}
 		}
 
 		public static async Task CreateNewOrOpenTab(this LayoutDocumentPane layoutDocumentPane, SqlManager manager, TreeNode treeNode)
@@ -59,50 +63,6 @@ namespace SqlServerWorkspace
 						Manager = manager,
 						Header = header
 					};
-					//var table = manager.Select("*", header);
-					//var dataGrid = new DataGrid
-					//{
-					//	ItemsSource = table.DefaultView,
-					//	Style = (Style)Application.Current.FindResource("DarkDataGrid")
-					//};
-
-					//foreach (DataColumn column in table.Columns)
-					//{
-					//	var binding = new Binding(column.ColumnName)
-					//	{
-					//		//Converter = (IValueConverter)Application.Current.FindResource("DBNullToNullStringConverter")
-					//	};
-
-					//	if (column.DataType == typeof(DateTime))
-					//	{
-					//		binding.StringFormat = "yyyy-MM-dd HH:mm:ss";
-					//	}
-
-					//	var dataGridColumn = new DataGridTextColumn
-					//	{
-					//		Header = column.ColumnName,
-					//		Binding = binding
-					//	};
-
-					//	var headerTemplate = new DataTemplate();
-					//	var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-					//	textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding());
-					//	headerTemplate.VisualTree = textBlockFactory;
-					//	dataGridColumn.HeaderTemplate = headerTemplate;
-
-					//	dataGrid.Columns.Add(dataGridColumn);
-					//}
-
-					//var rowNumberColumn = new DataGridTextColumn
-					//{
-					//	Header = "#",
-					//	Binding = new Binding
-					//	{
-					//		Path = new PropertyPath("Items.IndexOf"),
-					//		RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor) { AncestorType = typeof(DataGridRow) }
-					//	}
-					//};
-					//dataGrid.Columns.Insert(0, rowNumberColumn);
 
 					newLayoutContent.Content = tableViewControl;
 					newLayoutContent.IsSelected = true;

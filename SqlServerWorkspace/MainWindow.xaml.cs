@@ -2,9 +2,11 @@
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
 
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Input;
 
 namespace SqlServerWorkspace
 {
@@ -14,6 +16,8 @@ namespace SqlServerWorkspace
 	public partial class MainWindow : Window
 	{
 		public static readonly DependencyProperty StatusTextProperty = DependencyProperty.Register("StatusText", typeof(string), typeof(MainWindow), new PropertyMetadata(""));
+		private TreeViewItem currentSelectedItem = default!;
+		private TreeNode currentSelectedNode = default!;
 
 		public string StatusText
 		{
@@ -47,6 +51,8 @@ namespace SqlServerWorkspace
 			{
 				return;
 			}
+
+			currentSelectedItem = selectedItem;
 
 			/* Prevent event bubbling */
 			e.Handled = true;
@@ -103,6 +109,8 @@ namespace SqlServerWorkspace
 			{
 				return;
 			}
+
+			currentSelectedNode = selectedNode;
 
 			var manager = DatabaseTreeView.GetSqlManager(selectedNode);
 			if (manager == null)
@@ -182,7 +190,7 @@ namespace SqlServerWorkspace
 		{
 			var keyword = DatabaseTreeViewFilterTextBox.Text;
 
-			if(keyword.Length < 1)
+			if (keyword.Length < 1)
 			{
 				Refresh();
 				return;
@@ -191,9 +199,9 @@ namespace SqlServerWorkspace
 			var items = ResourceManager.Connections.Select(x => x.Nodes);
 
 			List<TreeNode> filteredItems = [];
-			foreach(var item in items)
+			foreach (var item in items)
 			{
-				foreach(var topNode in item)
+				foreach (var topNode in item)
 				{
 					var nodes = topNode.Search(keyword);
 					filteredItems.AddRange(nodes);

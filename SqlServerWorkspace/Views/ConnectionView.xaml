@@ -43,7 +43,7 @@
         <TextBlock Grid.Row="3">User</TextBlock>
         <TextBlock Grid.Row="4">Password</TextBlock>
         <TextBox Grid.Row="0" Grid.Column="1" x:Name="ServerTextBox"/>
-        <ComboBox Grid.Row="1" Grid.Column="1" x:Name="AuthenticationComboBox" SelectionChanged="AuthenticationComboBox_SelectionChanged" SelectedIndex="0">
+        <ComboBox Grid.Row="1" Grid.Column="1" x:Name="AuthenticationComboBox" SelectionChanged="AuthenticationComboBox_SelectionChanged">
             <ComboBoxItem>SQL Server Authentication</ComboBoxItem>
             <ComboBoxItem>Windows Authentication</ComboBoxItem>
         </ComboBox>

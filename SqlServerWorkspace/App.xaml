@@ -19,7 +19,8 @@
 
         <!-- Converters -->
         <converter:DBNullToNullStringConverter x:Key="DBNullToNullStringConverter"/>
-        
+        <converter:StringToBrushConverter x:Key="StringToBrushConverter"/>
+
         <!-- Styles -->        
         <Style TargetType="{x:Type TextBlock}" x:Key="TreeViewText">
             <Setter Property="FontFamily" Value="Verdana" />

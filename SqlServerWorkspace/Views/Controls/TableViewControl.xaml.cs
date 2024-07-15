@@ -1,11 +1,14 @@
 ﻿using Microsoft.Web.WebView2.Core;
 
 using SqlServerWorkspace.Data;
+using SqlServerWorkspace.Extensions;
 
 using System.Data;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 
 namespace SqlServerWorkspace.Views.Controls
@@ -17,6 +20,8 @@ namespace SqlServerWorkspace.Views.Controls
 	{
 		public SqlManager Manager { get; set; } = default!;
 		public string Header { get; set; } = string.Empty;
+		public DataTable SelectTable = default!;
+		public string SelectTableName = string.Empty;
 
 		public TableViewControl()
 		{
@@ -33,6 +38,8 @@ namespace SqlServerWorkspace.Views.Controls
 			try
 			{
 				var table = Manager.Select(query);
+				SelectTable = table.Copy();
+				SelectTableName = GetTableNameFromQuery(query);
 				TableDataGrid.Columns.Clear();
 				TableDataGrid.ItemsSource = table.DefaultView;
 
@@ -54,11 +61,11 @@ namespace SqlServerWorkspace.Views.Controls
 						Binding = binding
 					};
 
-					var headerTemplate = new DataTemplate();
-					var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-					textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding());
-					headerTemplate.VisualTree = textBlockFactory;
-					dataGridColumn.HeaderTemplate = headerTemplate;
+					//var headerTemplate = new DataTemplate();
+					//var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
+					//textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding());
+					//headerTemplate.VisualTree = textBlockFactory;
+					//dataGridColumn.HeaderTemplate = headerTemplate;
 
 					TableDataGrid.Columns.Add(dataGridColumn);
 				}
@@ -90,8 +97,135 @@ namespace SqlServerWorkspace.Views.Controls
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
+			try
+			{
+				// DataGrid 테이블
+				//var currentTable = TableDataGrid.ToDataTable();
 
-        }
+				//// 조회해놓은 테이블
+				//var selectTable2 = new DataTable();
+				//foreach (DataColumn column in SelectTable.Columns)
+				//{
+				//	selectTable2.Columns.Add(column.ColumnName, typeof(string));
+				//}
+
+				//foreach (DataRow row in SelectTable.Rows)
+				//{
+				//	DataRow newRow = selectTable2.NewRow();
+				//	foreach (DataColumn column in selectTable2.Columns)
+				//	{
+				//		if (row[column.ColumnName] == DBNull.Value)
+				//		{
+				//			continue;
+				//		}
+				//		newRow[column.ColumnName] = row[column.ColumnName].ToString();
+				//	}
+				//	selectTable2.Rows.Add(newRow);
+				//}
+
+				//var addedRows = currentTable.AsEnumerable().Except(selectTable2.AsEnumerable(), DataRowComparer.Default);
+				//var deletedRows = selectTable2.AsEnumerable().Except(currentTable.AsEnumerable(), DataRowComparer.Default);
+				//var modifiedRows = currentTable.AsEnumerable().Where(row => !selectTable2.AsEnumerable().Contains(row, DataRowComparer.Default) && !addedRows.Contains(row, DataRowComparer.Default));
+
+				var currentTable = TableDataGrid.ToDataTable();
+				var selectTable2 = new DataTable();
+				foreach (DataColumn column in SelectTable.Columns)
+				{
+					selectTable2.Columns.Add(column.ColumnName, typeof(string));
+				}
+
+				foreach (DataRow row in SelectTable.Rows)
+				{
+					DataRow newRow = selectTable2.NewRow();
+					foreach (DataColumn column in selectTable2.Columns)
+					{
+						if (row[column.ColumnName] == DBNull.Value)
+						{
+							continue;
+						}
+						newRow[column.ColumnName] = row[column.ColumnName].ToString();
+					}
+					selectTable2.Rows.Add(newRow);
+				}
+
+				List<DataRow> addedRows = [];
+				List<DataRow> deletedRows = [];
+				List<DataRow> modifiedRows = [];
+				foreach (DataRow currentRow in currentTable.Rows)
+				{
+					object primaryKeyValue = currentRow["ID"];
+					var selectRow = selectTable2.Rows.Find(primaryKeyValue);
+
+					if (selectRow == null)
+					{
+						addedRows.Add(currentRow);
+					}
+					else
+					{
+						bool hasChanges = false;
+						foreach (DataColumn column in currentTable.Columns)
+						{
+							if (!Equals(currentRow[column], selectRow[column]))
+							{
+								hasChanges = true;
+								break;
+							}
+						}
+
+						if (hasChanges)
+						{
+							modifiedRows.Add(currentRow);
+						}
+						else
+						{
+							Console.WriteLine($"Unchanged Row: {currentRow["ID"]} - {currentRow["Name"]}");
+						}
+					}
+				}
+
+				foreach (DataRow selectRow in selectTable2.Rows)
+				{
+					object primaryKeyValue = selectRow["ID"];
+					var currentRow = currentTable.Rows.Find(primaryKeyValue);
+
+					if (currentRow == null)
+					{
+						deletedRows.Add(selectRow);
+					}
+				}
+
+				var result = Manager.TransactionForTable(SelectTableName, addedRows, deletedRows, modifiedRows);
+
+				Common.SetStatusText(result);
+			}
+			catch (Exception ex)
+			{
+				Common.SetStatusText(ex.Message);
+			}
+		}
+
+		private void InfoButton_Click(object sender, RoutedEventArgs e)
+		{
+			var tableColumnInfo = Manager.GetTableInfo(SelectTableName);
+		}
+
+		private void ColumnInfoButton_Click(object sender, RoutedEventArgs e)
+		{
+			var tableInfo = Manager.GetTablePrimaryKeyNames(SelectTableName);
+		}
+
+		private void MergeButton_Click(object sender, RoutedEventArgs e)
+		{
+			var table = Manager.GetTableInfo(SelectTableName);
+			var primaryKeyNames = Manager.GetTablePrimaryKeyNames(SelectTableName);
+			var columnNames = table.Columns.Select(x => x.Name);
+			var nonKeyColumnNames = columnNames.Except(primaryKeyNames);
+			var columnNameSequence = string.Join(',', columnNames);
+			var columnNameAlphaSequence = string.Join(',', columnNames.Select(x => $"@{x}"));
+			StringBuilder builder = new StringBuilder();
+			builder.AppendLine($"MERGE {SelectTableName} AS target");
+			builder.AppendLine($"USING ( VALUES ( {columnNameAlphaSequence} ) ) AS source ( {columnNameSequence} )");
+		}
 
 		private async void WebView_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
 		{
@@ -111,6 +245,19 @@ namespace SqlServerWorkspace.Views.Controls
 					RunButton_Click(sender, e);
 					break;
 			}
+		}
+
+		string GetTableNameFromQuery(string query)
+		{
+			string[] words = query.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+			int fromIndex = Array.FindIndex(words, word => word.Equals("from", StringComparison.OrdinalIgnoreCase));
+
+			if (fromIndex != -1 && fromIndex < words.Length - 1)
+			{
+				return words[fromIndex + 1];
+			}
+
+			return string.Empty;
 		}
 	}
 }
