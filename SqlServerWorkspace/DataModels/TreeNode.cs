@@ -2,7 +2,7 @@
 
 namespace SqlServerWorkspace.DataModels
 {
-	public class TreeNode(string name, TreeNodeType type, string path, string? svgData = null, string? svgColor = null)
+	public class TreeNode(string name, TreeNodeType type, string path, string? svgData = null, string? svgColor = null, bool isExpanded = false)
 	{
 		public string Name { get; set; } = name;
 		public TreeNodeType Type { get; set; } = type;
@@ -10,7 +10,7 @@ namespace SqlServerWorkspace.DataModels
 		public string Path { get; set; } = path;
 		public string SvgData { get; set; } = svgData ?? string.Empty;
 		public string SvgColor { get; set; } = svgColor ?? string.Empty;
-		public bool IsExpanded { get; set; }
+		public bool IsExpanded { get; set; } = isExpanded;
 
 		public string GetParentName()
 		{
@@ -39,7 +39,7 @@ namespace SqlServerWorkspace.DataModels
 
 			TreeNode CloneNode(TreeNode node)
 			{
-				return new TreeNode(node.Name, node.Type, node.Path, node.SvgData, node.SvgColor);
+				return new TreeNode(node.Name, node.Type, node.Path, node.SvgData, node.SvgColor, node.IsExpanded);
 			}
 
 			void SearchInternal(TreeNode sourceNode, TreeNode targetNode)
@@ -54,7 +54,7 @@ namespace SqlServerWorkspace.DataModels
 					}
 					else
 					{
-						var matchedChild = new TreeNode(child.Name, child.Type, child.Path, child.SvgData, child.SvgColor);
+						var matchedChild = new TreeNode(child.Name, child.Type, child.Path, child.SvgData, child.SvgColor, child.IsExpanded);
 						SearchInternal(child, matchedChild);
 						if (matchedChild.Children.Count > 0)
 						{
