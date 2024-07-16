@@ -2,10 +2,8 @@
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
 
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Input;
 
 namespace SqlServerWorkspace
@@ -16,8 +14,6 @@ namespace SqlServerWorkspace
 	public partial class MainWindow : Window
 	{
 		public static readonly DependencyProperty StatusTextProperty = DependencyProperty.Register("StatusText", typeof(string), typeof(MainWindow), new PropertyMetadata(""));
-		private TreeViewItem currentSelectedItem = default!;
-		private TreeNode currentSelectedNode = default!;
 
 		public string StatusText
 		{
@@ -33,6 +29,7 @@ namespace SqlServerWorkspace
 			Refresh();
 
 			DataContext = this;
+			DatabaseTreeView.ExpandAll(DatabaseTreeView);
 		}
 
 		public void Refresh()
@@ -40,152 +37,7 @@ namespace SqlServerWorkspace
 			DatabaseTreeView.ItemsSource = ResourceManager.Connections.Select(x => x.Nodes);
 		}
 
-		private void DatabaseTreeViewItem_Loaded(object sender, RoutedEventArgs e)
-		{
-			DatabaseTreeView.ExpandAll(DatabaseTreeView);
-		}
-
-		private void DatabaseTreeViewItem_Selected(object sender, RoutedEventArgs e)
-		{
-			if (e.OriginalSource is not TreeViewItem selectedItem)
-			{
-				return;
-			}
-
-			currentSelectedItem = selectedItem;
-
-			/* Prevent event bubbling */
-			e.Handled = true;
-			var parent = VisualTreeHelper.GetParent(selectedItem);
-			while (parent != null && parent is TreeViewItem item)
-			{
-				var parentItem = item;
-				parentItem.IsSelected = false;
-				parent = VisualTreeHelper.GetParent(parent);
-			}
-
-			switch (selectedItem.DataContext)
-			{
-				case TreeNode selectedNode:
-					switch (selectedNode.Type)
-					{
-						case TreeNodeType.DatabaseNode:
-						case TreeNodeType.TableTitleNode:
-						case TreeNodeType.ViewTitleNode:
-						case TreeNodeType.FunctionTitleNode:
-						case TreeNodeType.ProcedureTitleNode:
-							selectedItem.IsExpanded = !selectedItem.IsExpanded;
-							break;
-
-						default:
-							break;
-					}
-
-					selectedItem.IsSelected = false;
-					break;
-
-				case IEnumerable<TreeNode> selectedNode:
-					switch (selectedNode.First().Type)
-					{
-						case TreeNodeType.ServerNode:
-							selectedItem.IsExpanded = !selectedItem.IsExpanded;
-							break;
-
-						default:
-							break;
-					}
-
-					selectedItem.IsSelected = false;
-					break;
-
-				default:
-					break;
-			}
-		}
-
-		private async void DatabaseTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
-		{
-			if (e.NewValue is not TreeNode selectedNode)
-			{
-				return;
-			}
-
-			currentSelectedNode = selectedNode;
-
-			var manager = DatabaseTreeView.GetSqlManager(selectedNode);
-			if (manager == null)
-			{
-				return;
-			}
-
-			switch (selectedNode.Type)
-			{
-				case TreeNodeType.TableNode:
-				case TreeNodeType.ViewNode:
-				case TreeNodeType.FunctionNode:
-				case TreeNodeType.ProcedureNode:
-					await EntryPane.CreateNewOrOpenTab(manager, selectedNode);
-					break;
-
-				case TreeNodeType.DatabaseNode:
-					if (selectedNode.Children.Count == 0)
-					{
-						TreeViewManager.MakeDatabaseTree(selectedNode);
-						Refresh();
-					}
-					break;
-
-				case TreeNodeType.TableTitleNode:
-					if (selectedNode.Children.Count == 0)
-					{
-						TreeViewManager.MakeTableTree(manager, selectedNode);
-						Refresh();
-					}
-					break;
-
-				case TreeNodeType.ViewTitleNode:
-					if (selectedNode.Children.Count == 0)
-					{
-						TreeViewManager.MakeViewTree(manager, selectedNode);
-						Refresh();
-					}
-					break;
-
-				case TreeNodeType.FunctionTitleNode:
-					if (selectedNode.Children.Count == 0)
-					{
-						TreeViewManager.MakeFunctionTree(manager, selectedNode);
-						Refresh();
-					}
-					break;
-
-				case TreeNodeType.ProcedureTitleNode:
-					if (selectedNode.Children.Count == 0)
-					{
-						TreeViewManager.MakeProcedureTree(manager, selectedNode);
-						Refresh();
-					}
-					break;
-
-				default:
-					break;
-			}
-		}
-
-		private void Connect_Click(object sender, RoutedEventArgs e)
-		{
-			var view = new ConnectionView();
-			if (view.ShowDialog() ?? false)
-			{
-				Refresh();
-			}
-		}
-
-		private void Exit_Click(object sender, RoutedEventArgs e)
-		{
-			Environment.Exit(0);
-		}
-
+		#region DATABASE TREEVIEW
 		private void DatabaseTreeViewFilterTextBox_TextChanged(object sender, TextChangedEventArgs e)
 		{
 			var keyword = DatabaseTreeViewFilterTextBox.Text;
@@ -210,5 +62,105 @@ namespace SqlServerWorkspace
 
 			DatabaseTreeView.ItemsSource = filteredItems;
 		}
+
+		private async void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+		{
+			if (sender is Border border && border.TemplatedParent is TreeViewItem item)
+			{
+				switch (item.DataContext)
+				{
+					case IEnumerable<TreeNode> nodes: // Server Node
+						break;
+
+					case TreeNode node:
+						var manager = DatabaseTreeView.GetSqlManager(node);
+						if (manager == null)
+						{
+							return;
+						}
+
+						switch (node.Type)
+						{
+							case TreeNodeType.TableNode:
+							case TreeNodeType.ViewNode:
+							case TreeNodeType.FunctionNode:
+							case TreeNodeType.ProcedureNode:
+								await EntryPane.CreateNewOrOpenTab(manager, node);
+								break;
+
+							case TreeNodeType.DatabaseNode:
+								if (node.Children.Count == 0)
+								{
+									TreeViewManager.MakeDatabaseTree(node);
+									Refresh();
+								}
+								break;
+
+							case TreeNodeType.TableTitleNode:
+								if (node.Children.Count == 0)
+								{
+									TreeViewManager.MakeTableTree(manager, node);
+									Refresh();
+								}
+								break;
+
+							case TreeNodeType.ViewTitleNode:
+								if (node.Children.Count == 0)
+								{
+									TreeViewManager.MakeViewTree(manager, node);
+									Refresh();
+								}
+								break;
+
+							case TreeNodeType.FunctionTitleNode:
+								if (node.Children.Count == 0)
+								{
+									TreeViewManager.MakeFunctionTree(manager, node);
+									Refresh();
+								}
+								break;
+
+							case TreeNodeType.ProcedureTitleNode:
+								if (node.Children.Count == 0)
+								{
+									TreeViewManager.MakeProcedureTree(manager, node);
+									Refresh();
+								}
+								break;
+
+							default:
+								break;
+						}
+						break;
+
+					default:
+						break;
+				}
+
+				if (item.HasItems)
+				{
+					item.IsExpanded = !item.IsExpanded;
+				}
+
+				e.Handled = true;
+			}
+		}
+		#endregion
+
+		#region MENU
+		private void Connect_Click(object sender, RoutedEventArgs e)
+		{
+			var view = new ConnectionView();
+			if (view.ShowDialog() ?? false)
+			{
+				Refresh();
+			}
+		}
+
+		private void Exit_Click(object sender, RoutedEventArgs e)
+		{
+			Environment.Exit(0);
+		}
+		#endregion
 	}
 }

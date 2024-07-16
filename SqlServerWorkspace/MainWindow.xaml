@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:SqlServerWorkspace"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         xmlns:dock="https://github.com/Dirkster99/AvalonDock"
+        xmlns:DataModel="clr-namespace:SqlServerWorkspace.DataModels"
         mc:Ignorable="d"
         Title="SQL Server Workspace" Height="800" Width="1200"
         Icon="/Resources/Icons/ssw.png">
@@ -14,6 +15,70 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/AvalonDock.Themes.VS2013;component/DarkBrushs.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- DataTemplate for TreeNode -->
+            <HierarchicalDataTemplate DataType="{x:Type DataModel:TreeNode}" ItemsSource="{Binding Children}">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{Binding SvgData}" Width="16" Height="16" StrokeThickness="1" Stretch="Uniform" Margin="0,0,3,0"
+                      Stroke="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}"
+                      Fill="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}"/>
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
+                </StackPanel>
+            </HierarchicalDataTemplate>
+
+            <!-- Style for TreeViewItem -->
+            <Style x:Key="DatabaseTreeViewItem" TargetType="{x:Type TreeViewItem}">
+                <Setter Property="Tag" Value="{Binding Path}"/>
+                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type TreeViewItem}">
+                            <StackPanel>
+                                <Border Name="Bd"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}"
+                                    MouseLeftButtonDown="Border_MouseLeftButtonDown">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <ToggleButton Name="Expander" 
+                                                  Grid.Column="0"
+                                                  Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey}}"
+                                                  IsChecked="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                            <ToggleButton.Template>
+                                                <ControlTemplate TargetType="ToggleButton">
+                                                    <ContentPresenter />
+                                                </ControlTemplate>
+                                            </ToggleButton.Template>
+                                            <ToggleButton.Content>
+                                                <Path Name="ExpandCollapseImage" Width="16" Height="16" Data="" Stroke="{StaticResource DarkForeground}" StrokeThickness="1"/>
+                                            </ToggleButton.Content>
+                                        </ToggleButton>
+                                        <ContentPresenter Grid.Column="1" ContentSource="Header" />
+                                    </Grid>
+                                </Border>
+                                <ItemsPresenter Visibility="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource btv}}"
+                                            Margin="20,0,0,0" />
+                            </StackPanel>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsExpanded" Value="true">
+                                    <Setter TargetName="ExpandCollapseImage" Property="Data" Value="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z" />
+                                </Trigger>
+                                <Trigger Property="IsExpanded" Value="false">
+                                    <Setter TargetName="ExpandCollapseImage" Property="Data" Value="M10.072 8.024L5.715 3.667l.618-.62L11 7.716v.618L6.333 13l-.618-.619 4.357-4.357z" />
+                                </Trigger>
+                                <Trigger Property="HasItems" Value="false">
+                                    <Setter TargetName="Expander" Property="Visibility" Value="Hidden" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
     <Grid>
@@ -58,42 +123,15 @@
 
                                     <TextBox x:Name="DatabaseTreeViewFilterTextBox" TextChanged="DatabaseTreeViewFilterTextBox_TextChanged"/>
 
-                                    <TreeView x:Name="DatabaseTreeView" Grid.Row="1" SelectedItemChanged="DatabaseTreeView_SelectedItemChanged" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard" Foreground="{StaticResource DarkForeground}" Background="{StaticResource DarkBackground}">
-                                        
+                                    <TreeView x:Name="DatabaseTreeView" Grid.Row="1" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard" Foreground="{StaticResource DarkForeground}" Background="{StaticResource DarkBackground}" ItemContainerStyle="{StaticResource DatabaseTreeViewItem}">
                                         <TreeView.ItemTemplate>
-                                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                            <HierarchicalDataTemplate DataType="{x:Type DataModel:TreeNode}" ItemsSource="{Binding Children}">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Path Data="{Binding SvgData}" Width="16" Height="16" StrokeThickness="1" Stretch="Uniform" Margin="0,0,3,0"
-                                                          Stroke="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}"
-                                                          Fill="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}"/>
+                                                    <Path Data="{Binding SvgData}" Width="16" Height="16" StrokeThickness="1" Stretch="Uniform" Margin="0,0,3,0" Stroke="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}" Fill="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}"/>
                                                     <TextBlock Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
                                                 </StackPanel>
                                             </HierarchicalDataTemplate>
                                         </TreeView.ItemTemplate>
-
-                                        <TreeView.ItemContainerStyle>
-                                            <Style TargetType="TreeViewItem">
-                                                <Setter Property="Tag" Value="{Binding Path}"/>
-                                                <EventSetter Event="Loaded" Handler="DatabaseTreeViewItem_Loaded"/>
-                                                <EventSetter Event="Selected" Handler="DatabaseTreeViewItem_Selected"/>
-                                                <!--<Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TreeViewItem">
-                        <Border x:Name="_border" Background="Transparent">
-                            <Grid>
-                                <ContentPresenter x:Name="PART_Header" ContentSource="Header" Margin="2"/>
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="_border" Property="Background" Value="#414141"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>-->
-                                            </Style>
-                                        </TreeView.ItemContainerStyle>
                                     </TreeView>
                                 </Grid>
                             </dock:LayoutAnchorable>

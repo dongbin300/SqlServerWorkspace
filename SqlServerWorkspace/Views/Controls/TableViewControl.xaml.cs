@@ -8,7 +8,6 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 
 namespace SqlServerWorkspace.Views.Controls
@@ -22,6 +21,8 @@ namespace SqlServerWorkspace.Views.Controls
 		public string Header { get; set; } = string.Empty;
 		public DataTable SelectTable = default!;
 		public string SelectTableName = string.Empty;
+
+		private static readonly char[] separator = [' ', '\t', '\n', '\r'];
 
 		public TableViewControl()
 		{
@@ -214,17 +215,28 @@ namespace SqlServerWorkspace.Views.Controls
 			var tableInfo = Manager.GetTablePrimaryKeyNames(SelectTableName);
 		}
 
-		private void MergeButton_Click(object sender, RoutedEventArgs e)
+		private async void MergeButton_Click(object sender, RoutedEventArgs e)
 		{
 			var table = Manager.GetTableInfo(SelectTableName);
 			var primaryKeyNames = Manager.GetTablePrimaryKeyNames(SelectTableName);
 			var columnNames = table.Columns.Select(x => x.Name);
 			var nonKeyColumnNames = columnNames.Except(primaryKeyNames);
-			var columnNameSequence = string.Join(',', columnNames);
-			var columnNameAlphaSequence = string.Join(',', columnNames.Select(x => $"@{x}"));
-			StringBuilder builder = new StringBuilder();
+			var columnNameSequence = string.Join(", ", columnNames);
+			var columnNameAlphaSequence = string.Join(", ", columnNames.Select(x => $"@{x}"));
+			var targetPrimaryKeyNames = string.Join(" and ", primaryKeyNames.Select(x => $"target.{x} = @{x}"));
+			var updateSetNonKeyColumnNames = string.Join(", ", nonKeyColumnNames.Select(x => $"{x} = @{x}"));
+			var builder = new StringBuilder();
 			builder.AppendLine($"MERGE {SelectTableName} AS target");
 			builder.AppendLine($"USING ( VALUES ( {columnNameAlphaSequence} ) ) AS source ( {columnNameSequence} )");
+			builder.AppendLine($"ON ( {targetPrimaryKeyNames} )");
+			builder.AppendLine($"WHEN MATCHED THEN");
+			builder.AppendLine($"UPDATE SET");
+			builder.AppendLine($"{updateSetNonKeyColumnNames}");
+			builder.AppendLine($"WHEN NOT MATCHED THEN");
+			builder.AppendLine($"INSERT ( {columnNameSequence} )");
+			builder.AppendLine($"VALUES ( {columnNameAlphaSequence} );");
+
+			await WebView.AppendEditorText($"{Environment.NewLine}{builder}");
 		}
 
 		private async void WebView_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
@@ -249,7 +261,7 @@ namespace SqlServerWorkspace.Views.Controls
 
 		string GetTableNameFromQuery(string query)
 		{
-			string[] words = query.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+			string[] words = query.Split(separator, StringSplitOptions.RemoveEmptyEntries);
 			int fromIndex = Array.FindIndex(words, word => word.Equals("from", StringComparison.OrdinalIgnoreCase));
 
 			if (fromIndex != -1 && fromIndex < words.Length - 1)

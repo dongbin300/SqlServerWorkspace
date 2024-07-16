@@ -87,6 +87,8 @@ namespace SqlServerWorkspace
 			databaseNode.Children.Add(viewNode);
 			databaseNode.Children.Add(functionNode);
 			databaseNode.Children.Add(procedureNode);
+
+			databaseNode.IsExpanded = true;
 		}
 
 		public static void MakeTableTree(SqlManager manager, TreeNode tableTitleNode)
@@ -98,6 +100,8 @@ namespace SqlServerWorkspace
 				var node = new TreeNode(tableName, TreeNodeType.TableNode, tableTitleNode.Path.CombinePath(tableName), ResourceManager.TableIcon, ResourceManager.TableIconColor);
 				tableTitleNode.Children.Add(node);
 			}
+
+			tableTitleNode.IsExpanded = true;
 		}
 
 		public static void MakeViewTree(SqlManager manager, TreeNode viewTitleNode)
@@ -109,6 +113,8 @@ namespace SqlServerWorkspace
 				var node = new TreeNode(viewName, TreeNodeType.ViewNode, viewTitleNode.Path.CombinePath(viewName), ResourceManager.ViewIcon, ResourceManager.ViewIconColor);
 				viewTitleNode.Children.Add(node);
 			}
+
+			viewTitleNode.IsExpanded = true;
 		}
 
 		public static void MakeFunctionTree(SqlManager manager, TreeNode functionTitleNode)
@@ -120,6 +126,8 @@ namespace SqlServerWorkspace
 				var node = new TreeNode(functionName, TreeNodeType.FunctionNode, functionTitleNode.Path.CombinePath(functionName), ResourceManager.FunctionIcon, ResourceManager.FunctionIconColor);
 				functionTitleNode.Children.Add(node);
 			}
+
+			functionTitleNode.IsExpanded = true;
 		}
 
 		public static void MakeProcedureTree(SqlManager manager, TreeNode procedureTitleNode)
@@ -131,6 +139,8 @@ namespace SqlServerWorkspace
 				var node = new TreeNode(procedureName, TreeNodeType.ProcedureNode, procedureTitleNode.Path.CombinePath(procedureName), ResourceManager.ProcedureIcon, ResourceManager.ProcedureIconColor);
 				procedureTitleNode.Children.Add(node);
 			}
+
+			procedureTitleNode.IsExpanded = true;
 		}
 	}
 }

@@ -62,6 +62,13 @@
             window.getEditorText = function() {
                 return editor.getValue();
             };
+
+            window.appendEditorText = function (text) {
+                text = text.replace(/\\n/g, '\n');
+                var currentText = editor.getValue();
+                var newText = currentText + text;
+                editor.setValue(newText);
+            };
         });
     </script>
 </body>

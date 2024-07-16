@@ -1,8 +1,5 @@
 ﻿using SqlServerWorkspace.Enums;
 
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-
 namespace SqlServerWorkspace.DataModels
 {
 	public class TreeNode(string name, TreeNodeType type, string path, string? svgData = null, string? svgColor = null)
@@ -13,6 +10,7 @@ namespace SqlServerWorkspace.DataModels
 		public string Path { get; set; } = path;
 		public string SvgData { get; set; } = svgData ?? string.Empty;
 		public string SvgColor { get; set; } = svgColor ?? string.Empty;
+		public bool IsExpanded { get; set; }
 
 		public string GetParentName()
 		{

@@ -146,13 +146,6 @@ namespace SqlServerWorkspace
 			await webView.SetEditorText(text);
 		}
 
-		public static async Task SetEditorText(this WebView2 webView, string text)
-		{
-			text = text.Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");
-			var script = $"setEditorText('{text}');";
-			await webView.CoreWebView2.ExecuteScriptAsync(script);
-		}
-
 		[GeneratedRegex(@"\bcreate\s+procedure\b", RegexOptions.IgnoreCase)]
 		private static partial Regex CreateProcedureRegex();
 		[GeneratedRegex(@"\bcreate\s+function\b", RegexOptions.IgnoreCase)]

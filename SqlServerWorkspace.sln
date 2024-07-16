@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34723.18
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlServerWorkspace", "SqlServerWorkspace\SqlServerWorkspace.csproj", "{430E58FF-A5E6-449D-AE7A-0BB69D628968}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlServerWorkspace", "SqlServerWorkspace\SqlServerWorkspace.csproj", "{430E58FF-A5E6-449D-AE7A-0BB69D628968}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TreeViewTest", "TreeViewTest\TreeViewTest.csproj", "{82D13E0F-DE1B-4E48-9B68-9275F8D1FDD5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{430E58FF-A5E6-449D-AE7A-0BB69D628968}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{430E58FF-A5E6-449D-AE7A-0BB69D628968}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{430E58FF-A5E6-449D-AE7A-0BB69D628968}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82D13E0F-DE1B-4E48-9B68-9275F8D1FDD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82D13E0F-DE1B-4E48-9B68-9275F8D1FDD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82D13E0F-DE1B-4E48-9B68-9275F8D1FDD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82D13E0F-DE1B-4E48-9B68-9275F8D1FDD5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
