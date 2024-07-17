@@ -342,12 +342,8 @@
         </Style>
         <!--#endregion-->
         
-        <!--#region TreeView-->
-       
-        <!--#endregion-->
-
         <!--#region ScrollViewer -->
-        <!--<Style TargetType="{x:Type ScrollViewer}">
+        <Style TargetType="{x:Type ScrollViewer}">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ScrollViewer}">
@@ -362,6 +358,7 @@
                             </Grid.RowDefinitions>
                             <ScrollContentPresenter Grid.ColumnSpan="2" Grid.RowSpan="2" />
                             <ScrollBar Grid.Column="1" x:Name="PART_VerticalScrollBar" Value="{TemplateBinding VerticalOffset}" Maximum="{TemplateBinding ScrollableHeight}" ViewportSize="{TemplateBinding ViewportHeight}" Background="Transparent" />
+                            <ScrollBar Grid.Row="1" Orientation="Horizontal" x:Name="PART_HorizontalScrollBar" Value="{TemplateBinding HorizontalOffset}" Maximum="{TemplateBinding ScrollableWidth}" ViewportSize="{TemplateBinding ViewportWidth}" Background="Transparent" />
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -386,6 +383,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
         <Style TargetType="{x:Type ScrollBar}">
             <Setter Property="Stylus.IsFlicksEnabled" Value="false" />
             <Setter Property="Foreground" Value="#ADABAB" />
@@ -417,7 +415,6 @@
                             <Trigger SourceName="Thumb" Property="IsDragging" Value="true">
                                 <Setter Value="{DynamicResource DarkBrush}" TargetName="Thumb" Property="Background" />
                             </Trigger>
-
                             <Trigger Property="IsEnabled" Value="false">
                                 <Setter TargetName="Thumb" Property="Visibility" Value="Collapsed" />
                             </Trigger>
@@ -442,7 +439,7 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>-->
+        </Style>
         <!--#endregion-->
         
         <!--<Style TargetType="{x:Type TabControl}" x:Key="LightTabControl">

@@ -81,11 +81,12 @@
             </Style>
         </ResourceDictionary>
     </Window.Resources>
+    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="26"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="40"/>
+            <!--<RowDefinition Height="40"/>-->
         </Grid.RowDefinitions>
 
         <!-- MENU -->
@@ -105,15 +106,8 @@
                 </dock:DockingManager.Theme>
                 <dock:LayoutRoot>
                     <dock:LayoutPanel Orientation="Horizontal">
-
-                        <!--<dock:LayoutAnchorablePane>
-                            <dock:LayoutAnchorable>
-                                
-                            </dock:LayoutAnchorable>
-                        </dock:LayoutAnchorablePane>-->
-                        
                         <!-- 1. LEFT-SIDE DATABASE HIERARCHY TREE VIEW -->
-                        <dock:LayoutAnchorablePane Name="DatabasePane" DockWidth="300" ScrollViewer.HorizontalScrollBarVisibility="Visible">
+                        <dock:LayoutAnchorablePane Name="DatabasePane" DockWidth="300">
                             <dock:LayoutAnchorable>
                                 <Grid>
                                     <Grid.RowDefinitions>
@@ -123,7 +117,11 @@
 
                                     <TextBox x:Name="DatabaseTreeViewFilterTextBox" TextChanged="DatabaseTreeViewFilterTextBox_TextChanged"/>
 
-                                    <TreeView x:Name="DatabaseTreeView" Grid.Row="1" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard" Foreground="{StaticResource DarkForeground}" Background="{StaticResource DarkBackground}" ItemContainerStyle="{StaticResource DatabaseTreeViewItem}">
+                                    <TreeView x:Name="DatabaseTreeView" Grid.Row="1" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard"
+                                              Foreground="{StaticResource DarkForeground}" Background="{StaticResource DarkBackground}"
+                                              ItemContainerStyle="{StaticResource DatabaseTreeViewItem}"
+                                              ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                              MouseRightButtonDown="DatabaseTreeView_MouseRightButtonDown">
                                         <TreeView.ItemTemplate>
                                             <HierarchicalDataTemplate DataType="{x:Type DataModel:TreeNode}" ItemsSource="{Binding Children}">
                                                 <StackPanel Orientation="Horizontal">
@@ -137,20 +135,28 @@
                             </dock:LayoutAnchorable>
                         </dock:LayoutAnchorablePane>
 
-                        <!-- 2. CONTENTS TAB GROUP -->
-                        <dock:LayoutDocumentPaneGroup>
-                            <dock:LayoutDocumentPane x:Name="EntryPane">
-                                <!-- ADD TAB HERE -->
-                            </dock:LayoutDocumentPane>
-                        </dock:LayoutDocumentPaneGroup>
-                        
+                        <dock:LayoutPanel Orientation="Vertical">
+                            <!-- 2. CONTENTS TAB GROUP -->
+                            <dock:LayoutDocumentPaneGroup>
+                                <dock:LayoutDocumentPane x:Name="EntryPane">
+                                    <!-- ADD TAB HERE -->
+                                </dock:LayoutDocumentPane>
+                            </dock:LayoutDocumentPaneGroup>
+
+                            <!-- 3. STATUS PANEL -->
+                            <dock:LayoutAnchorablePane DockHeight="200" >
+                                <dock:LayoutAnchorable>
+                                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                        <Grid>
+                                            <TextBlock x:Name="StatusTextBlock" Text="{Binding StatusText}" Style="{StaticResource StatusText}"/>
+                                        </Grid>
+                                    </ScrollViewer>
+                                </dock:LayoutAnchorable>
+                            </dock:LayoutAnchorablePane>
+                        </dock:LayoutPanel>
                     </dock:LayoutPanel>
                 </dock:LayoutRoot>
             </dock:DockingManager>
-        </Grid>
-
-        <Grid Grid.Row="2">
-            <TextBlock x:Name="StatusTextBlock" Text="{Binding StatusText}" Style="{StaticResource StatusText}"/>
         </Grid>
     </Grid>
 </Window>

@@ -2,7 +2,6 @@
 
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
-
 using SqlServerWorkspace.Data;
 using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
@@ -15,7 +14,7 @@ using System.Windows.Input;
 
 namespace SqlServerWorkspace
 {
-	public static partial class TabManager
+    public static partial class TabManager
 	{
 		static readonly string _monacoHtmlPath = Path.Combine("Resources", "monaco.html");
 		static readonly string _userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SqlServerWorkspace");
@@ -33,6 +32,18 @@ namespace SqlServerWorkspace
 			{
 
 			}
+		}
+
+		public static LayoutDocument? GetCurrentTab(this LayoutDocumentPane layoutDocumentPane)
+		{
+			ArgumentNullException.ThrowIfNull(layoutDocumentPane);
+
+			if (layoutDocumentPane.SelectedContent is LayoutDocument selectedDocument)
+			{
+				return selectedDocument;
+			}
+
+			return null;
 		}
 
 		public static async Task CreateNewOrOpenTab(this LayoutDocumentPane layoutDocumentPane, SqlManager manager, TreeNode treeNode)
@@ -71,6 +82,7 @@ namespace SqlServerWorkspace
 				case TreeNodeType.ViewNode:
 				case TreeNodeType.FunctionNode:
 				case TreeNodeType.ProcedureNode:
+					//var grid = new DockPanel() { LastChildFill = true };
 					var webView = new WebView2
 					{
 						HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -80,14 +92,16 @@ namespace SqlServerWorkspace
 					{
 						switch (e.Key)
 						{
-							case Key.F5:
+							case Key.F5: // Run Script
 								var editorText = await webView.GetEditorText();
 								editorText = editorText.Replace("\n", "\r\n");
 								var result = manager.Execute(editorText);
 								if (!string.IsNullOrEmpty(result))
 								{
-									MessageBox.Show(result);
+									Common.AppendLogDetail(result);
+									break;
 								}
+								Common.AppendLogDetail("Run Complete");
 								break;
 
 							default:
@@ -95,6 +109,7 @@ namespace SqlServerWorkspace
 						}
 					};
 
+					//grid.Children.Add(webView);
 					newLayoutContent.Content = webView;
 					newLayoutContent.IsSelected = true;
 
@@ -108,6 +123,7 @@ namespace SqlServerWorkspace
 							text = CreateProcedureRegex().Replace(text, "ALTER PROCEDURE");
 							text = CreateFunctionRegex().Replace(text, "ALTER FUNCTION");
 							await layoutDocumentPane.SetEditorText(header, text);
+							Common.AppendLogDetail(header);
 						}
 					};
 					break;

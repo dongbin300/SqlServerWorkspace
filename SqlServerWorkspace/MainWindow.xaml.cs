@@ -1,10 +1,15 @@
-﻿using SqlServerWorkspace.DataModels;
+﻿using Microsoft.Web.WebView2.Wpf;
+
+using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
 
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
+using System.Drawing;
+using System.Windows.Media;
 
 namespace SqlServerWorkspace
 {
@@ -14,6 +19,7 @@ namespace SqlServerWorkspace
 	public partial class MainWindow : Window
 	{
 		public static readonly DependencyProperty StatusTextProperty = DependencyProperty.Register("StatusText", typeof(string), typeof(MainWindow), new PropertyMetadata(""));
+		private DispatcherTimer SaveSettingsTimer = new ();
 
 		public string StatusText
 		{
@@ -26,15 +32,31 @@ namespace SqlServerWorkspace
 			InitializeComponent();
 
 			ResourceManager.Init();
+			var windowPosition = ResourceManager.Settings.WindowPosition;
+			Top = windowPosition.X == 0 ? Top : windowPosition.X;
+			Left = windowPosition.Y == 0 ? Left : windowPosition.Y;
+			Width = windowPosition.Width == 0 ? Width : windowPosition.Width;
+			Height = windowPosition.Height == 0 ? Height : windowPosition.Height;
+
 			Refresh();
 
 			DataContext = this;
 			DatabaseTreeView.ExpandAll(DatabaseTreeView);
+
+			SaveSettingsTimer.Interval = TimeSpan.FromSeconds(3);
+			SaveSettingsTimer.Tick += SaveSettingsTimer_Tick;
+			SaveSettingsTimer.Start();
 		}
 
 		public void Refresh()
 		{
 			DatabaseTreeView.ItemsSource = ResourceManager.Connections.Select(x => x.Nodes);
+		}
+
+		private void SaveSettingsTimer_Tick(object? sender, EventArgs e)
+		{
+			ResourceManager.Settings.WindowPosition = new Rectangle((int)Top, (int)Left, (int)Width, (int)Height);
+			ResourceManager.SaveSettings();
 		}
 
 		#region DATABASE TREEVIEW
@@ -160,6 +182,114 @@ namespace SqlServerWorkspace
 		private void Exit_Click(object sender, RoutedEventArgs e)
 		{
 			Environment.Exit(0);
+		}
+		#endregion
+
+		#region TREEVIEWITEM EVENT
+		private void DatabaseTreeView_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+		{
+			var dependencyObject = e.OriginalSource as DependencyObject;
+			while (dependencyObject != null && dependencyObject is not TreeViewItem)
+			{
+				dependencyObject = VisualTreeHelper.GetParent(dependencyObject);
+			}
+
+			if (dependencyObject is not TreeViewItem treeViewItem)
+			{
+				return;
+			}
+
+			treeViewItem.IsSelected = true;
+			switch (treeViewItem.DataContext)
+			{
+				case IEnumerable<TreeNode> nodes: // Server Node
+					{
+						// 추후에 추가
+						//var contextMenu = new ContextMenu();
+
+						//var menu1 = new MenuItem { Header = "Refresh" };
+						//menu1.Click += MenuItem_Click;
+						//contextMenu.Items.Add(menu1);
+
+						//contextMenu.PlacementTarget = treeViewItem;
+						//contextMenu.IsOpen = true;
+
+						//contextMenu.Tag = treeViewItem;
+					}
+					break;
+
+				case TreeNode node:
+					{
+						TreeViewContextMenu.MakeContextMenu(treeViewItem, node);
+					}
+					break;
+
+				default:
+					break;
+			}
+		}
+
+		public void TreeViewMenuItem_Click(object sender, RoutedEventArgs e)
+		{
+			if (sender is not MenuItem menuItem)
+			{
+				return;
+			}
+
+			if (menuItem.Parent is not ContextMenu contextMenu)
+			{
+				return;
+			}
+
+			if (menuItem.Tag is not ContextMenuFunction function)
+			{
+				return;
+			}
+
+			if (contextMenu.Tag is not TreeNode node)
+			{
+				return;
+			}
+
+			var manager = DatabaseTreeView.GetSqlManager(node);
+			if (manager == null)
+			{
+				return;
+			}
+
+			switch (node.Type)
+			{
+				case TreeNodeType.DatabaseNode:
+					TreeViewContextMenu.ProcessDatabaseNodeMenu(function, node);
+					break;
+				case TreeNodeType.TableTitleNode:
+					TreeViewContextMenu.ProcessTableTitleNodeMenu(function, node, manager);
+					break;
+				case TreeNodeType.ViewTitleNode:
+					TreeViewContextMenu.ProcessViewTitleNodeMenu(function, node, manager);
+					break;
+				case TreeNodeType.FunctionTitleNode:
+					TreeViewContextMenu.ProcessFunctionTitleNodeMenu(function, node, manager);
+					break;
+				case TreeNodeType.ProcedureTitleNode:
+					TreeViewContextMenu.ProcessProcedureTitleNodeMenu(function, node, manager);
+					break;
+				case TreeNodeType.TableNode:
+					TreeViewContextMenu.ProcessTableNodeMenu(function, node, manager);
+					break;
+				case TreeNodeType.ViewNode:
+					TreeViewContextMenu.ProcessViewNodeMenu(function, node, manager);
+					break;
+				case TreeNodeType.FunctionNode:
+					TreeViewContextMenu.ProcessFunctionNodeMenu(function, node, manager);
+					break;
+				case TreeNodeType.ProcedureNode:
+					TreeViewContextMenu.ProcessProcedureNodeMenu(function, node, manager);
+					break;
+
+				default:
+					break;
+			}
 		}
 		#endregion
 	}

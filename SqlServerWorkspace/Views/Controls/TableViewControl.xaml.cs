@@ -1,5 +1,4 @@
 ﻿using Microsoft.Web.WebView2.Core;
-
 using SqlServerWorkspace.Data;
 using SqlServerWorkspace.Extensions;
 
@@ -12,10 +11,10 @@ using System.Windows.Input;
 
 namespace SqlServerWorkspace.Views.Controls
 {
-	/// <summary>
-	/// TableViewControl.xaml에 대한 상호 작용 논리
-	/// </summary>
-	public partial class TableViewControl : UserControl
+    /// <summary>
+    /// TableViewControl.xaml에 대한 상호 작용 논리
+    /// </summary>
+    public partial class TableViewControl : UserControl
 	{
 		public SqlManager Manager { get; set; } = default!;
 		public string Header { get; set; } = string.Empty;
@@ -82,11 +81,11 @@ namespace SqlServerWorkspace.Views.Controls
 				//};
 				//dataGrid.Columns.Insert(0, rowNumberColumn);
 
-				Common.SetStatusText("Complete");
+				Common.AppendLogDetail($"{query}");
 			}
 			catch (Exception ex)
 			{
-				Common.SetStatusText(ex.Message);
+				Common.AppendLogDetail(ex.Message);
 			}
 		}
 
@@ -197,11 +196,11 @@ namespace SqlServerWorkspace.Views.Controls
 
 				var result = Manager.TransactionForTable(SelectTableName, addedRows, deletedRows, modifiedRows);
 
-				Common.SetStatusText(result);
+				Common.AppendLogDetail(result);
 			}
 			catch (Exception ex)
 			{
-				Common.SetStatusText(ex.Message);
+				Common.AppendLogDetail(ex.Message);
 			}
 		}
 
@@ -237,6 +236,8 @@ namespace SqlServerWorkspace.Views.Controls
 			builder.AppendLine($"VALUES ( {columnNameAlphaSequence} );");
 
 			await WebView.AppendEditorText($"{Environment.NewLine}{builder}");
+
+			Common.AppendLogDetail($"{SelectTableName} MERGE");
 		}
 
 		private async void WebView_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)

@@ -11,7 +11,7 @@
             <RowDefinition Height="36"/>
             <RowDefinition Height="*" MinHeight="80"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="8*"/>
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal">
