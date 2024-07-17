@@ -218,6 +218,11 @@ namespace SqlServerWorkspace.Data
 			}
 		}
 
+		public string Rename(string source, string destination)
+		{
+			return Execute($"EXEC sp_rename '{source}', '{destination}'");
+		}
+
 		public IEnumerable<string> SelectDatabaseNames()
 		{
 			return Select("name", "sys.databases", "", "name").Field("name");

@@ -4,20 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Connect" Height="240" Width="400">
-    <Window.Resources>
-        <Style TargetType="TextBlock">
-            <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style TargetType="TextBox">
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-        </Style>
-        <Style TargetType="ComboBox">
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-        </Style>
-    </Window.Resources>
-    <Grid>
+        Title="Connect" Height="240" Width="400" WindowStartupLocation="CenterOwner">
+    <Grid Background="{StaticResource DarkBackground}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="120"/>
             <ColumnDefinition Width="*"/>
@@ -32,11 +20,11 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Rectangle Grid.Row="0" Fill="{StaticResource SswColor}" Opacity="0.5"/>
-        <Rectangle Grid.Row="1" Fill="{StaticResource SswColor}" Opacity="0.5"/>
-        <Rectangle Grid.Row="2" Fill="{StaticResource SswColor}" Opacity="0.5"/>
-        <Rectangle Grid.Row="3" Fill="{StaticResource SswColor}" Opacity="0.5"/>
-        <Rectangle Grid.Row="4" Fill="{StaticResource SswColor}" Opacity="0.5"/>
+        <Rectangle Grid.Row="0" Fill="{StaticResource SswColor}"/>
+        <Rectangle Grid.Row="1" Fill="{StaticResource SswColor}"/>
+        <Rectangle Grid.Row="2" Fill="{StaticResource SswColor}"/>
+        <Rectangle Grid.Row="3" Fill="{StaticResource SswColor}"/>
+        <Rectangle Grid.Row="4" Fill="{StaticResource SswColor}"/>
         <TextBlock Grid.Row="0">Server</TextBlock>
         <TextBlock Grid.Row="1">Authentication</TextBlock>
         <TextBlock Grid.Row="2">Database</TextBlock>

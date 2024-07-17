@@ -1,7 +1,9 @@
 ﻿using SqlServerWorkspace.Data;
 using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
+using SqlServerWorkspace.Views;
 
+using System.Windows;
 using System.Windows.Controls;
 
 namespace SqlServerWorkspace
@@ -33,6 +35,9 @@ namespace SqlServerWorkspace
 				case TreeNodeType.ViewNode:
 				case TreeNodeType.FunctionNode:
 				case TreeNodeType.ProcedureNode:
+					{
+						contextMenu.AddMenu("Rename", ContextMenuFunction.Rename);
+					}
 					break;
 
 				default:
@@ -42,7 +47,7 @@ namespace SqlServerWorkspace
 			contextMenu.PlacementTarget = treeViewItem;
 			contextMenu.IsOpen = true;
 
-			contextMenu.Tag = node;
+			contextMenu.Tag = treeViewItem;
 		}
 
 		public static void ProcessDatabaseNodeMenu(ContextMenuFunction function, TreeNode node)
@@ -124,37 +129,157 @@ namespace SqlServerWorkspace
 			}
 		}
 
-		public static void ProcessTableNodeMenu(ContextMenuFunction function, TreeNode node, SqlManager manager)
+		public static void ProcessTableNodeMenu(ContextMenuFunction function, TreeViewItem item, TreeNode node, SqlManager manager)
 		{
 			switch (function)
 			{
+				case ContextMenuFunction.Rename:
+					{
+						var originalName = node.Name;
+						var renameView = new RenameView
+						{
+							Owner = Common.MainWindow,
+							RenameText = originalName
+						};
+						if (renameView.ShowDialog() ?? false)
+						{
+							var newName = renameView.RenameText;
+							var result = manager.Rename(originalName, newName);
+							if (!string.IsNullOrEmpty(result))
+							{
+								Common.AppendLogDetail(result);
+								return;
+							}
+							Common.AppendLogDetail($"Rename, {originalName} -> {newName}");
+
+							var parentNode = item.GetParentNode();
+							if (parentNode == null)
+							{
+								return;
+							}
+
+							TreeViewManager.MakeTableTree(manager, parentNode);
+							Common.RefreshMainWindow();
+						}
+					}
+					break;
 				default:
 					break;
 			}
 		}
 
-		public static void ProcessViewNodeMenu(ContextMenuFunction function, TreeNode node, SqlManager manager)
+		public static void ProcessViewNodeMenu(ContextMenuFunction function, TreeViewItem item, TreeNode node, SqlManager manager)
 		{
 			switch (function)
 			{
+				case ContextMenuFunction.Rename:
+					{
+						var originalName = node.Name;
+						var renameView = new RenameView
+						{
+							Owner = Common.MainWindow,
+							RenameText = originalName
+						};
+						if (renameView.ShowDialog() ?? false)
+						{
+							var newName = renameView.RenameText;
+							var result = manager.Rename(originalName, newName);
+							if (!string.IsNullOrEmpty(result))
+							{
+								Common.AppendLogDetail(result);
+								return;
+							}
+							Common.AppendLogDetail($"Rename, {originalName} -> {newName}");
+
+							var parentNode = item.GetParentNode();
+							if (parentNode == null)
+							{
+								return;
+							}
+
+							TreeViewManager.MakeViewTree(manager, parentNode);
+							Common.RefreshMainWindow();
+						}
+					}
+					break;
 				default:
 					break;
 			}
 		}
 
-		public static void ProcessFunctionNodeMenu(ContextMenuFunction function, TreeNode node, SqlManager manager)
+		public static void ProcessFunctionNodeMenu(ContextMenuFunction function, TreeViewItem item, TreeNode node, SqlManager manager)
 		{
 			switch (function)
 			{
+				case ContextMenuFunction.Rename:
+					{
+						var originalName = node.Name;
+						var renameView = new RenameView
+						{
+							Owner = Common.MainWindow,
+							RenameText = originalName
+						};
+						if (renameView.ShowDialog() ?? false)
+						{
+							var newName = renameView.RenameText;
+							var result = manager.Rename(originalName, newName);
+							if (!string.IsNullOrEmpty(result))
+							{
+								Common.AppendLogDetail(result);
+								return;
+							}
+							Common.AppendLogDetail($"Rename, {originalName} -> {newName}");
+
+							var parentNode = item.GetParentNode();
+							if (parentNode == null)
+							{
+								return;
+							}
+
+							TreeViewManager.MakeFunctionTree(manager, parentNode);
+							Common.RefreshMainWindow();
+						}
+					}
+					break;
 				default:
 					break;
 			}
 		}
 
-		public static void ProcessProcedureNodeMenu(ContextMenuFunction function, TreeNode node, SqlManager manager)
+		public static void ProcessProcedureNodeMenu(ContextMenuFunction function, TreeViewItem item, TreeNode node, SqlManager manager)
 		{
 			switch (function)
 			{
+				case ContextMenuFunction.Rename:
+					{
+						var originalName = node.Name;
+						var renameView = new RenameView
+						{
+							Owner = Common.MainWindow,
+							RenameText = originalName
+						};
+						if (renameView.ShowDialog() ?? false)
+						{
+							var newName = renameView.RenameText;
+							var result = manager.Rename(originalName, newName);
+							if (!string.IsNullOrEmpty(result))
+							{
+								Common.AppendLogDetail(result);
+								return;
+							}
+							Common.AppendLogDetail($"Rename, {originalName} -> {newName}");
+
+							var parentNode = item.GetParentNode();
+							if (parentNode == null)
+							{
+								return;
+							}
+
+							TreeViewManager.MakeProcedureTree(manager, parentNode);
+							Common.RefreshMainWindow();
+						}
+					}
+					break;
 				default:
 					break;
 			}

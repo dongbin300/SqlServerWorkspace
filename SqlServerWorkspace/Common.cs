@@ -4,9 +4,11 @@ namespace SqlServerWorkspace
 {
     public class Common
     {
-        public static void SetLog(string text)
+        public static Window MainWindow => Application.Current.MainWindow;
+
+		public static void SetLog(string text)
         {
-            if (Application.Current.MainWindow is MainWindow mainWindow)
+            if (MainWindow is MainWindow mainWindow)
             {
                 mainWindow.StatusText = text + Environment.NewLine;
             }
@@ -14,7 +16,7 @@ namespace SqlServerWorkspace
 
         public static void SetLogDetail(string text)
         {
-            if (Application.Current.MainWindow is MainWindow mainWindow)
+            if (MainWindow is MainWindow mainWindow)
             {
                 var currentTab = mainWindow.EntryPane.GetCurrentTab();
                 var tabHeader = currentTab == null ? string.Empty : currentTab.Title;
@@ -24,7 +26,7 @@ namespace SqlServerWorkspace
 
         public static void AppendLog(string text)
         {
-            if (Application.Current.MainWindow is MainWindow mainWindow)
+            if (MainWindow is MainWindow mainWindow)
             {
                 mainWindow.StatusText += text + Environment.NewLine;
             }
@@ -32,7 +34,7 @@ namespace SqlServerWorkspace
 
         public static void AppendLogDetail(string text)
         {
-            if (Application.Current.MainWindow is MainWindow mainWindow)
+            if (MainWindow is MainWindow mainWindow)
             {
                 var currentTab = mainWindow.EntryPane.GetCurrentTab();
                 var tabHeader = currentTab == null ? string.Empty : currentTab.Title;
@@ -42,7 +44,7 @@ namespace SqlServerWorkspace
 
         public static void RefreshMainWindow()
         {
-			if (Application.Current.MainWindow is MainWindow mainWindow)
+			if (MainWindow is MainWindow mainWindow)
             {
                 mainWindow.Refresh();
             }

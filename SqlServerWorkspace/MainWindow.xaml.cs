@@ -172,7 +172,10 @@ namespace SqlServerWorkspace
 		#region MENU
 		private void Connect_Click(object sender, RoutedEventArgs e)
 		{
-			var view = new ConnectionView();
+			var view = new ConnectionView()
+			{
+				Owner = this
+			};
 			if (view.ShowDialog() ?? false)
 			{
 				Refresh();
@@ -246,45 +249,56 @@ namespace SqlServerWorkspace
 				return;
 			}
 
-			if (contextMenu.Tag is not TreeNode node)
+			if (contextMenu.Tag is not TreeViewItem treeViewItem)
 			{
 				return;
 			}
 
-			var manager = DatabaseTreeView.GetSqlManager(node);
-			if (manager == null)
+			switch (treeViewItem.DataContext)
 			{
-				return;
-			}
+				case TreeNode node:
+					var manager = DatabaseTreeView.GetSqlManager(node);
+					if (manager == null)
+					{
+						return;
+					}
 
-			switch (node.Type)
-			{
-				case TreeNodeType.DatabaseNode:
-					TreeViewContextMenu.ProcessDatabaseNodeMenu(function, node);
+					switch (node.Type)
+					{
+						case TreeNodeType.DatabaseNode:
+							TreeViewContextMenu.ProcessDatabaseNodeMenu(function, node);
+							break;
+						case TreeNodeType.TableTitleNode:
+							TreeViewContextMenu.ProcessTableTitleNodeMenu(function, node, manager);
+							break;
+						case TreeNodeType.ViewTitleNode:
+							TreeViewContextMenu.ProcessViewTitleNodeMenu(function, node, manager);
+							break;
+						case TreeNodeType.FunctionTitleNode:
+							TreeViewContextMenu.ProcessFunctionTitleNodeMenu(function, node, manager);
+							break;
+						case TreeNodeType.ProcedureTitleNode:
+							TreeViewContextMenu.ProcessProcedureTitleNodeMenu(function, node, manager);
+							break;
+						case TreeNodeType.TableNode:
+							TreeViewContextMenu.ProcessTableNodeMenu(function, treeViewItem, node, manager);
+							break;
+						case TreeNodeType.ViewNode:
+							TreeViewContextMenu.ProcessViewNodeMenu(function, treeViewItem, node, manager);
+							break;
+						case TreeNodeType.FunctionNode:
+							TreeViewContextMenu.ProcessFunctionNodeMenu(function, treeViewItem, node, manager);
+							break;
+						case TreeNodeType.ProcedureNode:
+							TreeViewContextMenu.ProcessProcedureNodeMenu(function, treeViewItem, node, manager);
+							break;
+
+						default:
+							break;
+					}
 					break;
-				case TreeNodeType.TableTitleNode:
-					TreeViewContextMenu.ProcessTableTitleNodeMenu(function, node, manager);
-					break;
-				case TreeNodeType.ViewTitleNode:
-					TreeViewContextMenu.ProcessViewTitleNodeMenu(function, node, manager);
-					break;
-				case TreeNodeType.FunctionTitleNode:
-					TreeViewContextMenu.ProcessFunctionTitleNodeMenu(function, node, manager);
-					break;
-				case TreeNodeType.ProcedureTitleNode:
-					TreeViewContextMenu.ProcessProcedureTitleNodeMenu(function, node, manager);
-					break;
-				case TreeNodeType.TableNode:
-					TreeViewContextMenu.ProcessTableNodeMenu(function, node, manager);
-					break;
-				case TreeNodeType.ViewNode:
-					TreeViewContextMenu.ProcessViewNodeMenu(function, node, manager);
-					break;
-				case TreeNodeType.FunctionNode:
-					TreeViewContextMenu.ProcessFunctionNodeMenu(function, node, manager);
-					break;
-				case TreeNodeType.ProcedureNode:
-					TreeViewContextMenu.ProcessProcedureNodeMenu(function, node, manager);
+
+				case IEnumerable<TreeNode> nodes: // 추후
 					break;
 
 				default:

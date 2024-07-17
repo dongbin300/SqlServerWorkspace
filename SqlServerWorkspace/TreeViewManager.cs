@@ -77,6 +77,29 @@ namespace SqlServerWorkspace
 			return parent as TreeViewItem;
 		}
 
+		public static TreeViewItem? GetParent(this TreeViewItem item)
+		{
+			if (item.Parent is not TreeViewItem parentItem)
+			{
+				return null;
+			}
+			return parentItem;
+		}
+
+		public static TreeNode? GetParentNode(this TreeViewItem item)
+		{
+			var parent = item.GetParent();
+			if (parent?.Header is not TreeNode node)
+			{
+				if (parent?.DataContext is not TreeNode node2)
+				{
+					return null;
+				}
+				return node2;
+			}
+			return node;
+		}
+
 		public static void MakeDatabaseTree(TreeNode databaseNode)
 		{
 			try

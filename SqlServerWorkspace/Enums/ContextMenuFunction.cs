@@ -3,6 +3,9 @@
 	public enum ContextMenuFunction
 	{
 		None,
-		Refresh
+		Refresh,
+		Rename,
+		Remove,
+		Properties
 	}
 }
