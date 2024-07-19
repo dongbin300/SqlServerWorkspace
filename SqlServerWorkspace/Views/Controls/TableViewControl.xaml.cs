@@ -58,7 +58,7 @@ namespace SqlServerWorkspace.Views.Controls
 
 					var dataGridColumn = new DataGridTextColumn
 					{
-						Header = column.ColumnName + Environment.NewLine + tableInfo.Columns.First(x=>x.Name.Equals(column.ColumnName)).ToTypeString(),
+						Header = new string[] { column.ColumnName, tableInfo.Columns.First(x => x.Name.Equals(column.ColumnName)).ToTypeString() },
 						Binding = binding
 					};
 

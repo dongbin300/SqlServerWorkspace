@@ -284,14 +284,19 @@
                         <Setter Property="Foreground" Value="{StaticResource DarkForeground}"/>
                         <Setter Property="HorizontalContentAlignment" Value="Center"/>
                         <Setter Property="VerticalContentAlignment" Value="Center"/>
-                        <Setter Property="FontWeight" Value="Bold"/>
                         <Setter Property="BorderBrush" Value="#565656"/>
                         <Setter Property="BorderThickness" Value="0,0,1,0"/>
                         <Setter Property="Padding" Value="5"/>
                         <Setter Property="ContentTemplate">
                             <Setter.Value>
                                 <DataTemplate>
-                                    <TextBlock TextWrapping="Wrap" Text="{Binding}" Height="40" TextAlignment="Center"></TextBlock>
+                                    <TextBlock TextWrapping="Wrap" Height="40" TextAlignment="Center">
+                                        <TextBlock.Inlines>
+                                            <Run Text="{Binding Path=[0]}" FontWeight="Bold" Foreground="{StaticResource SswColor}"/>
+                                            <LineBreak />
+                                            <Run Text="{Binding Path=[1]}" Foreground="#909090"/>
+                                        </TextBlock.Inlines>
+                                    </TextBlock>
                                 </DataTemplate>
                             </Setter.Value>
                         </Setter>

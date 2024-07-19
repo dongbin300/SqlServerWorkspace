@@ -18,7 +18,7 @@ namespace SqlServerWorkspace.Extensions
 			{
 				if (column is DataGridColumn dataGridColumn)
 				{
-					var columnName = dataGridColumn.Header.ToString()?.Split(Environment.NewLine)[0];
+					var columnName = ((string[])dataGridColumn.Header)[0];
 					dataTable.Columns.Add(columnName, typeof(string));
 				}
 			}
@@ -35,7 +35,7 @@ namespace SqlServerWorkspace.Extensions
 				{
 					if (column is DataGridColumn dataGridColumn)
 					{
-						var columnName = dataGridColumn.Header.ToString()?.Split(Environment.NewLine)[0];
+						var columnName = ((string[])dataGridColumn.Header)[0];
 						if (string.IsNullOrEmpty(columnName))
 						{
 							continue;
