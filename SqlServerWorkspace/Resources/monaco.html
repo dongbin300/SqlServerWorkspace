@@ -69,6 +69,13 @@
                 var newText = currentText + text;
                 editor.setValue(newText);
             };
+
+            window.getSelectedText = function () {
+                var selection = editor.getSelection();
+                var model = editor.getModel();
+                var selectedText = model.getValueInRange(selection);
+                return selectedText;
+            };
         });
     </script>
 </body>

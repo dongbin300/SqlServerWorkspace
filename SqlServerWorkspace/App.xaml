@@ -12,6 +12,10 @@
         <SolidColorBrush x:Key="DarkBackground" Color="#1E1E1E"/>
         <SolidColorBrush x:Key="DarkForeground" Color="#F1F1F1"/>
         <SolidColorBrush x:Key="SswColor" Color="#CC96F8"/>
+        <SolidColorBrush x:Key="InfoColor" Color="#F1F1F1"/>
+        <SolidColorBrush x:Key="SuccessColor" Color="#3BCF86"/>
+        <SolidColorBrush x:Key="WarningColor" Color="#FCD535"/>
+        <SolidColorBrush x:Key="ErrorColor" Color="#ED3161"/>
 
         <SolidColorBrush x:Key="IconStroke" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="InputGestureForeground" Color="#DDDDDD"/>
@@ -267,6 +271,7 @@
             <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
             <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="Background" Value="{StaticResource DarkBackground}"/>
+            <Setter Property="RowBackground" Value="{StaticResource DarkBackground}"/>
             <Setter Property="Foreground" Value="{StaticResource DarkForeground}"/>
             <Setter Property="SelectionUnit" Value="Cell" />
             <Setter Property="HeadersVisibility" Value="Column" />
@@ -290,7 +295,7 @@
                         <Setter Property="ContentTemplate">
                             <Setter.Value>
                                 <DataTemplate>
-                                    <TextBlock TextWrapping="Wrap" Height="40" TextAlignment="Center">
+                                    <TextBlock TextWrapping="Wrap" Height="36" TextAlignment="Center">
                                         <TextBlock.Inlines>
                                             <Run Text="{Binding Path=[0]}" FontWeight="Bold" Foreground="{StaticResource SswColor}"/>
                                             <LineBreak />
@@ -316,7 +321,7 @@
                                     <!--<TextBox Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Content.Text, Mode=TwoWay, UpdateSourceTrigger=Default}"
                                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0" BorderThickness="0" Background="{TemplateBinding Background}"/>-->
                                     <Grid Background="{TemplateBinding Background}">
-                                        <ContentPresenter x:Name="PART_ContentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <ContentPresenter x:Name="PART_ContentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
                                     </Grid>
                                 </ControlTemplate>
                             </Setter.Value>
@@ -399,7 +404,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Border x:Name="_border" Background="{StaticResource TitleBarBackground}"/>
-                            <TextBlock Foreground="#eee" Grid.Column="1" Margin="15,0" VerticalAlignment="Center" x:Name="_txt" Text="{Binding Header,RelativeSource={RelativeSource TemplatedParent}}" />
+                            <TextBlock Foreground="#eee" Grid.Column="1" Margin="15,0" HorizontalAlignment="Left" VerticalAlignment="Center" x:Name="_txt" Text="{Binding Header,RelativeSource={RelativeSource TemplatedParent}}" />
                             <Popup Placement="Bottom" x:Name="SubMenuPopup" AllowsTransparency="True"  Focusable="False" IsOpen="{TemplateBinding IsSubmenuOpen}" >
                                 <ScrollViewer ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                     <Border Background="#888" Name="SubmenuBorder" BorderBrush="LightGray" BorderThickness="1" SnapsToDevicePixels="True"  >
@@ -436,7 +441,7 @@
                             <Border Background="{StaticResource TitleBarBackground}"/>
                             <Border x:Name="_border"  Grid.ColumnSpan="3"/>
                             <Image x:Name="_imgicon" Width="12" Height="12" Stretch="Uniform"  Source="{Binding Icon.Source, RelativeSource={RelativeSource TemplatedParent}}"  />
-                            <TextBlock Foreground="#eee" Grid.Column="1" Margin="5 0 15 0" VerticalAlignment="Center" x:Name="_txt" Text="{Binding Header,RelativeSource={RelativeSource TemplatedParent}}" />
+                            <TextBlock Foreground="#eee" Grid.Column="1" Margin="5 0 15 0" HorizontalAlignment="Left" VerticalAlignment="Center" x:Name="_txt" Text="{Binding Header,RelativeSource={RelativeSource TemplatedParent}}" />
                             <TextBlock Foreground="{StaticResource InputGestureForeground}" Grid.Column="2" Margin="10 0" HorizontalAlignment="Right" VerticalAlignment="Center" x:Name="_shortcut" Text="{TemplateBinding InputGestureText}" />
                             <Path Visibility="Collapsed" x:Name="_path" Grid.Column="2" HorizontalAlignment="Right" Margin="5 13 5 0"  Data="M0,4 4,0 0,-4 z" Fill="{DynamicResource TitleBarForeground}"/>
                             <Popup Placement="Right" x:Name="SubMenuPopup" AllowsTransparency="True"  Focusable="False" IsOpen="{TemplateBinding IsSubmenuOpen}" >

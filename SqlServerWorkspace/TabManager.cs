@@ -2,6 +2,7 @@
 
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
+
 using SqlServerWorkspace.Data;
 using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
@@ -14,7 +15,7 @@ using System.Windows.Input;
 
 namespace SqlServerWorkspace
 {
-    public static partial class TabManager
+	public static partial class TabManager
 	{
 		static readonly string _monacoHtmlPath = Path.Combine("Resources", "monaco.html");
 		static readonly string _userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SqlServerWorkspace");
@@ -93,15 +94,16 @@ namespace SqlServerWorkspace
 						switch (e.Key)
 						{
 							case Key.F5: // Run Script
-								var editorText = await webView.GetEditorText();
-								editorText = editorText.Replace("\n", "\r\n");
-								var result = manager.Execute(editorText);
+								var selectedText = await webView.GetSelectedText();
+								var text = string.IsNullOrEmpty(selectedText) ? await webView.GetEditorText() : selectedText;
+								text = text.Replace("\n", "\r\n");
+								var result = manager.Execute(text);
 								if (!string.IsNullOrEmpty(result))
 								{
-									Common.AppendLogDetail(result);
+									Common.Log(result, LogType.Error);
 									break;
 								}
-								Common.AppendLogDetail("Run Complete");
+								Common.Log("Run Complete", LogType.Success);
 								break;
 
 							default:
@@ -123,7 +125,7 @@ namespace SqlServerWorkspace
 							text = CreateProcedureRegex().Replace(text, "ALTER PROCEDURE");
 							text = CreateFunctionRegex().Replace(text, "ALTER FUNCTION");
 							await layoutDocumentPane.SetEditorText(header, text);
-							Common.AppendLogDetail(header);
+							Common.Log(header, LogType.Info);
 						}
 					};
 					break;

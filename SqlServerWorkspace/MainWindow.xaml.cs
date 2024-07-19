@@ -18,14 +18,7 @@ namespace SqlServerWorkspace
 	/// </summary>
 	public partial class MainWindow : Window
 	{
-		public static readonly DependencyProperty StatusTextProperty = DependencyProperty.Register("StatusText", typeof(string), typeof(MainWindow), new PropertyMetadata(""));
 		private DispatcherTimer SaveSettingsTimer = new ();
-
-		public string StatusText
-		{
-			get { return (string)GetValue(StatusTextProperty); }
-			set { SetValue(StatusTextProperty, value); }
-		}
 
 		public MainWindow()
 		{

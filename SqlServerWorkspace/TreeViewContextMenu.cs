@@ -147,10 +147,10 @@ namespace SqlServerWorkspace
 							var result = manager.Rename(originalName, newName);
 							if (!string.IsNullOrEmpty(result))
 							{
-								Common.AppendLogDetail(result);
+								Common.Log(result, LogType.Error);
 								return;
 							}
-							Common.AppendLogDetail($"Rename, {originalName} -> {newName}");
+							Common.Log($"Rename, {originalName} -> {newName}", LogType.Success);
 
 							var parentNode = item.GetParentNode();
 							if (parentNode == null)
@@ -186,10 +186,10 @@ namespace SqlServerWorkspace
 							var result = manager.Rename(originalName, newName);
 							if (!string.IsNullOrEmpty(result))
 							{
-								Common.AppendLogDetail(result);
+								Common.Log(result, LogType.Error);
 								return;
 							}
-							Common.AppendLogDetail($"Rename, {originalName} -> {newName}");
+							Common.Log($"Rename, {originalName} -> {newName}", LogType.Success);
 
 							var parentNode = item.GetParentNode();
 							if (parentNode == null)
@@ -225,10 +225,10 @@ namespace SqlServerWorkspace
 							var result = manager.Rename(originalName, newName);
 							if (!string.IsNullOrEmpty(result))
 							{
-								Common.AppendLogDetail(result);
+								Common.Log(result, LogType.Error);
 								return;
 							}
-							Common.AppendLogDetail($"Rename, {originalName} -> {newName}");
+							Common.Log($"Rename, {originalName} -> {newName}", LogType.Success);
 
 							var parentNode = item.GetParentNode();
 							if (parentNode == null)
@@ -264,10 +264,10 @@ namespace SqlServerWorkspace
 							var result = manager.Rename(originalName, newName);
 							if (!string.IsNullOrEmpty(result))
 							{
-								Common.AppendLogDetail(result);
+								Common.Log(result, LogType.Error);
 								return;
 							}
-							Common.AppendLogDetail($"Rename, {originalName} -> {newName}");
+							Common.Log($"Rename, {originalName} -> {newName}", LogType.Success);
 
 							var parentNode = item.GetParentNode();
 							if (parentNode == null)

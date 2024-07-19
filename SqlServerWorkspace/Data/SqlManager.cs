@@ -246,7 +246,7 @@ namespace SqlServerWorkspace.Data
 				}
 
 				transaction.Commit();
-				return "Changes saved successfully.";
+				return string.Empty;
 			}
 			catch (Exception ex)
 			{

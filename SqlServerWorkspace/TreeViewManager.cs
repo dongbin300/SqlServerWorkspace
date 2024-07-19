@@ -119,7 +119,7 @@ namespace SqlServerWorkspace
 			}
 			catch (Exception ex)
 			{
-				Common.AppendLogDetail(ex.Message);
+				Common.Log(ex.Message, LogType.Error);
 			}
 		}
 
@@ -143,7 +143,7 @@ namespace SqlServerWorkspace
 			}
 			catch (Exception ex)
 			{
-				Common.AppendLogDetail(ex.Message);
+				Common.Log(ex.Message, LogType.Error);
 			}
 		}
 
@@ -167,7 +167,7 @@ namespace SqlServerWorkspace
 			}
 			catch (Exception ex)
 			{
-				Common.AppendLogDetail(ex.Message);
+				Common.Log(ex.Message, LogType.Error);
 			}
 		}
 
@@ -191,7 +191,7 @@ namespace SqlServerWorkspace
 			}
 			catch (Exception ex)
 			{
-				Common.AppendLogDetail(ex.Message);
+				Common.Log(ex.Message, LogType.Error);
 			}
 		}
 
@@ -215,7 +215,7 @@ namespace SqlServerWorkspace
 			}
 			catch (Exception ex)
 			{
-				Common.AppendLogDetail(ex.Message);
+				Common.Log(ex.Message, LogType.Error);
 			}
 		}
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Web.WebView2.Core;
 
 using SqlServerWorkspace.Data;
+using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Extensions;
 
 using System.Data;
@@ -122,11 +123,11 @@ namespace SqlServerWorkspace.Views.Controls
 				//};
 				//dataGrid.Columns.Insert(0, rowNumberColumn);
 
-				Common.AppendLogDetail($"{query}");
+				Common.Log($"{query}", LogType.Info);
 			}
 			catch (Exception ex)
 			{
-				Common.AppendLogDetail(ex.Message);
+				Common.Log(ex.Message, LogType.Error);
 			}
 		}
 
@@ -141,33 +142,19 @@ namespace SqlServerWorkspace.Views.Controls
 			try
 			{
 				var currentTable = TableDataGrid.ToDataTable();
-
-				//var selectTable2 = new DataTable();
-				//foreach (DataColumn column in SelectTable.Columns)
-				//{
-				//	selectTable2.Columns.Add(column.ColumnName, typeof(string));
-				//}
-
-				//foreach (DataRow row in SelectTable.Rows)
-				//{
-				//	DataRow newRow = selectTable2.NewRow();
-				//	foreach (DataColumn column in selectTable2.Columns)
-				//	{
-				//		if (row[column.ColumnName] == DBNull.Value)
-				//		{
-				//			continue;
-				//		}
-				//		newRow[column.ColumnName] = row[column.ColumnName].ToString();
-				//	}
-				//	selectTable2.Rows.Add(newRow);
-				//}
-
 				var result = Manager.TableTransaction(SelectTableName, SelectTable, currentTable);
-				Common.AppendLogDetail(result);
+
+				if (!string.IsNullOrEmpty(result))
+				{
+					Common.Log(result, LogType.Error);
+					return;
+				}
+
+				Common.Log("Changes saved successfully.", LogType.Success);
 			}
 			catch (Exception ex)
 			{
-				Common.AppendLogDetail(ex.Message);
+				Common.Log(ex.Message, LogType.Error);
 			}
 		}
 
@@ -177,7 +164,7 @@ namespace SqlServerWorkspace.Views.Controls
 
 			await WebView.AppendEditorText($"{Environment.NewLine}{mergeQuery}");
 
-			Common.AppendLogDetail($"{SelectTableName} MERGE");
+			Common.Log($"{SelectTableName} MERGE", LogType.Info);
 		}
 
 		private async void WebView_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)

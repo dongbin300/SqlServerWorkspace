@@ -148,7 +148,7 @@
                                 <dock:LayoutAnchorable Title="Logs">
                                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                                         <Grid>
-                                            <TextBlock x:Name="StatusTextBlock" Text="{Binding StatusText}" Style="{StaticResource StatusText}"/>
+                                            <TextBlock x:Name="StatusTextBlock" Style="{StaticResource StatusText}"/>
                                         </Grid>
                                     </ScrollViewer>
                                 </dock:LayoutAnchorable>
