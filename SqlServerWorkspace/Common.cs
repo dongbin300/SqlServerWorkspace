@@ -25,8 +25,9 @@ namespace SqlServerWorkspace
                 var run = new Run(text);
                 mainWindow.StatusTextBlock.Inlines.Add(run);
                 mainWindow.StatusTextBlock.Inlines.Add(new LineBreak());
-            }
-        }
+                mainWindow.StatusTextScrollViewer.ScrollToEnd();
+			}
+		}
 
         public static void Log(string text, LogType type = LogType.Info)
         {
@@ -48,6 +49,7 @@ namespace SqlServerWorkspace
 				};
 				mainWindow.StatusTextBlock.Inlines.Add(run);
 				mainWindow.StatusTextBlock.Inlines.Add(new LineBreak());
+                mainWindow.StatusTextScrollViewer.ScrollToEnd();
 			}
         }
 

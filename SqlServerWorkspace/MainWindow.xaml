@@ -146,7 +146,7 @@
                             <!-- 3. STATUS PANEL -->
                             <dock:LayoutAnchorablePane DockHeight="200" >
                                 <dock:LayoutAnchorable Title="Logs">
-                                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                    <ScrollViewer x:Name="StatusTextScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                                         <Grid>
                                             <TextBlock x:Name="StatusTextBlock" Style="{StaticResource StatusText}"/>
                                         </Grid>
