@@ -1,4 +1,6 @@
-﻿using SqlServerWorkspace.DataModels;
+﻿using Microsoft.VisualBasic.Devices;
+
+using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
 
@@ -48,7 +50,11 @@ namespace SqlServerWorkspace
 
 		public void Refresh()
 		{
-			DatabaseTreeView.ItemsSource = ResourceManager.Connections.Select(x => x.Nodes);
+			var keyword = DatabaseTreeViewFilterTextBox.Text;
+
+			DatabaseTreeView.ItemsSource = DatabaseTreeViewFilterTextBox.Text.Length < 1 ?
+				ResourceManager.ConnectionsNodes :
+				Filter(ResourceManager.ConnectionsNodes, keyword);
 		}
 
 		private void SaveSettingsTimer_Tick(object? sender, EventArgs e)
@@ -58,18 +64,8 @@ namespace SqlServerWorkspace
 		}
 
 		#region DATABASE TREEVIEW
-		private void DatabaseTreeViewFilterTextBox_TextChanged(object sender, TextChangedEventArgs e)
+		private IEnumerable<TreeNode> Filter(IEnumerable<IEnumerable<TreeNode>> items, string keyword)
 		{
-			var keyword = DatabaseTreeViewFilterTextBox.Text;
-
-			if (keyword.Length < 1)
-			{
-				Refresh();
-				return;
-			}
-
-			var items = ResourceManager.Connections.Select(x => x.Nodes);
-
 			List<TreeNode> filteredItems = [];
 			foreach (var item in items)
 			{
@@ -80,7 +76,12 @@ namespace SqlServerWorkspace
 				}
 			}
 
-			DatabaseTreeView.ItemsSource = filteredItems;
+			return filteredItems;
+		}
+
+		private void DatabaseTreeViewFilterTextBox_TextChanged(object sender, TextChangedEventArgs e)
+		{
+			Refresh();
 		}
 
 		private async void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

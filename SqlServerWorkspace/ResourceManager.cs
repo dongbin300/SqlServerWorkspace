@@ -21,6 +21,7 @@ namespace SqlServerWorkspace
 		static readonly string connectionFileName = "connection.json";
 		static readonly string settingsFileName = "settings.json";
 		public static List<SqlManager> Connections = [];
+		public static IEnumerable<IEnumerable<TreeNode>> ConnectionsNodes => Connections.Select(c => c.Nodes);
 		public static Settings Settings = default!;
 
 		/* Icon Resource */
