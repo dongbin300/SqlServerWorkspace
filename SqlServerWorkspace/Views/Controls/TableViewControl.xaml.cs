@@ -1,9 +1,9 @@
 ﻿using Microsoft.Web.WebView2.Core;
+
 using SqlServerWorkspace.Data;
 using SqlServerWorkspace.Extensions;
 
 using System.Data;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -11,10 +11,10 @@ using System.Windows.Input;
 
 namespace SqlServerWorkspace.Views.Controls
 {
-    /// <summary>
-    /// TableViewControl.xaml에 대한 상호 작용 논리
-    /// </summary>
-    public partial class TableViewControl : UserControl
+	/// <summary>
+	/// TableViewControl.xaml에 대한 상호 작용 논리
+	/// </summary>
+	public partial class TableViewControl : UserControl
 	{
 		public SqlManager Manager { get; set; } = default!;
 		public string Header { get; set; } = string.Empty;
@@ -42,6 +42,7 @@ namespace SqlServerWorkspace.Views.Controls
 				SelectTableName = GetTableNameFromQuery(query);
 				TableDataGrid.Columns.Clear();
 				TableDataGrid.ItemsSource = table.DefaultView;
+				var tableInfo = Manager.GetTableInfo(SelectTableName);
 
 				foreach (DataColumn column in table.Columns)
 				{
@@ -57,16 +58,56 @@ namespace SqlServerWorkspace.Views.Controls
 
 					var dataGridColumn = new DataGridTextColumn
 					{
-						Header = column.ColumnName,
+						Header = column.ColumnName + Environment.NewLine + tableInfo.Columns.First(x=>x.Name.Equals(column.ColumnName)).ToTypeString(),
 						Binding = binding
 					};
 
-					//var headerTemplate = new DataTemplate();
-					//var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-					//textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding());
-					//headerTemplate.VisualTree = textBlockFactory;
-					//dataGridColumn.HeaderTemplate = headerTemplate;
+					//var cellStyle = new Style(typeof(DataGridCell));
+					//cellStyle.Setters.Add(new Setter(DataGridCell.BackgroundProperty, new SolidColorBrush(Color.FromRgb(63, 63, 63))));
+					//cellStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, Brushes.White));
+					//cellStyle.Setters.Add(new Setter(DataGridCell.BorderBrushProperty, Brushes.Transparent));
+					//cellStyle.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(0)));
 
+					//cellStyle.Triggers.Add(new DataTrigger
+					//{
+					//	Binding = new Binding("IsSelected") { RelativeSource = new RelativeSource(RelativeSourceMode.Self) },
+					//	Value = true,
+					//	Setters =
+					//	{
+					//		new Setter(DataGridCell.BackgroundProperty, new SolidColorBrush(Color.FromRgb(49, 49, 49))),
+					//		new Setter(DataGridCell.ForegroundProperty, Brushes.White)
+					//	}
+					//});
+
+					//dataGrid.CellStyle = cellStyle;
+
+					//var templateColumn = new DataGridTemplateColumn
+					//{
+					//	Header = column.ColumnName
+					//};
+
+					//var cellTemplate = new DataTemplate();
+					//var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
+					//textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding(column.ColumnName));
+					//textBlockFactory.SetValue(TextBlock.BackgroundProperty, new SolidColorBrush(Colors.Transparent));
+					//textBlockFactory.SetValue(TextBlock.ForegroundProperty, Brushes.White);
+					//cellTemplate.VisualTree = textBlockFactory;
+
+					//var editingTemplate = new DataTemplate();
+					//var textBoxFactory = new FrameworkElementFactory(typeof(TextBox));
+					//textBoxFactory.SetBinding(TextBox.TextProperty, new Binding(column.ColumnName) { Mode = BindingMode.TwoWay });
+					//textBoxFactory.SetValue(BackgroundProperty, new SolidColorBrush(Colors.Transparent));
+					//textBoxFactory.SetValue(ForegroundProperty, Brushes.White);
+					//textBoxFactory.SetValue(BorderBrushProperty, Brushes.Transparent);
+					//textBoxFactory.SetValue(BorderThicknessProperty, new Thickness(0));
+					//textBoxFactory.SetValue(HorizontalContentAlignmentProperty, HorizontalAlignment.Center);
+					//textBoxFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
+					//editingTemplate.VisualTree = textBoxFactory;
+
+					//templateColumn.CellTemplate = cellTemplate;
+					//templateColumn.CellEditingTemplate = editingTemplate;
+
+					//TableDataGrid.Columns.Add(templateColumn);
 					TableDataGrid.Columns.Add(dataGridColumn);
 				}
 
@@ -99,10 +140,8 @@ namespace SqlServerWorkspace.Views.Controls
 		{
 			try
 			{
-				// DataGrid 테이블
-				//var currentTable = TableDataGrid.ToDataTable();
+				var currentTable = TableDataGrid.ToDataTable();
 
-				//// 조회해놓은 테이블
 				//var selectTable2 = new DataTable();
 				//foreach (DataColumn column in SelectTable.Columns)
 				//{
@@ -123,79 +162,7 @@ namespace SqlServerWorkspace.Views.Controls
 				//	selectTable2.Rows.Add(newRow);
 				//}
 
-				//var addedRows = currentTable.AsEnumerable().Except(selectTable2.AsEnumerable(), DataRowComparer.Default);
-				//var deletedRows = selectTable2.AsEnumerable().Except(currentTable.AsEnumerable(), DataRowComparer.Default);
-				//var modifiedRows = currentTable.AsEnumerable().Where(row => !selectTable2.AsEnumerable().Contains(row, DataRowComparer.Default) && !addedRows.Contains(row, DataRowComparer.Default));
-
-				var currentTable = TableDataGrid.ToDataTable();
-				var selectTable2 = new DataTable();
-				foreach (DataColumn column in SelectTable.Columns)
-				{
-					selectTable2.Columns.Add(column.ColumnName, typeof(string));
-				}
-
-				foreach (DataRow row in SelectTable.Rows)
-				{
-					DataRow newRow = selectTable2.NewRow();
-					foreach (DataColumn column in selectTable2.Columns)
-					{
-						if (row[column.ColumnName] == DBNull.Value)
-						{
-							continue;
-						}
-						newRow[column.ColumnName] = row[column.ColumnName].ToString();
-					}
-					selectTable2.Rows.Add(newRow);
-				}
-
-				List<DataRow> addedRows = [];
-				List<DataRow> deletedRows = [];
-				List<DataRow> modifiedRows = [];
-				foreach (DataRow currentRow in currentTable.Rows)
-				{
-					object primaryKeyValue = currentRow["ID"];
-					var selectRow = selectTable2.Rows.Find(primaryKeyValue);
-
-					if (selectRow == null)
-					{
-						addedRows.Add(currentRow);
-					}
-					else
-					{
-						bool hasChanges = false;
-						foreach (DataColumn column in currentTable.Columns)
-						{
-							if (!Equals(currentRow[column], selectRow[column]))
-							{
-								hasChanges = true;
-								break;
-							}
-						}
-
-						if (hasChanges)
-						{
-							modifiedRows.Add(currentRow);
-						}
-						else
-						{
-							Console.WriteLine($"Unchanged Row: {currentRow["ID"]} - {currentRow["Name"]}");
-						}
-					}
-				}
-
-				foreach (DataRow selectRow in selectTable2.Rows)
-				{
-					object primaryKeyValue = selectRow["ID"];
-					var currentRow = currentTable.Rows.Find(primaryKeyValue);
-
-					if (currentRow == null)
-					{
-						deletedRows.Add(selectRow);
-					}
-				}
-
-				var result = Manager.TransactionForTable(SelectTableName, addedRows, deletedRows, modifiedRows);
-
+				var result = Manager.TableTransaction(SelectTableName, SelectTable, currentTable);
 				Common.AppendLogDetail(result);
 			}
 			catch (Exception ex)
@@ -204,38 +171,11 @@ namespace SqlServerWorkspace.Views.Controls
 			}
 		}
 
-		private void InfoButton_Click(object sender, RoutedEventArgs e)
-		{
-			var tableColumnInfo = Manager.GetTableInfo(SelectTableName);
-		}
-
-		private void ColumnInfoButton_Click(object sender, RoutedEventArgs e)
-		{
-			var tableInfo = Manager.GetTablePrimaryKeyNames(SelectTableName);
-		}
-
 		private async void MergeButton_Click(object sender, RoutedEventArgs e)
 		{
-			var table = Manager.GetTableInfo(SelectTableName);
-			var primaryKeyNames = Manager.GetTablePrimaryKeyNames(SelectTableName);
-			var columnNames = table.Columns.Select(x => x.Name);
-			var nonKeyColumnNames = columnNames.Except(primaryKeyNames);
-			var columnNameSequence = string.Join(", ", columnNames);
-			var columnNameAlphaSequence = string.Join(", ", columnNames.Select(x => $"@{x}"));
-			var targetPrimaryKeyNames = string.Join(" and ", primaryKeyNames.Select(x => $"target.{x} = @{x}"));
-			var updateSetNonKeyColumnNames = string.Join(", ", nonKeyColumnNames.Select(x => $"{x} = @{x}"));
-			var builder = new StringBuilder();
-			builder.AppendLine($"MERGE {SelectTableName} AS target");
-			builder.AppendLine($"USING ( VALUES ( {columnNameAlphaSequence} ) ) AS source ( {columnNameSequence} )");
-			builder.AppendLine($"ON ( {targetPrimaryKeyNames} )");
-			builder.AppendLine($"WHEN MATCHED THEN");
-			builder.AppendLine($"UPDATE SET");
-			builder.AppendLine($"{updateSetNonKeyColumnNames}");
-			builder.AppendLine($"WHEN NOT MATCHED THEN");
-			builder.AppendLine($"INSERT ( {columnNameSequence} )");
-			builder.AppendLine($"VALUES ( {columnNameAlphaSequence} );");
+			var mergeQuery = Manager.GetMergeQuery(SelectTableName);
 
-			await WebView.AppendEditorText($"{Environment.NewLine}{builder}");
+			await WebView.AppendEditorText($"{Environment.NewLine}{mergeQuery}");
 
 			Common.AppendLogDetail($"{SelectTableName} MERGE");
 		}

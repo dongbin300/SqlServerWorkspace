@@ -4,6 +4,7 @@
              xmlns:local="clr-namespace:SqlServerWorkspace"
              xmlns:converter="clr-namespace:SqlServerWorkspace.Converters"
              xmlns:DataModel="clr-namespace:SqlServerWorkspace.DataModels"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
 
@@ -19,6 +20,9 @@
         <SolidColorBrush x:Key="TitleBarMouseOver" Color="#777777"/>
         <SolidColorBrush x:Key="SelectedBackground" Color="#444D56"/>
 
+        <FontFamily x:Key="BaseFont">Meiryo UI</FontFamily>
+        <sys:Double x:Key="BaseFontSize">12</sys:Double>
+
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="btv"/>
         <converter:DBNullToNullStringConverter x:Key="DBNullToNullStringConverter"/>
@@ -26,8 +30,8 @@
 
         <!-- Styles -->
         <Style TargetType="{x:Type TextBlock}">
-            <Setter Property="FontFamily" Value="Verdana" />
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="Height" Value="20" />
             <Setter Property="Foreground" Value="#F1F1F1" />
             <Setter Property="Background" Value="Transparent" />
@@ -36,16 +40,16 @@
         </Style>
         
         <Style TargetType="{x:Type TextBlock}" x:Key="TreeViewText">
-            <Setter Property="FontFamily" Value="Verdana" />
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="Height" Value="20" />
             <Setter Property="Foreground" Value="#F1F1F1" />
             <Setter Property="Background" Value="Transparent" />
         </Style>
 
         <Style TargetType="{x:Type TextBlock}" x:Key="StatusText">
-            <Setter Property="FontFamily" Value="Verdana" />
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="Foreground" Value="{StaticResource DarkForeground}" />
             <Setter Property="Background" Value="{StaticResource DarkBackground}" />
             <Setter Property="TextWrapping" Value="Wrap" />
@@ -53,10 +57,10 @@
         </Style>
 
         <Style TargetType="{x:Type TextBox}">
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="Foreground" Value="#F1F1F1" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="FontFamily" Value="Meiryo UI" />
-            <Setter Property="FontSize" Value="13" />
             <Setter Property="BorderBrush" Value="#666" />
             <Setter Property="BorderThickness" Value="0 0 0 1" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -72,11 +76,11 @@
         </Style>
 
         <Style TargetType="{x:Type PasswordBox}">
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="PasswordChar" Value="*"/>
             <Setter Property="Foreground" Value="#F1F1F1" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="FontFamily" Value="Meiryo UI" />
-            <Setter Property="FontSize" Value="13" />
             <Setter Property="BorderBrush" Value="#666" />
             <Setter Property="BorderThickness" Value="0 0 0 1" />
             <Setter Property="CaretBrush" Value="{StaticResource SswColor}" />
@@ -123,6 +127,8 @@
         </ControlTemplate>
         
         <Style TargetType="{x:Type ComboBox}">
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="Foreground" Value="#F4F4F4"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -169,9 +175,11 @@
         </Style>
         
         <Style TargetType="{x:Type Button}">
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
+            <Setter Property="FontWeight" Value="UltraBold" />
             <Setter Property="Background" Value="{StaticResource SswColor}" />
             <Setter Property="Foreground" Value="White" />
-            <Setter Property="FontWeight" Value="UltraBold" />
             <Setter Property="Padding" Value="5" />
             <Setter Property="Margin" Value="3" />
             <Setter Property="BorderThickness" Value="1" />
@@ -200,6 +208,8 @@
         </Style>
 
         <Style TargetType="{x:Type DataGrid}" x:Key="LightDataGrid">
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="Black"/>
             <Setter Property="HeadersVisibility" Value="Column" />
@@ -254,12 +264,14 @@
         </Style>
 
         <Style TargetType="{x:Type DataGrid}" x:Key="DarkDataGrid">
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="Background" Value="{StaticResource DarkBackground}"/>
             <Setter Property="Foreground" Value="{StaticResource DarkForeground}"/>
+            <Setter Property="SelectionUnit" Value="Cell" />
             <Setter Property="HeadersVisibility" Value="Column" />
             <Setter Property="HorizontalGridLinesBrush" Value="#565656" />
             <Setter Property="VerticalGridLinesBrush" Value="#565656" />
-            <Setter Property="ColumnHeaderHeight" Value="30"/>
             <Setter Property="RowHeight" Value="30"/>
             <Setter Property="CanUserAddRows" Value="True"/>
             <Setter Property="CanUserDeleteRows" Value="True"/>
@@ -276,6 +288,13 @@
                         <Setter Property="BorderBrush" Value="#565656"/>
                         <Setter Property="BorderThickness" Value="0,0,1,0"/>
                         <Setter Property="Padding" Value="5"/>
+                        <Setter Property="ContentTemplate">
+                            <Setter.Value>
+                                <DataTemplate>
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding}" Height="40" TextAlignment="Center"></TextBlock>
+                                </DataTemplate>
+                            </Setter.Value>
+                        </Setter>
                     </Style>
                 </Setter.Value>
             </Setter>
@@ -289,8 +308,10 @@
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="DataGridCell">
+                                    <!--<TextBox Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Content.Text, Mode=TwoWay, UpdateSourceTrigger=Default}"
+                                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0" BorderThickness="0" Background="{TemplateBinding Background}"/>-->
                                     <Grid Background="{TemplateBinding Background}">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <ContentPresenter x:Name="PART_ContentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Grid>
                                 </ControlTemplate>
                             </Setter.Value>

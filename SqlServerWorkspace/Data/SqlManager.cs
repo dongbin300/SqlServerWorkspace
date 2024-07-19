@@ -185,27 +185,64 @@ namespace SqlServerWorkspace.Data
 			command.ExecuteNonQuery();
 		}
 
-		public string TransactionForTable(string tableName, IEnumerable<DataRow> addedRows, IEnumerable<DataRow> deletedRows, IEnumerable<DataRow> modifiedRows)
+		public string TableTransaction(string tableName, DataTable originalTable, DataTable modifiedTable)
 		{
+			var table = GetTableInfo(tableName);
+			var primaryKeyNames = GetTablePrimaryKeyNames(tableName);
+			var columnNames = table.Columns.Select(x => x.Name);
+			var nonKeyColumnNames = columnNames.Except(primaryKeyNames);
+			var columnNameSequence = string.Join(',', columnNames);
+			var sourceColumnNameSequence = string.Join(',', columnNames.Select(x => $"source.{x}"));
+			var updateSetNonKeyColumnNames = string.Join(',', nonKeyColumnNames.Select(x => $"target.{x} = source.{x}"));
+			//var updateSetCompareNonKeyColumnNames = string.Join(" or ", nonKeyColumnNames.Select(x => $"target.{x} <> source.{x}"));
+			var updateSetCompareNonKeyColumnNames = string.Join(" or ", nonKeyColumnNames.Select(x => $"(target.{x} <> source.{x} or (target.{x} is null and source.{x} is not null) or (target.{x} is not null and source.{x} is null))"));
+			var targetPrimaryKeyNames = string.Join(" and ", primaryKeyNames.Select(x => $"target.{x} = source.{x}"));
+			var mergeQuery = new StringBuilder();
+			mergeQuery.AppendLine($"MERGE INTO {tableName} AS target");
+			mergeQuery.AppendLine("USING (VALUES");
+
+			for (int i = 0; i < modifiedTable.Rows.Count; i++)
+			{
+				mergeQuery.Append('(');
+				for (int j = 0; j < columnNames.Count(); j++)
+				{
+					mergeQuery.Append($"@{columnNames.ElementAt(j)}{i}");
+					if (j < columnNames.Count() - 1)
+						mergeQuery.Append(',');
+				}
+				mergeQuery.Append(')');
+				if (i < modifiedTable.Rows.Count - 1)
+					mergeQuery.Append(',');
+			}
+
+			mergeQuery.AppendLine($") AS source ({columnNameSequence})");
+			mergeQuery.AppendLine($"ON {targetPrimaryKeyNames}");
+			mergeQuery.AppendLine($"WHEN MATCHED AND ({updateSetCompareNonKeyColumnNames}) THEN");
+			mergeQuery.AppendLine($"UPDATE SET {updateSetNonKeyColumnNames}");
+			mergeQuery.AppendLine("WHEN NOT MATCHED BY target THEN");
+			mergeQuery.AppendLine($"INSERT ({columnNameSequence})");
+			mergeQuery.AppendLine($"VALUES ({sourceColumnNameSequence})");
+			mergeQuery.AppendLine("WHEN NOT MATCHED BY source THEN");
+			mergeQuery.AppendLine("DELETE;");
+
 			using var connection = new SqlConnection(GetConnectionString());
 			connection.Open();
 			using var transaction = connection.BeginTransaction();
 
 			try
 			{
-				foreach (var row in addedRows)
+				using (var cmd = new SqlCommand(mergeQuery.ToString(), connection, transaction))
 				{
-					InsertRow(row, connection, transaction, tableName);
-				}
+					for (int i = 0; i < modifiedTable.Rows.Count; i++)
+					{
+						foreach (var columnName in columnNames)
+						{
+							var value = modifiedTable.Rows[i][columnName];
+							cmd.Parameters.AddWithValue($"@{columnName}{i}", value == DBNull.Value ? DBNull.Value : value);
+						}
+					}
 
-				foreach (var row in deletedRows)
-				{
-					DeleteRow(row, connection, transaction, tableName);
-				}
-
-				foreach (var row in modifiedRows)
-				{
-					UpdateRow(row, connection, transaction, tableName);
+					cmd.ExecuteNonQuery();
 				}
 
 				transaction.Commit();
@@ -317,6 +354,30 @@ namespace SqlServerWorkspace.Data
 			{
 				throw;
 			}
+		}
+
+		public string GetMergeQuery(string tableName)
+		{
+			var table = GetTableInfo(tableName);
+			var primaryKeyNames = GetTablePrimaryKeyNames(tableName);
+			var columnNames = table.Columns.Select(x => x.Name);
+			var nonKeyColumnNames = columnNames.Except(primaryKeyNames);
+			var columnNameSequence = string.Join(", ", columnNames);
+			var columnNameAlphaSequence = string.Join(", ", columnNames.Select(x => $"@{x}"));
+			var targetPrimaryKeyNames = string.Join(" and ", primaryKeyNames.Select(x => $"target.{x} = @{x}"));
+			var updateSetNonKeyColumnNames = string.Join(", ", nonKeyColumnNames.Select(x => $"{x} = @{x}"));
+			var builder = new StringBuilder();
+			builder.AppendLine($"MERGE {tableName} AS target");
+			builder.AppendLine($"USING ( VALUES ( {columnNameAlphaSequence} ) ) AS source ( {columnNameSequence} )");
+			builder.AppendLine($"ON ( {targetPrimaryKeyNames} )");
+			builder.AppendLine($"WHEN MATCHED THEN");
+			builder.AppendLine($"UPDATE SET");
+			builder.AppendLine($"{updateSetNonKeyColumnNames}");
+			builder.AppendLine($"WHEN NOT MATCHED THEN");
+			builder.AppendLine($"INSERT ( {columnNameSequence} )");
+			builder.AppendLine($"VALUES ( {columnNameAlphaSequence} );");
+
+			return builder.ToString();
 		}
 
 		public string GetObject(string objectName)

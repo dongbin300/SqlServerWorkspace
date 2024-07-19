@@ -1,15 +1,13 @@
-﻿using Microsoft.Web.WebView2.Wpf;
-
-using SqlServerWorkspace.DataModels;
+﻿using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
 
+using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Threading;
-using System.Drawing;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace SqlServerWorkspace
 {
@@ -306,5 +304,6 @@ namespace SqlServerWorkspace
 			}
 		}
 		#endregion
-	}
+
+    }
 }

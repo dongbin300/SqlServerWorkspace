@@ -16,37 +16,43 @@ namespace SqlServerWorkspace.Extensions
 
 			foreach (var column in dataGrid.Columns)
 			{
-				if (column is DataGridTextColumn textColumn)
+				if (column is DataGridColumn dataGridColumn)
 				{
-					dataTable.Columns.Add(textColumn.Header.ToString(), typeof(string));
+					var columnName = dataGridColumn.Header.ToString()?.Split(Environment.NewLine)[0];
+					dataTable.Columns.Add(columnName, typeof(string));
 				}
 			}
 
-			for (var i = 0; i < dataGrid.Items.Count; i++)
+			foreach(var item in dataGrid.Items)
 			{
-				if (dataGrid.Items[i] is not DataRowView item)
+				if (item is not DataRowView row)
 				{
 					continue;
 				}
 
-				DataRow row = dataTable.NewRow();
+				DataRow newRow = dataTable.NewRow();
 				foreach (var column in dataGrid.Columns)
 				{
-					if (column is DataGridTextColumn textColumn)
+					if (column is DataGridColumn dataGridColumn)
 					{
-						var columnName = textColumn.Header.ToString();
+						var columnName = dataGridColumn.Header.ToString()?.Split(Environment.NewLine)[0];
 						if (string.IsNullOrEmpty(columnName))
 						{
 							continue;
 						}
 
-						var value = item[columnName];
-						row[columnName] = value ?? DBNull.Value;
+						var value = row[columnName];
+
+						if (value is DateTime dateTime)
+						{
+							value = dateTime.ToString("yyyy-MM-dd HH:mm:ss");
+						}
+
+						newRow[columnName] = value ?? DBNull.Value;
 					}
 				}
-				dataTable.Rows.Add(row);
+				dataTable.Rows.Add(newRow);
 			}
-
 			return dataTable;
 		}
 	}

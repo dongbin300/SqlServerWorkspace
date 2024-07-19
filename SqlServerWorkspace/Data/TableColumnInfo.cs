@@ -9,5 +9,7 @@ namespace SqlServerWorkspace.Data
 		public SqlDbType TrueType => (SqlDbType)Enum.Parse(typeof(SqlDbType), Type);
 		public string Length { get; set; } = length;
 		public int TrueLength => int.Parse(Length);
+
+		public string ToTypeString() => string.IsNullOrEmpty(Length) ? Type : $"{Type}({Length})";
 	}
 }
