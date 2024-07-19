@@ -127,17 +127,19 @@ namespace SqlServerWorkspace
 		{
 			try
 			{
-				tableTitleNode.Children.Clear();
+				var databaseName = tableTitleNode.GetParentName();
+				var parentNode = manager.Nodes[0].Children.First(x => x.Name.Equals(databaseName)).Children.First(x => x.Name.Equals(tableTitleNode.Name));
+				manager.Database = databaseName;
 
-				manager.Database = tableTitleNode.GetParentName();
+				parentNode.Children.Clear();
 				var tableNames = manager.SelectTableNames();
 				foreach (var tableName in tableNames)
 				{
-					var node = new TreeNode(tableName, TreeNodeType.TableNode, tableTitleNode.Path.CombinePath(tableName), ResourceManager.TableIcon, ResourceManager.TableIconColor);
-					tableTitleNode.Children.Add(node);
+					var node = new TreeNode(tableName, TreeNodeType.TableNode, parentNode.Path.CombinePath(tableName), ResourceManager.TableIcon, ResourceManager.TableIconColor);
+					parentNode.Children.Add(node);
 				}
 
-				tableTitleNode.IsExpanded = true;
+				parentNode.IsExpanded = true;
 			}
 			catch (Exception ex)
 			{
@@ -149,17 +151,19 @@ namespace SqlServerWorkspace
 		{
 			try
 			{
-				viewTitleNode.Children.Clear();
+				var databaseName = viewTitleNode.GetParentName();
+				var parentNode = manager.Nodes[0].Children.First(x => x.Name.Equals(databaseName)).Children.First(x => x.Name.Equals(viewTitleNode.Name));
+				manager.Database = databaseName;
 
-				manager.Database = viewTitleNode.GetParentName();
+				parentNode.Children.Clear();
 				var viewNames = manager.SelectViewNames();
 				foreach (var viewName in viewNames)
 				{
-					var node = new TreeNode(viewName, TreeNodeType.ViewNode, viewTitleNode.Path.CombinePath(viewName), ResourceManager.ViewIcon, ResourceManager.ViewIconColor);
-					viewTitleNode.Children.Add(node);
+					var node = new TreeNode(viewName, TreeNodeType.ViewNode, parentNode.Path.CombinePath(viewName), ResourceManager.ViewIcon, ResourceManager.ViewIconColor);
+					parentNode.Children.Add(node);
 				}
 
-				viewTitleNode.IsExpanded = true;
+				parentNode.IsExpanded = true;
 			}
 			catch (Exception ex)
 			{
@@ -171,17 +175,19 @@ namespace SqlServerWorkspace
 		{
 			try
 			{
-				functionTitleNode.Children.Clear();
+				var databaseName = functionTitleNode.GetParentName();
+				var parentNode = manager.Nodes[0].Children.First(x => x.Name.Equals(databaseName)).Children.First(x => x.Name.Equals(functionTitleNode.Name));
+				manager.Database = databaseName;
 
-				manager.Database = functionTitleNode.GetParentName();
+				parentNode.Children.Clear();
 				var functionNames = manager.SelectFunctionNames();
 				foreach (var functionName in functionNames)
 				{
-					var node = new TreeNode(functionName, TreeNodeType.FunctionNode, functionTitleNode.Path.CombinePath(functionName), ResourceManager.FunctionIcon, ResourceManager.FunctionIconColor);
-					functionTitleNode.Children.Add(node);
+					var node = new TreeNode(functionName, TreeNodeType.FunctionNode, parentNode.Path.CombinePath(functionName), ResourceManager.FunctionIcon, ResourceManager.FunctionIconColor);
+					parentNode.Children.Add(node);
 				}
 
-				functionTitleNode.IsExpanded = true;
+				parentNode.IsExpanded = true;
 			}
 			catch (Exception ex)
 			{
@@ -193,17 +199,19 @@ namespace SqlServerWorkspace
 		{
 			try
 			{
-				procedureTitleNode.Children.Clear();
+				var databaseName = procedureTitleNode.GetParentName();
+				var parentNode = manager.Nodes[0].Children.First(x => x.Name.Equals(databaseName)).Children.First(x => x.Name.Equals(procedureTitleNode.Name));
+				manager.Database = databaseName;
 
-				manager.Database = procedureTitleNode.GetParentName();
+				parentNode.Children.Clear();
 				var procedureNames = manager.SelectProcedureNames();
 				foreach (var procedureName in procedureNames)
 				{
-					var node = new TreeNode(procedureName, TreeNodeType.ProcedureNode, procedureTitleNode.Path.CombinePath(procedureName), ResourceManager.ProcedureIcon, ResourceManager.ProcedureIconColor);
-					procedureTitleNode.Children.Add(node);
+					var node = new TreeNode(procedureName, TreeNodeType.ProcedureNode, parentNode.Path.CombinePath(procedureName), ResourceManager.ProcedureIcon, ResourceManager.ProcedureIconColor);
+					parentNode.Children.Add(node);
 				}
 
-				procedureTitleNode.IsExpanded = true;
+				parentNode.IsExpanded = true;
 			}
 			catch (Exception ex)
 			{

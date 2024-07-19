@@ -108,7 +108,7 @@
                     <dock:LayoutPanel Orientation="Horizontal">
                         <!-- 1. LEFT-SIDE DATABASE HIERARCHY TREE VIEW -->
                         <dock:LayoutAnchorablePane Name="DatabasePane" DockWidth="300">
-                            <dock:LayoutAnchorable>
+                            <dock:LayoutAnchorable Title="Object Explorer">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="24"/>
@@ -145,7 +145,7 @@
 
                             <!-- 3. STATUS PANEL -->
                             <dock:LayoutAnchorablePane DockHeight="200" >
-                                <dock:LayoutAnchorable>
+                                <dock:LayoutAnchorable Title="Logs">
                                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                                         <Grid>
                                             <TextBlock x:Name="StatusTextBlock" Text="{Binding StatusText}" Style="{StaticResource StatusText}"/>
