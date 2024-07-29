@@ -136,14 +136,14 @@ namespace SqlServerWorkspace
 				case ContextMenuFunction.Rename:
 					{
 						var originalName = node.Name;
-						var renameView = new RenameView
+						var renameView = new NameView
 						{
 							Owner = Common.MainWindow,
-							RenameText = originalName
+							NameText = originalName
 						};
 						if (renameView.ShowDialog() ?? false)
 						{
-							var newName = renameView.RenameText;
+							var newName = renameView.NameText;
 							var result = manager.Rename(originalName, newName);
 							if (!string.IsNullOrEmpty(result))
 							{
@@ -175,14 +175,14 @@ namespace SqlServerWorkspace
 				case ContextMenuFunction.Rename:
 					{
 						var originalName = node.Name;
-						var renameView = new RenameView
+						var renameView = new NameView
 						{
 							Owner = Common.MainWindow,
-							RenameText = originalName
+							NameText = originalName
 						};
 						if (renameView.ShowDialog() ?? false)
 						{
-							var newName = renameView.RenameText;
+							var newName = renameView.NameText;
 							var result = manager.Rename(originalName, newName);
 							if (!string.IsNullOrEmpty(result))
 							{
@@ -214,14 +214,14 @@ namespace SqlServerWorkspace
 				case ContextMenuFunction.Rename:
 					{
 						var originalName = node.Name;
-						var renameView = new RenameView
+						var renameView = new NameView
 						{
 							Owner = Common.MainWindow,
-							RenameText = originalName
+							NameText = originalName
 						};
 						if (renameView.ShowDialog() ?? false)
 						{
-							var newName = renameView.RenameText;
+							var newName = renameView.NameText;
 							var result = manager.Rename(originalName, newName);
 							if (!string.IsNullOrEmpty(result))
 							{
@@ -253,14 +253,14 @@ namespace SqlServerWorkspace
 				case ContextMenuFunction.Rename:
 					{
 						var originalName = node.Name;
-						var renameView = new RenameView
+						var renameView = new NameView
 						{
 							Owner = Common.MainWindow,
-							RenameText = originalName
+							NameText = originalName
 						};
 						if (renameView.ShowDialog() ?? false)
 						{
-							var newName = renameView.RenameText;
+							var newName = renameView.NameText;
 							var result = manager.Rename(originalName, newName);
 							if (!string.IsNullOrEmpty(result))
 							{

@@ -3,27 +3,27 @@
 namespace SqlServerWorkspace.Views
 {
 	/// <summary>
-	/// RenameView.xaml에 대한 상호 작용 논리
+	/// NameView.xaml에 대한 상호 작용 논리
 	/// </summary>
-	public partial class RenameView : Window
+	public partial class NameView : Window
 	{
-		public string RenameText = string.Empty;
+		public string NameText = string.Empty;
 
-		public RenameView()
+		public NameView()
 		{
 			InitializeComponent();
 		}
 
 		private void Window_Loaded(object sender, RoutedEventArgs e)
 		{
-			RenameTextBox.Text = RenameText;
-			RenameTextBox.Focus();
-			RenameTextBox.SelectAll();
+			NameTextBox.Text = NameText;
+			NameTextBox.Focus();
+			NameTextBox.SelectAll();
 		}
 
 		private void OkButton_Click(object sender, RoutedEventArgs e)
 		{
-			RenameText = RenameTextBox.Text;
+			NameText = NameTextBox.Text;
 
 			DialogResult = true;
 			Close();
@@ -35,7 +35,7 @@ namespace SqlServerWorkspace.Views
 			Close();
 		}
 
-		private void RenameTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+		private void NameTextBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
 		{
 			if (e.Key == System.Windows.Input.Key.Enter)
 			{

@@ -6,11 +6,13 @@ using Microsoft.Web.WebView2.Wpf;
 using SqlServerWorkspace.Data;
 using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
+using SqlServerWorkspace.Extensions;
 using SqlServerWorkspace.Views.Controls;
 
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace SqlServerWorkspace
@@ -97,12 +99,58 @@ namespace SqlServerWorkspace
 								var selectedText = await webView.GetSelectedText();
 								var text = string.IsNullOrEmpty(selectedText) ? await webView.GetEditorText() : selectedText;
 								text = text.Replace("\n", "\r\n");
-								var result = manager.Execute(text);
-								if (!string.IsNullOrEmpty(result))
+
+								if (text.Split(' ')[0].Equals("exec", StringComparison.OrdinalIgnoreCase))
 								{
-									Common.Log(result, LogType.Error);
-									break;
+									var execText = text[(text.IndexOf("exec", StringComparison.OrdinalIgnoreCase) + 4)..].Trim();
+									var table = manager.ExecuteStoredProcedure(execText);
+
+									var mainWindowStatusPanel = ((MainWindow)Common.MainWindow).StatusPanel;
+									var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == "SPER");
+
+									if (anchorables.Any())
+									{
+										var anchorable = anchorables.First();
+										var dataGrid = new DataGrid()
+										{
+											Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+											ItemsSource = table.DefaultView
+										};
+										dataGrid.FillSqlDataTableSimple(table);
+
+										anchorable.Content = dataGrid;
+									}
+									else
+									{
+										var tablePanel = new LayoutAnchorable()
+										{
+											ContentId = "SPER",
+											Title = "Stored Procedure Execute Result"
+										};
+										var dataGrid = new DataGrid()
+										{
+											Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+											ItemsSource = table.DefaultView
+										};
+										dataGrid.FillSqlDataTableSimple(table);
+
+										tablePanel.Content = dataGrid;
+										mainWindowStatusPanel.Children.Add(tablePanel);
+									}
+
+									var anchorable2 = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().First(a => a.ContentId == "SPER");
+									mainWindowStatusPanel.SelectedContentIndex = mainWindowStatusPanel.Children.IndexOf(anchorable2);
 								}
+								else
+								{
+									var result = manager.Execute(text);
+									if (!string.IsNullOrEmpty(result))
+									{
+										Common.Log(result, LogType.Error);
+										break;
+									}
+								}
+
 								Common.Log("Run Complete", LogType.Success);
 								break;
 

@@ -7,7 +7,6 @@ using SqlServerWorkspace.Extensions;
 using System.Data;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 
 namespace SqlServerWorkspace.Views.Controls
@@ -45,83 +44,7 @@ namespace SqlServerWorkspace.Views.Controls
 				TableDataGrid.ItemsSource = table.DefaultView;
 				var tableInfo = Manager.GetTableInfo(SelectTableName);
 
-				foreach (DataColumn column in table.Columns)
-				{
-					var binding = new Binding(column.ColumnName)
-					{
-						//Converter = (IValueConverter)Application.Current.FindResource("DBNullToNullStringConverter")
-					};
-
-					if (column.DataType == typeof(DateTime))
-					{
-						binding.StringFormat = "yyyy-MM-dd HH:mm:ss";
-					}
-
-					var dataGridColumn = new DataGridTextColumn
-					{
-						Header = new string[] { column.ColumnName, tableInfo.Columns.First(x => x.Name.Equals(column.ColumnName)).ToTypeString() },
-						Binding = binding
-					};
-
-					//var cellStyle = new Style(typeof(DataGridCell));
-					//cellStyle.Setters.Add(new Setter(DataGridCell.BackgroundProperty, new SolidColorBrush(Color.FromRgb(63, 63, 63))));
-					//cellStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, Brushes.White));
-					//cellStyle.Setters.Add(new Setter(DataGridCell.BorderBrushProperty, Brushes.Transparent));
-					//cellStyle.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(0)));
-
-					//cellStyle.Triggers.Add(new DataTrigger
-					//{
-					//	Binding = new Binding("IsSelected") { RelativeSource = new RelativeSource(RelativeSourceMode.Self) },
-					//	Value = true,
-					//	Setters =
-					//	{
-					//		new Setter(DataGridCell.BackgroundProperty, new SolidColorBrush(Color.FromRgb(49, 49, 49))),
-					//		new Setter(DataGridCell.ForegroundProperty, Brushes.White)
-					//	}
-					//});
-
-					//dataGrid.CellStyle = cellStyle;
-
-					//var templateColumn = new DataGridTemplateColumn
-					//{
-					//	Header = column.ColumnName
-					//};
-
-					//var cellTemplate = new DataTemplate();
-					//var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-					//textBlockFactory.SetBinding(TextBlock.TextProperty, new Binding(column.ColumnName));
-					//textBlockFactory.SetValue(TextBlock.BackgroundProperty, new SolidColorBrush(Colors.Transparent));
-					//textBlockFactory.SetValue(TextBlock.ForegroundProperty, Brushes.White);
-					//cellTemplate.VisualTree = textBlockFactory;
-
-					//var editingTemplate = new DataTemplate();
-					//var textBoxFactory = new FrameworkElementFactory(typeof(TextBox));
-					//textBoxFactory.SetBinding(TextBox.TextProperty, new Binding(column.ColumnName) { Mode = BindingMode.TwoWay });
-					//textBoxFactory.SetValue(BackgroundProperty, new SolidColorBrush(Colors.Transparent));
-					//textBoxFactory.SetValue(ForegroundProperty, Brushes.White);
-					//textBoxFactory.SetValue(BorderBrushProperty, Brushes.Transparent);
-					//textBoxFactory.SetValue(BorderThicknessProperty, new Thickness(0));
-					//textBoxFactory.SetValue(HorizontalContentAlignmentProperty, HorizontalAlignment.Center);
-					//textBoxFactory.SetValue(VerticalAlignmentProperty, VerticalAlignment.Center);
-					//editingTemplate.VisualTree = textBoxFactory;
-
-					//templateColumn.CellTemplate = cellTemplate;
-					//templateColumn.CellEditingTemplate = editingTemplate;
-
-					//TableDataGrid.Columns.Add(templateColumn);
-					TableDataGrid.Columns.Add(dataGridColumn);
-				}
-
-				//var rowNumberColumn = new DataGridTextColumn
-				//{
-				//	Header = "#",
-				//	Binding = new Binding
-				//	{
-				//		Path = new PropertyPath("Items.IndexOf"),
-				//		RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor) { AncestorType = typeof(DataGridRow) }
-				//	}
-				//};
-				//dataGrid.Columns.Insert(0, rowNumberColumn);
+				TableDataGrid.FillSqlDataTable(table, tableInfo);
 
 				Common.Log($"{query}", LogType.Info);
 			}
@@ -161,10 +84,34 @@ namespace SqlServerWorkspace.Views.Controls
 		private async void MergeButton_Click(object sender, RoutedEventArgs e)
 		{
 			var mergeQuery = Manager.GetMergeQuery(SelectTableName);
-
 			await WebView.AppendEditorText($"{Environment.NewLine}{mergeQuery}");
 
 			Common.Log($"{SelectTableName} MERGE", LogType.Info);
+		}
+
+		private async void CreateButton_Click(object sender, RoutedEventArgs e)
+		{
+			var createTableQuery = Manager.GetCreateTableQuery(SelectTableName);
+			await WebView.AppendEditorText($"{Environment.NewLine}{createTableQuery}");
+
+			Common.Log($"{SelectTableName} CREATE", LogType.Info);
+		}
+
+		private async void CopyButton_Click(object sender, RoutedEventArgs e)
+		{
+			var inputTableNameView = new NameView
+			{
+				Owner = Common.MainWindow,
+				NameText = ""
+			};
+			if (inputTableNameView.ShowDialog() ?? false)
+			{
+				var destinationTableName = inputTableNameView.NameText;
+				var copyDataQuery = Manager.GetCopyDataQuery(SelectTableName, destinationTableName);
+				await WebView.AppendEditorText($"{Environment.NewLine}{copyDataQuery}");
+
+				Common.Log($"{SelectTableName} -> {destinationTableName} COPY", LogType.Info);
+			}
 		}
 
 		private async void WebView_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)

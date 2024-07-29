@@ -19,7 +19,7 @@
             <!-- DataTemplate for TreeNode -->
             <HierarchicalDataTemplate DataType="{x:Type DataModel:TreeNode}" ItemsSource="{Binding Children}">
                 <StackPanel Orientation="Horizontal">
-                    <Path Data="{Binding SvgData}" Width="16" Height="16" StrokeThickness="1" Stretch="Uniform" Margin="0,0,3,0"
+                    <Path Data="{Binding SvgData}" Width="20" Height="20" StrokeThickness="1" Stretch="Uniform" Margin="0,0,3,0"
                       Stroke="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}"
                       Fill="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}"/>
                     <TextBlock Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
@@ -58,7 +58,7 @@
                                                 <Path Name="ExpandCollapseImage" Width="16" Height="16" Data="" Stroke="{StaticResource DarkForeground}" StrokeThickness="1"/>
                                             </ToggleButton.Content>
                                         </ToggleButton>
-                                        <ContentPresenter Grid.Column="1" ContentSource="Header" />
+                                        <ContentPresenter Grid.Column="1" ContentSource="Header" Height="22" />
                                     </Grid>
                                 </Border>
                                 <ItemsPresenter Visibility="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource btv}}"
@@ -144,7 +144,7 @@
                             </dock:LayoutDocumentPaneGroup>
 
                             <!-- 3. STATUS PANEL -->
-                            <dock:LayoutAnchorablePane DockHeight="200" >
+                            <dock:LayoutAnchorablePane x:Name="StatusPanel" DockHeight="240" >
                                 <dock:LayoutAnchorable Title="Logs">
                                     <ScrollViewer x:Name="StatusTextScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                                         <Grid>

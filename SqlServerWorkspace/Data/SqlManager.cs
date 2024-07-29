@@ -21,6 +21,7 @@ namespace SqlServerWorkspace.Data
 		[JsonIgnore]
 		public List<TreeNode> Nodes { get; set; } = [];
 
+		#region Base SQL Query
 		public string GetConnectionString()
 		{
 			var _connectionString = string.Empty;
@@ -122,7 +123,7 @@ namespace SqlServerWorkspace.Data
 		public string Insert(string tableName, IEnumerable<string> columns, IEnumerable<IEnumerable<string>> values)
 		{
 			var builder = new StringBuilder();
-			foreach(var row in values)
+			foreach (var row in values)
 			{
 				builder.AppendJoin(',', $"({string.Join(',', row)})");
 			}
@@ -130,61 +131,32 @@ namespace SqlServerWorkspace.Data
 
 			return Insert(query);
 		}
+		#endregion
 
-		private void InsertRow(DataRow row, SqlConnection connection, SqlTransaction transaction, string tableName)
+		#region Execute SQL Object
+		public DataTable ExecuteStoredProcedure(string procedureName)
 		{
-			var columns = row.Table.Columns.Cast<DataColumn>().Select(c => c.ColumnName).ToArray();
-			var values = columns.Select(c => $"@{c}").ToArray();
+			var dataTable = new DataTable();
 
-			var commandText = $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", values)})";
-			var command = new SqlCommand(commandText, connection, transaction);
-
-			foreach (var column in columns)
+			using (var connection = new SqlConnection(GetConnectionString()))
 			{
-				var value = row[column];
-				command.Parameters.AddWithValue($"@{column}", value);
+				using var command = new SqlCommand(procedureName, connection);
+				command.CommandType = CommandType.StoredProcedure;
+
+				using var adapter = new SqlDataAdapter(command);
+				connection.Open();
+				adapter.Fill(dataTable);
 			}
 
-			command.ExecuteNonQuery();
+			return dataTable;
 		}
 
-		private void DeleteRow(DataRow row, SqlConnection connection, SqlTransaction transaction, string tableName)
+		public string Rename(string source, string destination)
 		{
-			var primaryKeyColumns = row.Table.PrimaryKey.Select(c => c.ColumnName).ToArray();
-			var whereClause = string.Join(" AND ", primaryKeyColumns.Select(c => $"{c} = @{c}"));
-
-			var commandText = $"DELETE FROM {tableName} WHERE {whereClause}";
-			var command = new SqlCommand(commandText, connection, transaction);
-
-			foreach (var column in primaryKeyColumns)
-			{
-				var value = row[column];
-				command.Parameters.AddWithValue($"@{column}", value);
-			}
-
-			command.ExecuteNonQuery();
+			return Execute($"EXEC sp_rename '{source}', '{destination}'");
 		}
 
-		private void UpdateRow(DataRow row, SqlConnection connection, SqlTransaction transaction, string tableName)
-		{
-			var columns = row.Table.Columns.Cast<DataColumn>().Select(c => c.ColumnName).ToArray();
-			var primaryKeyColumns = row.Table.PrimaryKey.Select(c => c.ColumnName).ToArray();
-
-			var setClause = string.Join(", ", columns.Where(c => !primaryKeyColumns.Contains(c)).Select(c => $"{c} = @{c}"));
-			var whereClause = string.Join(" AND ", primaryKeyColumns.Select(c => $"{c} = @{c}"));
-
-			var commandText = $"UPDATE {tableName} SET {setClause} WHERE {whereClause}";
-			var command = new SqlCommand(commandText, connection, transaction);
-
-			foreach (var column in columns)
-			{
-				var value = row[column];
-				command.Parameters.AddWithValue($"@{column}", value);
-			}
-
-			command.ExecuteNonQuery();
-		}
-
+		#region Transaction
 		public string TableTransaction(string tableName, DataTable originalTable, DataTable modifiedTable)
 		{
 			var table = GetTableInfo(tableName);
@@ -254,35 +226,22 @@ namespace SqlServerWorkspace.Data
 				return ex.Message;
 			}
 		}
+		#endregion
+		#endregion
 
-		public string Rename(string source, string destination)
-		{
-			return Execute($"EXEC sp_rename '{source}', '{destination}'");
-		}
+		#region Select SQL Object
 
+		#region Database
 		public IEnumerable<string> SelectDatabaseNames()
 		{
 			return Select("name", "sys.databases", "", "name").Field("name");
 		}
+		#endregion
 
+		#region Table
 		public IEnumerable<string> SelectTableNames()
 		{
 			return Select("table_name", "INFORMATION_SCHEMA.TABLES", "TABLE_TYPE = 'BASE TABLE'", "table_name").Field("table_name");
-		}
-
-		public IEnumerable<string> SelectViewNames()
-		{
-			return Select("table_name", "INFORMATION_SCHEMA.VIEWS").Field("table_name");
-		}
-
-		public IEnumerable<string> SelectFunctionNames()
-		{
-			return Select("name", "sys.objects", "type IN ('FN', 'IF', 'TF', 'FS', 'FT')", "name").Field("name");
-		}
-
-		public IEnumerable<string> SelectProcedureNames()
-		{
-			return Select("routine_name", "INFORMATION_SCHEMA.ROUTINES", "ROUTINE_TYPE = 'PROCEDURE'", "routine_name").Field("routine_name");
 		}
 
 		public TableInfo GetTableInfo(string tableName)
@@ -290,12 +249,14 @@ namespace SqlServerWorkspace.Data
 			using var connection = new SqlConnection(GetConnectionString());
 			string query = $"SELECT TABLE_NAME, TABLE_CATALOG, TABLE_SCHEMA, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{tableName}'";
 			var command = new SqlCommand(query, connection);
+			string query2 = $"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1 AND TABLE_NAME = '{tableName}'";
+			var command2 = new SqlCommand(query2, connection);
 
 			try
 			{
 				connection.Open();
-				var reader = command.ExecuteReader();
 
+				var reader = command.ExecuteReader();
 				var columns = new List<TableColumnInfo>();
 				var _tableName = string.Empty;
 				var tableCatalog = string.Empty;
@@ -313,6 +274,26 @@ namespace SqlServerWorkspace.Data
 					columns.Add(new TableColumnInfo(columnName, dataType, maxLength));
 				}
 				reader.Close();
+
+				var reader2 = command2.ExecuteReader();
+				while (reader2.Read())
+				{
+					var value = reader2["COLUMN_NAME"].ToString();
+					if (string.IsNullOrEmpty(value))
+					{
+						continue;
+					}
+
+					var column = columns.Find(x => x.Name.Equals(value));
+					if (column == null)
+					{
+						continue;
+					}
+
+					column.IsKey = true;
+				}
+				reader2.Close();
+
 				var tableInfo = new TableInfo(_tableName, tableCatalog, tableSchema, columns);
 
 				return tableInfo;
@@ -355,31 +336,30 @@ namespace SqlServerWorkspace.Data
 				throw;
 			}
 		}
+		#endregion
 
-		public string GetMergeQuery(string tableName)
+		#region View
+		public IEnumerable<string> SelectViewNames()
 		{
-			var table = GetTableInfo(tableName);
-			var primaryKeyNames = GetTablePrimaryKeyNames(tableName);
-			var columnNames = table.Columns.Select(x => x.Name);
-			var nonKeyColumnNames = columnNames.Except(primaryKeyNames);
-			var columnNameSequence = string.Join(", ", columnNames);
-			var columnNameAlphaSequence = string.Join(", ", columnNames.Select(x => $"@{x}"));
-			var targetPrimaryKeyNames = string.Join(" and ", primaryKeyNames.Select(x => $"target.{x} = @{x}"));
-			var updateSetNonKeyColumnNames = string.Join(", ", nonKeyColumnNames.Select(x => $"{x} = @{x}"));
-			var builder = new StringBuilder();
-			builder.AppendLine($"MERGE {tableName} AS target");
-			builder.AppendLine($"USING ( VALUES ( {columnNameAlphaSequence} ) ) AS source ( {columnNameSequence} )");
-			builder.AppendLine($"ON ( {targetPrimaryKeyNames} )");
-			builder.AppendLine($"WHEN MATCHED THEN");
-			builder.AppendLine($"UPDATE SET");
-			builder.AppendLine($"{updateSetNonKeyColumnNames}");
-			builder.AppendLine($"WHEN NOT MATCHED THEN");
-			builder.AppendLine($"INSERT ( {columnNameSequence} )");
-			builder.AppendLine($"VALUES ( {columnNameAlphaSequence} );");
-
-			return builder.ToString();
+			return Select("table_name", "INFORMATION_SCHEMA.VIEWS").Field("table_name");
 		}
+		#endregion
 
+		#region Function
+		public IEnumerable<string> SelectFunctionNames()
+		{
+			return Select("name", "sys.objects", "type IN ('FN', 'IF', 'TF', 'FS', 'FT')", "name").Field("name");
+		}
+		#endregion
+
+		#region Procedure
+		public IEnumerable<string> SelectProcedureNames()
+		{
+			return Select("routine_name", "INFORMATION_SCHEMA.ROUTINES", "ROUTINE_TYPE = 'PROCEDURE'", "routine_name").Field("routine_name");
+		}
+		#endregion
+
+		#region Object
 		public string GetObject(string objectName)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
@@ -403,7 +383,9 @@ namespace SqlServerWorkspace.Data
 				throw;
 			}
 		}
+		#endregion
 
+		#region Etc
 		public IEnumerable<string> GetRecentlyModifiedItems(string periodHour)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
@@ -426,5 +408,75 @@ namespace SqlServerWorkspace.Data
 				throw;
 			}
 		}
+		#endregion
+
+		#endregion
+
+		#region Query Generate
+		public string GetMergeQuery(string tableName)
+		{
+			var table = GetTableInfo(tableName);
+			var primaryKeyNames = GetTablePrimaryKeyNames(tableName);
+			var columnNames = table.Columns.Select(x => x.Name);
+			var nonKeyColumnNames = columnNames.Except(primaryKeyNames);
+			var columnNameSequence = string.Join(", ", columnNames);
+			var columnNameAlphaSequence = string.Join(", ", columnNames.Select(x => $"@{x}"));
+			var targetPrimaryKeyNames = string.Join(" and ", primaryKeyNames.Select(x => $"target.{x} = @{x}"));
+			var updateSetNonKeyColumnNames = string.Join(", ", nonKeyColumnNames.Select(x => $"{x} = @{x}"));
+
+			var builder = new StringBuilder();
+			builder.AppendLine($"MERGE {tableName} AS target");
+			builder.AppendLine($"USING ( VALUES ( {columnNameAlphaSequence} ) ) AS source ( {columnNameSequence} )");
+			builder.AppendLine($"ON ( {targetPrimaryKeyNames} )");
+			builder.AppendLine($"WHEN MATCHED THEN");
+			builder.AppendLine($"UPDATE SET");
+			builder.AppendLine($"{updateSetNonKeyColumnNames}");
+			builder.AppendLine($"WHEN NOT MATCHED THEN");
+			builder.AppendLine($"INSERT ( {columnNameSequence} )");
+			builder.AppendLine($"VALUES ( {columnNameAlphaSequence} );");
+
+			return builder.ToString();
+		}
+
+		public string GetCreateTableQuery(string tableName)
+		{
+			var table = GetTableInfo(tableName);
+			var primaryKeyConstraints = string.Join(',', table.Columns.Where(x => x.IsKey).Select(x => $"{x.Name} ASC"));
+
+			var builder = new StringBuilder();
+			builder.AppendLine($"CREATE TABLE {tableName}");
+			builder.AppendLine("(");
+			foreach (var column in table.Columns)
+			{
+				builder.AppendLine($"{column.Name} {column.ToTypeString()} {(column.IsKey ? "NOT NULL" : "NULL")},");
+			}
+			builder.AppendLine(")");
+			builder.AppendLine("go");
+			builder.AppendLine();
+			builder.AppendLine($"ALTER TABLE {tableName}");
+			builder.AppendLine($"ADD CONSTRAINT XPK_{tableName} PRIMARY KEY NONCLUSTERED (");
+			builder.AppendLine($"{primaryKeyConstraints}");
+			builder.AppendLine(")");
+			builder.AppendLine("go");
+
+			return builder.ToString();
+		}
+
+		public string GetCopyDataQuery(string sourceTableName, string destinationTableName)
+		{
+			var sourceTable = GetTableInfo(sourceTableName);
+			var destinationTable = GetTableInfo(destinationTableName);
+			var sourceTableColumnNameSequence = string.Join(',', sourceTable.Columns.Select(x => x.Name));
+			var destinationTableColumnNameSequence = string.Join(',', destinationTable.Columns.Select(x => x.Name));
+
+			var builder = new StringBuilder();
+			builder.AppendLine($"INSERT INTO {destinationTableName}");
+			builder.AppendLine($"({destinationTableColumnNameSequence})");
+			builder.AppendLine($"SELECT {sourceTableColumnNameSequence}");
+			builder.AppendLine($"FROM {sourceTableName}");
+
+			return builder.ToString();
+		}
+		#endregion
 	}
 }

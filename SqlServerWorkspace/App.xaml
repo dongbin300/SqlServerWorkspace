@@ -273,8 +273,8 @@
             <Setter Property="Background" Value="{StaticResource DarkBackground}"/>
             <Setter Property="RowBackground" Value="{StaticResource DarkBackground}"/>
             <Setter Property="Foreground" Value="{StaticResource DarkForeground}"/>
-            <Setter Property="SelectionUnit" Value="Cell" />
-            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="SelectionUnit" Value="CellOrRowHeader" />
+            <Setter Property="HeadersVisibility" Value="All"/>
             <Setter Property="HorizontalGridLinesBrush" Value="#565656" />
             <Setter Property="VerticalGridLinesBrush" Value="#565656" />
             <Setter Property="RowHeight" Value="30"/>
@@ -282,10 +282,21 @@
             <Setter Property="CanUserDeleteRows" Value="True"/>
             <Setter Property="AutoGenerateColumns" Value="False"/>
             <Setter Property="IsReadOnly" Value="False"/>
+            <Setter Property="RowHeaderWidth" Value="40"/>
+            <Setter Property="RowHeaderStyle">
+                <Setter.Value>
+                    <Style TargetType="{x:Type DataGridRowHeader}">
+                        <Setter Property="Background" Value="#1F1F1F" />
+                        <Setter Property="Foreground" Value="{StaticResource DarkForeground}" />
+                        <Setter Property="BorderBrush" Value="#565656" />
+                        <Setter Property="BorderThickness" Value="0,0,0,1" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
             <Setter Property="ColumnHeaderStyle">
                 <Setter.Value>
                     <Style TargetType="{x:Type DataGridColumnHeader}">
-                        <Setter Property="Background" Value="#272727"/>
+                        <Setter Property="Background" Value="#1F1F1F"/>
                         <Setter Property="Foreground" Value="{StaticResource DarkForeground}"/>
                         <Setter Property="HorizontalContentAlignment" Value="Center"/>
                         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -311,7 +322,7 @@
             <Setter Property="CellStyle">
                 <Setter.Value>
                     <Style TargetType="{x:Type DataGridCell}">
-                        <Setter Property="Background" Value="#3F3F3F" />
+                        <Setter Property="Background" Value="#282828" />
                         <Setter Property="Foreground" Value="{StaticResource DarkForeground}"/>
                         <Setter Property="BorderBrush" Value="Transparent" />
                         <Setter Property="BorderThickness" Value="0" />
@@ -328,7 +339,62 @@
                         </Setter>
                         <Style.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#313131"/>
+                                <Setter Property="Background" Value="#121212"/>
+                                <Setter Property="Foreground" Value="{StaticResource DarkForeground}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type DataGrid}" x:Key="DarkDataGridSimple">
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
+            <Setter Property="Background" Value="{StaticResource DarkBackground}"/>
+            <Setter Property="RowBackground" Value="{StaticResource DarkBackground}"/>
+            <Setter Property="Foreground" Value="{StaticResource DarkForeground}"/>
+            <Setter Property="SelectionUnit" Value="CellOrRowHeader" />
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#565656" />
+            <Setter Property="VerticalGridLinesBrush" Value="#565656" />
+            <Setter Property="RowHeight" Value="30"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="ColumnHeaderStyle">
+                <Setter.Value>
+                    <Style TargetType="{x:Type DataGridColumnHeader}">
+                        <Setter Property="Background" Value="#1F1F1F"/>
+                        <Setter Property="Foreground" Value="{StaticResource DarkForeground}"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                        <Setter Property="VerticalContentAlignment" Value="Center"/>
+                        <Setter Property="BorderBrush" Value="#565656"/>
+                        <Setter Property="BorderThickness" Value="0,0,1,0"/>
+                        <Setter Property="Padding" Value="5"/>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="CellStyle">
+                <Setter.Value>
+                    <Style TargetType="{x:Type DataGridCell}">
+                        <Setter Property="Background" Value="#282828" />
+                        <Setter Property="Foreground" Value="{StaticResource DarkForeground}"/>
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="DataGridCell">
+                                    <!--<TextBox Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Content.Text, Mode=TwoWay, UpdateSourceTrigger=Default}"
+                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0" BorderThickness="0" Background="{TemplateBinding Background}"/>-->
+                                    <Grid Background="{TemplateBinding Background}">
+                                        <ContentPresenter x:Name="PART_ContentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#121212"/>
                                 <Setter Property="Foreground" Value="{StaticResource DarkForeground}"/>
                             </Trigger>
                         </Style.Triggers>
