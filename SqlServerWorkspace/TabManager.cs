@@ -82,6 +82,7 @@ namespace SqlServerWorkspace
 					newLayoutContent.IsSelected = true;
 					break;
 
+				case TreeNodeType.DatabaseNode:
 				case TreeNodeType.ViewNode:
 				case TreeNodeType.FunctionNode:
 				case TreeNodeType.ProcedureNode:
@@ -140,6 +141,43 @@ namespace SqlServerWorkspace
 
 									var anchorable2 = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().First(a => a.ContentId == "SPER");
 									mainWindowStatusPanel.SelectedContentIndex = mainWindowStatusPanel.Children.IndexOf(anchorable2);
+								}
+								else if(text.Split(' ')[0].Equals("select", StringComparison.OrdinalIgnoreCase))
+								{
+									var table = manager.Select(text);
+
+									var mainWindowStatusPanel = ((MainWindow)Common.MainWindow).StatusPanel;
+									var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == "SR");
+
+									if (anchorables.Any())
+									{
+										var anchorable = anchorables.First();
+										var dataGrid = new DataGrid()
+										{
+											Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+											ItemsSource = table.DefaultView
+										};
+										dataGrid.FillSqlDataTableSimple(table);
+
+										anchorable.Content = dataGrid;
+									}
+									else
+									{
+										var tablePanel = new LayoutAnchorable()
+										{
+											ContentId = "SR",
+											Title = "Result"
+										};
+										var dataGrid = new DataGrid()
+										{
+											Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+											ItemsSource = table.DefaultView
+										};
+										dataGrid.FillSqlDataTableSimple(table);
+
+										tablePanel.Content = dataGrid;
+										mainWindowStatusPanel.Children.Add(tablePanel);
+									}
 								}
 								else
 								{

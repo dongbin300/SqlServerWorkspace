@@ -6,6 +6,7 @@
 		Refresh,
 		Rename,
 		Remove,
-		Properties
+		Properties,
+		NewQuery
 	}
 }

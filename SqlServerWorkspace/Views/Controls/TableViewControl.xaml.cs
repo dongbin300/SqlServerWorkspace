@@ -134,7 +134,7 @@ namespace SqlServerWorkspace.Views.Controls
 			}
 		}
 
-		string GetTableNameFromQuery(string query)
+		private string GetTableNameFromQuery(string query)
 		{
 			string[] words = query.Split(separator, StringSplitOptions.RemoveEmptyEntries);
 			int fromIndex = Array.FindIndex(words, word => word.Equals("from", StringComparison.OrdinalIgnoreCase));
@@ -145,6 +145,133 @@ namespace SqlServerWorkspace.Views.Controls
 			}
 
 			return string.Empty;
+		}
+
+		private void TableDataGrid_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+		{
+			if (TableDataGrid.SelectedItem == null)
+			{
+				return;
+			}
+
+			var contextMenu = new ContextMenu();
+
+			var copyMenuItem = new MenuItem { Header = "Copy" };
+			copyMenuItem.Click += CopyMenuItem_Click;
+			contextMenu.Items.Add(copyMenuItem);
+
+			var pasteMenuItem = new MenuItem { Header = "Paste" };
+			pasteMenuItem.Click += PasteMenuItem_Click;
+			if (string.IsNullOrEmpty(Clipboard.GetText()))
+			{
+				pasteMenuItem.IsEnabled = false;
+			}
+			contextMenu.Items.Add(pasteMenuItem);
+
+			var duplicateMenuItem = new MenuItem { Header = "Duplicate" };
+			duplicateMenuItem.Click += DuplicateMenuItem_Click;
+			contextMenu.Items.Add(duplicateMenuItem);
+
+			contextMenu.IsOpen = true;
+		}
+
+		private void CopyMenuItem_Click(object sender, RoutedEventArgs e)
+		{
+			if (TableDataGrid.ItemsSource is not DataView || TableDataGrid.SelectedItem == null)
+			{
+				return;
+			}
+
+			if (TableDataGrid.SelectedItem is not DataRowView dataRowView)
+			{
+				return;
+			}
+
+			var selectedRow = dataRowView.Row;
+			var text = string.Join('\t', selectedRow.ItemArray);
+			Clipboard.SetText(text);
+		}
+
+		private void PasteMenuItem_Click(object sender, RoutedEventArgs e)
+		{
+			if (TableDataGrid.ItemsSource is not DataView || TableDataGrid.SelectedItem == null)
+			{
+				return;
+			}
+
+			if (TableDataGrid.SelectedItem is not DataRowView dataRowView)
+			{
+				return;
+			}
+
+			var selectedRow = dataRowView.Row;
+			var clipboardText = Clipboard.GetText();
+
+			if (string.IsNullOrEmpty(clipboardText))
+			{
+				return;
+			}
+
+			var values = clipboardText.Split('\t');
+
+			for (int i = 0; i < values.Length && i < selectedRow.Table.Columns.Count; i++)
+			{
+				if (string.IsNullOrWhiteSpace(values[i]))
+				{
+					continue;
+				}
+
+				var column = selectedRow.Table.Columns[i];
+
+				if (column.DataType == typeof(int) && int.TryParse(values[i], out int intValue))
+				{
+					selectedRow[i] = intValue;
+				}
+				else if (column.DataType == typeof(double) && double.TryParse(values[i], out double doubleValue))
+				{
+					selectedRow[i] = doubleValue;
+				}
+				else if (column.DataType == typeof(DateTime) && DateTime.TryParse(values[i], out DateTime dateTimeValue))
+				{
+					selectedRow[i] = dateTimeValue;
+				}
+				else
+				{
+					selectedRow[i] = values[i];
+				}
+			}
+		}
+
+		private void DuplicateMenuItem_Click(object sender, RoutedEventArgs e)
+		{
+			if (TableDataGrid.ItemsSource is not DataView dataView || TableDataGrid.SelectedItem == null)
+			{
+				return;
+			}
+
+			if (TableDataGrid.SelectedItem is not DataRowView dataRowView)
+			{
+				return;
+			}
+
+			var selectedRow = dataRowView.Row;
+
+			if (dataView.Table == null)
+			{
+				return;
+			}
+
+			var newRow = dataView.Table.NewRow();
+
+			if (selectedRow.ItemArray.Clone() is not object[] itemArray)
+			{
+				return;
+			}
+
+			newRow.ItemArray = itemArray;
+
+			int selectedIndex = TableDataGrid.SelectedIndex;
+			dataView.Table.Rows.InsertAt(newRow, selectedIndex + 1);
 		}
 	}
 }

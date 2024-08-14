@@ -1,4 +1,6 @@
-﻿using SqlServerWorkspace.Data;
+﻿using AvalonDock.Layout;
+
+using SqlServerWorkspace.Data;
 using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
@@ -18,6 +20,7 @@ namespace SqlServerWorkspace
 			{
 				case TreeNodeType.DatabaseNode:
 					{
+						contextMenu.AddMenu("New Query", ContextMenuFunction.NewQuery);
 						contextMenu.AddMenu("Refresh", ContextMenuFunction.Refresh);
 					}
 					break;
@@ -50,16 +53,23 @@ namespace SqlServerWorkspace
 			contextMenu.Tag = treeViewItem;
 		}
 
-		public static void ProcessDatabaseNodeMenu(ContextMenuFunction function, TreeNode node)
+		public static async Task ProcessDatabaseNodeMenu(ContextMenuFunction function, TreeNode node, SqlManager manager, LayoutDocumentPane entryPane)
 		{
 			switch (function)
 			{
+				case ContextMenuFunction.NewQuery:
+					{
+						await entryPane.CreateNewOrOpenTab(manager, node);
+					}
+					break;
+
 				case ContextMenuFunction.Refresh:
 					{
 						TreeViewManager.MakeDatabaseTree(node);
 						Common.RefreshMainWindow();
 					}
 					break;
+
 				default:
 					break;
 			}

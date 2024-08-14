@@ -49,6 +49,12 @@
             <Setter Property="Height" Value="20" />
             <Setter Property="Foreground" Value="#F1F1F1" />
             <Setter Property="Background" Value="Transparent" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource SswColor}"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <Style TargetType="{x:Type TextBlock}" x:Key="StatusText">
@@ -282,6 +288,7 @@
             <Setter Property="CanUserDeleteRows" Value="True"/>
             <Setter Property="AutoGenerateColumns" Value="False"/>
             <Setter Property="IsReadOnly" Value="False"/>
+            <Setter Property="ClipboardCopyMode" Value="IncludeHeader"/>
             <Setter Property="RowHeaderWidth" Value="40"/>
             <Setter Property="RowHeaderStyle">
                 <Setter.Value>
@@ -308,7 +315,17 @@
                                 <DataTemplate>
                                     <TextBlock TextWrapping="Wrap" Height="36" TextAlignment="Center">
                                         <TextBlock.Inlines>
-                                            <Run Text="{Binding Path=[0]}" FontWeight="Bold" Foreground="{StaticResource SswColor}"/>
+                                            <Run Text="{Binding Path=[0]}" FontWeight="Bold" Foreground="{StaticResource SswColor}">
+                                                <Run.Style>
+                                                    <Style TargetType="Run">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=[2]}" Value="*">
+                                                                <Setter Property="TextDecorations"  Value="Underline" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Run.Style>
+                                            </Run>
                                             <LineBreak />
                                             <Run Text="{Binding Path=[1]}" Foreground="#909090"/>
                                         </TextBlock.Inlines>
@@ -608,8 +625,8 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <ScrollContentPresenter Grid.ColumnSpan="2" Grid.RowSpan="2" />
-                            <ScrollBar Grid.Column="1" x:Name="PART_VerticalScrollBar" Value="{TemplateBinding VerticalOffset}" Maximum="{TemplateBinding ScrollableHeight}" ViewportSize="{TemplateBinding ViewportHeight}" Background="Transparent" />
-                            <ScrollBar Grid.Row="1" Orientation="Horizontal" x:Name="PART_HorizontalScrollBar" Value="{TemplateBinding HorizontalOffset}" Maximum="{TemplateBinding ScrollableWidth}" ViewportSize="{TemplateBinding ViewportWidth}" Background="Transparent" />
+                            <ScrollBar Grid.Column="1" x:Name="PART_VerticalScrollBar" Value="{TemplateBinding VerticalOffset}" Maximum="{TemplateBinding ScrollableHeight}" ViewportSize="{TemplateBinding ViewportHeight}" Background="Transparent" Opacity="0.5" />
+                            <ScrollBar Grid.Row="1" Orientation="Horizontal" x:Name="PART_HorizontalScrollBar" Value="{TemplateBinding HorizontalOffset}" Maximum="{TemplateBinding ScrollableWidth}" ViewportSize="{TemplateBinding ViewportWidth}" Background="Transparent" Opacity="0.5" />
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -622,12 +639,14 @@
                     <ControlTemplate TargetType="{x:Type Thumb}">
                         <Grid x:Name="Grid">
                             <Rectangle HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="Auto" Height="Auto" Fill="Transparent" />
-                            <Border x:Name="CornerScrollBarRectangle" CornerRadius="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="Auto" Height="Auto" Margin="0,1,0,1" Background="{TemplateBinding Background}" />
+                            <Border x:Name="CornerScrollBarRectangle" CornerRadius="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="Auto" Height="Auto" Margin="1,1,-2,0" Background="{TemplateBinding Background}" />
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="Tag" Value="Horizontal">
                                 <Setter TargetName="CornerScrollBarRectangle" Property="Width" Value="Auto" />
-                                <Setter TargetName="CornerScrollBarRectangle" Property="Height" Value="6" />
+                                <Setter TargetName="CornerScrollBarRectangle" Property="Height" Value="10" />
+                                <Setter TargetName="CornerScrollBarRectangle" Property="Margin" Value="0,-4,2,-4" />
+                                <Setter TargetName="CornerScrollBarRectangle" Property="CornerRadius" Value="8" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

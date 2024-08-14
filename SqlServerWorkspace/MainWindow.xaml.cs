@@ -1,5 +1,9 @@
-﻿using Microsoft.VisualBasic.Devices;
+﻿using AvalonDock.Controls;
+using AvalonDock.Layout;
 
+using Microsoft.VisualBasic.Devices;
+
+using SqlServerWorkspace.Data;
 using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
@@ -18,7 +22,7 @@ namespace SqlServerWorkspace
 	/// </summary>
 	public partial class MainWindow : Window
 	{
-		private DispatcherTimer SaveSettingsTimer = new ();
+		private DispatcherTimer SaveSettingsTimer = new();
 
 		public MainWindow()
 		{
@@ -162,6 +166,7 @@ namespace SqlServerWorkspace
 		#endregion
 
 		#region MENU
+		#region FILE
 		private void Connect_Click(object sender, RoutedEventArgs e)
 		{
 			var view = new ConnectionView()
@@ -178,6 +183,23 @@ namespace SqlServerWorkspace
 		{
 			Environment.Exit(0);
 		}
+		#endregion
+		#region VIEW
+		private void ViewMenu_Click(object sender, RoutedEventArgs e)
+		{
+			if (sender is not MenuItem menuItem)
+			{
+				return;
+			}
+
+			var name = menuItem.Header.ToString() ?? string.Empty;
+
+			ShowOrFocusPane(name, () => new LayoutAnchorable
+			{
+				Title = name
+			});
+		}
+		#endregion
 		#endregion
 
 		#region TREEVIEWITEM EVENT
@@ -224,7 +246,7 @@ namespace SqlServerWorkspace
 			}
 		}
 
-		public void TreeViewMenuItem_Click(object sender, RoutedEventArgs e)
+		public async void TreeViewMenuItem_Click(object sender, RoutedEventArgs e)
 		{
 			if (sender is not MenuItem menuItem)
 			{
@@ -258,7 +280,7 @@ namespace SqlServerWorkspace
 					switch (node.Type)
 					{
 						case TreeNodeType.DatabaseNode:
-							TreeViewContextMenu.ProcessDatabaseNodeMenu(function, node);
+							await TreeViewContextMenu.ProcessDatabaseNodeMenu(function, node, manager, EntryPane);
 							break;
 						case TreeNodeType.TableTitleNode:
 							TreeViewContextMenu.ProcessTableTitleNodeMenu(function, node, manager);
@@ -297,7 +319,38 @@ namespace SqlServerWorkspace
 					break;
 			}
 		}
+
 		#endregion
 
-    }
+		List<LayoutAnchorable> closedAnchorables = [];
+		private void LayoutAnchorable_Hiding(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+			if (sender is LayoutAnchorable anchorable)
+			{
+				closedAnchorables.Add(anchorable);
+			}
+		}
+
+		private void ShowOrFocusPane(string title, Func<LayoutAnchorable> createAnchorable)
+		{
+			var existingAnchorable = closedAnchorables.FirstOrDefault(a => a.Title == title);
+			if (existingAnchorable != null)
+			{
+				existingAnchorable.Show();
+				MainDockingManager.ActiveContent = existingAnchorable;
+				closedAnchorables.Remove(existingAnchorable);
+			}
+			else
+			{
+				var newAnchorable = createAnchorable();
+				var pane = MainDockingManager.Layout.Descendents().OfType<LayoutAnchorablePane>().FirstOrDefault();
+				if (pane != null)
+				{
+					pane.Children.Add(newAnchorable);
+					newAnchorable.Show();
+					MainDockingManager.ActiveContent = newAnchorable;
+				}
+			}
+		}
+	}
 }

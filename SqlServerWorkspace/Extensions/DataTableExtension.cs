@@ -73,9 +73,10 @@ namespace SqlServerWorkspace.Extensions
 					binding.StringFormat = "yyyy-MM-dd HH:mm:ss";
 				}
 
+				var tableColumn = tableInfo.Columns.First(x => x.Name.Equals(column.ColumnName));
 				var dataGridColumn = new DataGridTextColumn
 				{
-					Header = new string[] { column.ColumnName, tableInfo.Columns.First(x => x.Name.Equals(column.ColumnName)).ToTypeString() },
+					Header = new string[] { column.ColumnName, tableColumn.ToTypeString(), tableColumn.IsKey ? "*" : "" },
 					Binding = binding
 				};
 

@@ -58,7 +58,7 @@
                                                 <Path Name="ExpandCollapseImage" Width="16" Height="16" Data="" Stroke="{StaticResource DarkForeground}" StrokeThickness="1"/>
                                             </ToggleButton.Content>
                                         </ToggleButton>
-                                        <ContentPresenter Grid.Column="1" ContentSource="Header" Height="22" />
+                                        <ContentPresenter x:Name="HeaderContent" Grid.Column="1" ContentSource="Header" Height="22" />
                                     </Grid>
                                 </Border>
                                 <ItemsPresenter Visibility="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource btv}}"
@@ -96,19 +96,23 @@
                 <Separator Style="{StaticResource SubMenuSeparator}"/>
                 <MenuItem Header="Exit" Style="{StaticResource SubMenuItem}" Click="Exit_Click"/>
             </MenuItem>
+            <MenuItem Header="View" Style="{StaticResource MainMenuItem}">
+                <MenuItem Header="Object Explorer" Style="{StaticResource SubMenuItem}" Click="ViewMenu_Click"/>
+                <MenuItem Header="Logs" Style="{StaticResource SubMenuItem}" Click="ViewMenu_Click"/>
+            </MenuItem>
         </Menu>
 
         <!-- AVALONDOCK LAYOUT -->
         <Grid Grid.Row="1">
-            <dock:DockingManager>
+            <dock:DockingManager x:Name="MainDockingManager">
                 <dock:DockingManager.Theme>
                     <dock:Vs2013DarkTheme/>
                 </dock:DockingManager.Theme>
                 <dock:LayoutRoot>
                     <dock:LayoutPanel Orientation="Horizontal">
                         <!-- 1. LEFT-SIDE DATABASE HIERARCHY TREE VIEW -->
-                        <dock:LayoutAnchorablePane Name="DatabasePane" DockWidth="300">
-                            <dock:LayoutAnchorable Title="Object Explorer">
+                        <dock:LayoutAnchorablePane x:Name="DatabasePane" DockWidth="300">
+                            <dock:LayoutAnchorable Title="Object Explorer" Hiding="LayoutAnchorable_Hiding">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="24"/>
@@ -126,7 +130,7 @@
                                             <HierarchicalDataTemplate DataType="{x:Type DataModel:TreeNode}" ItemsSource="{Binding Children}">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Path Data="{Binding SvgData}" Width="16" Height="16" StrokeThickness="1" Stretch="Uniform" Margin="0,0,3,0" Stroke="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}" Fill="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}"/>
-                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
+                                                    <TextBlock Name="HeaderContent" Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
                                                 </StackPanel>
                                             </HierarchicalDataTemplate>
                                         </TreeView.ItemTemplate>
@@ -145,7 +149,7 @@
 
                             <!-- 3. STATUS PANEL -->
                             <dock:LayoutAnchorablePane x:Name="StatusPanel" DockHeight="240" >
-                                <dock:LayoutAnchorable Title="Logs">
+                                <dock:LayoutAnchorable Title="Logs" Hiding="LayoutAnchorable_Hiding">
                                     <ScrollViewer x:Name="StatusTextScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                                         <Grid>
                                             <TextBlock x:Name="StatusTextBlock" Style="{StaticResource StatusText}"/>

@@ -4,8 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:wv="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+             xmlns:local="clr-namespace:SqlServerWorkspace.Views.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Loaded="UserControl_Loaded">
+    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="36"/>
@@ -24,6 +26,6 @@
 
         <wv:WebView2 Grid.Row="1" x:Name="WebView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" NavigationCompleted="WebView_NavigationCompleted" KeyDown="WebView_KeyDown"/>
         <GridSplitter Grid.Row="2" Height="3" HorizontalAlignment="Stretch" Background="{StaticResource DarkBackground}"/>
-        <DataGrid Grid.Row="3" x:Name="TableDataGrid" Style="{StaticResource DarkDataGrid}"/>
+        <DataGrid Grid.Row="3" x:Name="TableDataGrid" Style="{StaticResource DarkDataGrid}" MouseRightButtonUp="TableDataGrid_MouseRightButtonUp"/>
     </Grid>
 </UserControl>
