@@ -5,6 +5,7 @@ using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Extensions;
 
 using System.Data;
+using System.Data.Common;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -239,6 +240,43 @@ namespace SqlServerWorkspace.Data
 		#endregion
 
 		#region Table
+		public string NewTable(string tableName, IEnumerable<TableColumnInfo> columns)
+		{
+			try
+			{
+				var builder = new StringBuilder();
+				builder.AppendLine($"CREATE TABLE {tableName} (");
+				var columnStrings = columns.Select(x => $"{x.Name} {x.TypeString} {(x.IsNotNull ? "NOT NULL" : "NULL")}");
+				builder.AppendLine(string.Join("," + Environment.NewLine, columnStrings));
+				builder.AppendLine($")");
+				builder.AppendLine();
+				builder.AppendLine($"ALTER TABLE {tableName}");
+				builder.AppendLine($"ADD CONSTRAINT XPK_{tableName} PRIMARY KEY NONCLUSTERED (");
+				var keyColumns = columns.Where(x => x.IsKey);
+				var keyColumnStrings = keyColumns.Select(x => $"{x.Name} ASC");
+				builder.AppendLine(string.Join("," + Environment.NewLine, keyColumnStrings));
+				builder.AppendLine($")");
+
+				var result = Execute(builder.ToString());
+
+				if(result != string.Empty)
+				{
+					return result;
+				}
+
+				foreach (var column in columns)
+				{
+					SetDescription(tableName, column.Name, column.Description);
+				}
+
+				return result;
+			}
+			catch (Exception ex)
+			{
+				return ex.Message;
+			}
+		}
+
 		public IEnumerable<string> SelectTableNames()
 		{
 			return Select("table_name", "INFORMATION_SCHEMA.TABLES", "TABLE_TYPE = 'BASE TABLE'", "table_name").Field("table_name");
@@ -293,6 +331,19 @@ namespace SqlServerWorkspace.Data
 					column.IsKey = true;
 				}
 				reader2.Close();
+
+				/* Description */
+				var descriptions = GetDescription(tableName).ToList();
+				for (var i = 0; i < columns.Count; i++)
+				{
+					var description = descriptions.Find(x => x.ColumnName.Equals(columns[i].Name));
+					if (description == null)
+					{
+						continue;
+					}
+
+					columns[i].Description = description.Description;
+				}
 
 				var tableInfo = new TableInfo(_tableName, tableCatalog, tableSchema, columns);
 
@@ -428,6 +479,8 @@ namespace SqlServerWorkspace.Data
 			builder.AppendLine($"MERGE {tableName} AS target");
 			builder.AppendLine($"USING ( VALUES ( {columnNameAlphaSequence} ) ) AS source ( {columnNameSequence} )");
 			builder.AppendLine($"ON ( {targetPrimaryKeyNames} )");
+			builder.AppendLine($"WHEN MATCHED AND @vi_act = 'd' THEN");
+			builder.AppendLine($"DELETE");
 			builder.AppendLine($"WHEN MATCHED THEN");
 			builder.AppendLine($"UPDATE SET");
 			builder.AppendLine($"{updateSetNonKeyColumnNames}");
@@ -476,6 +529,107 @@ namespace SqlServerWorkspace.Data
 			builder.AppendLine($"FROM {sourceTableName}");
 
 			return builder.ToString();
+		}
+		#endregion
+
+		#region Description
+		/*
+		    -- 설명 등록
+			exec sp_addextendedproperty
+			@name = N'MS_Description',
+			@value = N'테스트',
+			@level0type = N'SCHEMA', @level0name = N'dbo',
+			@level1type = N'TABLE',  @level1name = N'a_err_log',
+			@level2type = N'COLUMN', @level2name = N'd7';
+			
+			-- 설명 조회
+			SELECT 
+			    tbl.name AS TableName,
+			    col.name AS ColumnName,
+			    ep.value AS Description
+			FROM 
+			    sys.extended_properties AS ep
+			    INNER JOIN sys.columns AS col ON ep.major_id = col.object_id AND ep.minor_id = col.column_id
+			    INNER JOIN sys.tables AS tbl ON col.object_id = tbl.object_id
+			WHERE 
+			    ep.name = 'MS_Description'
+			    AND tbl.name = 'a_err_log'; 
+			
+			
+			-- 설명 수정
+			EXEC sp_updateextendedproperty 
+			    @name = N'MS_Description',
+			    @value = N'', 
+			    @level0type = N'SCHEMA', @level0name = N'dbo',
+			    @level1type = N'TABLE',  @level1name = N'a_err_log',
+			    @level2type = N'COLUMN', @level2name = N'd7';
+			
+			-- 전체 테이블의 설명 조회
+			SELECT 
+			    tbl.name AS TableName,
+			    col.name AS ColumnName,
+			    ep.value AS Description
+			FROM 
+			    sys.extended_properties AS ep
+			    INNER JOIN sys.columns AS col ON ep.major_id = col.object_id AND ep.minor_id = col.column_id
+			    INNER JOIN sys.tables AS tbl ON col.object_id = tbl.object_id
+			WHERE 
+			    ep.name = 'MS_Description';
+		*/
+		public string SetDescription(string tableName, string columnName, string description, string descriptionName = "MS_Description")
+		{
+			try
+			{
+				var builder = new StringBuilder();
+				builder.AppendLine($"exec sp_addextendedproperty");
+				builder.AppendLine($"@name = N'{descriptionName}',");
+				builder.AppendLine($"@value = N'{description}',");
+				builder.AppendLine($"@level0type = N'SCHEMA', @level0name = N'dbo',");
+				builder.AppendLine($"@level1type = N'TABLE',  @level1name = N'{tableName}',");
+				builder.AppendLine($"@level2type = N'COLUMN', @level2name = N'{columnName}'");
+
+				var result = Execute(builder.ToString());
+
+				return result;
+			}
+			catch (Exception ex)
+			{
+				return ex.Message;
+			}
+		}
+
+		public IEnumerable<ColumnDescription> GetDescription(string tableName = "", string descriptionName = "MS_Description")
+		{
+			using var connection = new SqlConnection(GetConnectionString());
+			string query = $"SELECT tbl.name AS TableName, col.name AS ColumnName, ep.value AS Description FROM sys.extended_properties AS ep INNER JOIN sys.columns AS col ON ep.major_id = col.object_id AND ep.minor_id = col.column_id INNER JOIN sys.tables AS tbl ON col.object_id = tbl.object_id WHERE ep.name = '{descriptionName}'";
+			if (query != string.Empty)
+			{
+				query += $" AND tbl.name = '{tableName}'";
+			}
+			var command = new SqlCommand(query, connection);
+
+			try
+			{
+				connection.Open();
+				var reader = command.ExecuteReader();
+
+				List<ColumnDescription> descriptions = [];
+				while (reader.Read())
+				{
+					var table = reader["TableName"].ToString() ?? string.Empty;
+					var column = reader["ColumnName"].ToString() ?? string.Empty;
+					var description = reader["Description"].ToString() ?? string.Empty;
+
+					descriptions.Add(new ColumnDescription(table, column, description));
+				}
+				reader.Close();
+
+				return descriptions;
+			}
+			catch
+			{
+				throw;
+			}
 		}
 		#endregion
 	}

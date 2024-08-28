@@ -18,6 +18,12 @@ namespace SqlServerWorkspace.DataModels
 			return parts.Length < 2 ? string.Empty : parts[^2];
 		}
 
+		public string GetDatabaseName()
+		{
+			var parts = Path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+			return parts.Length < 2 ? string.Empty : parts[1];
+		}
+
 		public List<TreeNode> Search(string keyword)
 		{
 			List<TreeNode> results = [];

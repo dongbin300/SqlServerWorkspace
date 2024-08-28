@@ -313,7 +313,7 @@
                         <Setter Property="ContentTemplate">
                             <Setter.Value>
                                 <DataTemplate>
-                                    <TextBlock TextWrapping="Wrap" Height="36" TextAlignment="Center">
+                                    <TextBlock TextWrapping="Wrap" Height="54" TextAlignment="Center">
                                         <TextBlock.Inlines>
                                             <Run Text="{Binding Path=[0]}" FontWeight="Bold" Foreground="{StaticResource SswColor}">
                                                 <Run.Style>
@@ -327,7 +327,9 @@
                                                 </Run.Style>
                                             </Run>
                                             <LineBreak />
-                                            <Run Text="{Binding Path=[1]}" Foreground="#909090"/>
+                                            <Run Text="{Binding Path=[1]}" Foreground="#CACACA"/>
+                                            <LineBreak />
+                                            <Run Text="{Binding Path=[3]}" Foreground="#909090"/>
                                         </TextBlock.Inlines>
                                     </TextBlock>
                                 </DataTemplate>

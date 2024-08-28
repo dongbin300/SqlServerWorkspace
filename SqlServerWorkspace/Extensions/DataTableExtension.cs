@@ -76,7 +76,13 @@ namespace SqlServerWorkspace.Extensions
 				var tableColumn = tableInfo.Columns.First(x => x.Name.Equals(column.ColumnName));
 				var dataGridColumn = new DataGridTextColumn
 				{
-					Header = new string[] { column.ColumnName, tableColumn.ToTypeString(), tableColumn.IsKey ? "*" : "" },
+					Header = new string[]
+					{ 
+						column.ColumnName,				// Column Name
+						tableColumn.ToTypeString(),		// Column DataType
+						tableColumn.IsKey ? "*" : "",	// Column Key Flag
+						tableColumn.Description,		// Column Description
+					},
 					Binding = binding
 				};
 

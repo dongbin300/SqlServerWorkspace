@@ -26,6 +26,12 @@ namespace SqlServerWorkspace
 					break;
 
 				case TreeNodeType.TableTitleNode:
+					{
+						contextMenu.AddMenu("New Table", ContextMenuFunction.NewTable);
+						contextMenu.AddMenu("Refresh", ContextMenuFunction.Refresh);
+					}
+					break;
+
 				case TreeNodeType.ViewTitleNode:
 				case TreeNodeType.FunctionTitleNode:
 				case TreeNodeType.ProcedureTitleNode:
@@ -79,6 +85,20 @@ namespace SqlServerWorkspace
 		{
 			switch (function)
 			{
+				case ContextMenuFunction.NewTable:
+					{
+						manager.Database = node.GetDatabaseName();
+						var newTableView = new NewTableView()
+						{
+							Manager = manager
+						};
+						if (newTableView.ShowDialog() ?? false)
+						{
+							Common.RefreshMainWindow();
+						}
+					}
+					break;
+
 				case ContextMenuFunction.Refresh:
 					{
 						TreeViewManager.MakeTableTree(manager, node);

@@ -7,6 +7,7 @@
 		Rename,
 		Remove,
 		Properties,
-		NewQuery
+		NewQuery,
+		NewTable,
 	}
 }
