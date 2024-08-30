@@ -4,11 +4,12 @@ namespace SqlServerWorkspace.Data
 {
 	public class TableColumnInfo
 	{
-		public TableColumnInfo(string name, string type, string length)
+		public TableColumnInfo(string name, string type, string length, bool isNotNull)
 		{
 			Name = name;
 			Type = type;
 			Length = length;
+			IsNotNull = isNotNull;
 		}
 
 		public TableColumnInfo(string name, string typeString, bool isKey, bool isNotNull, string description)

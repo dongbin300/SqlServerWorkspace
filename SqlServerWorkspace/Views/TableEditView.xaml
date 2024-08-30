@@ -1,4 +1,4 @@
-﻿<Window x:Class="SqlServerWorkspace.Views.NewTableView"
+﻿<Window x:Class="SqlServerWorkspace.Views.TableEditView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -6,7 +6,7 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:SqlServerWorkspace.Views"
         mc:Ignorable="d"
-        Title="New Table" Height="450" Width="520">
+        Title="Edit Table" Height="500" Width="600" Loaded="Window_Loaded">
     <Grid Background="{StaticResource DarkBackground}">
         <Grid.RowDefinitions>
             <RowDefinition Height="40"/>
@@ -25,7 +25,11 @@
         </Grid>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <DataGrid x:Name="ColumnDataGrid" Style="{StaticResource DarkDataGridSimple}" CanUserAddRows="True" CanUserDeleteRows="True" CanUserResizeColumns="True" IsReadOnly="False">
+            <DataGrid x:Name="ColumnDataGrid" Style="{StaticResource DarkDataGridSimple}"
+                      CanUserAddRows="True" CanUserDeleteRows="True" CanUserResizeColumns="True" IsReadOnly="False" CanUserSortColumns="False" 
+                      PreviewMouseWheel="ColumnDataGrid_PreviewMouseWheel"
+                      BeginningEdit="ColumnDataGrid_BeginningEdit"
+                      CellEditEnding="ColumnDataGrid_CellEditEnding">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Width="2*" Binding="{Binding Name}"/>
                     <DataGridTextColumn Header="Data Type" Width="2*" Binding="{Binding DataType}"/>
@@ -72,14 +76,34 @@
                 </Style>
             </DataGridComboBoxColumn.EditingElementStyle>
         </DataGridComboBoxColumn>-->
-                    <DataGridCheckBoxColumn Header="Key" Width="1*" Binding="{Binding Key}" />
-                    <DataGridCheckBoxColumn Header="Not Null" Width="1*" Binding="{Binding NotNull}"/>
+                    <DataGridCheckBoxColumn Header="Key" Width="1*" Binding="{Binding Key}"
+                                            ElementStyle="{StaticResource SswCheckBox}"
+                                            EditingElementStyle="{StaticResource SswCheckBox}"/>
+                    <DataGridCheckBoxColumn Header="Not Null" Width="1*" Binding="{Binding NotNull}"
+                                            ElementStyle="{StaticResource SswCheckBox}"
+                                            EditingElementStyle="{StaticResource SswCheckBox}"/>
+                    <DataGridTemplateColumn x:Name="SaveColumn" Header="" Width="1*" CellStyle="{StaticResource ButtonCell}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Save" Style="{StaticResource DataGridButton}" Click="ColumnSaveButton_Click"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn x:Name="DeleteColumn" Header="" Width="1*" CellStyle="{StaticResource ButtonCell}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Delete" Style="{StaticResource DataGridButton}" Click="ColumnDeleteButton_Click"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </ScrollViewer>
         
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button x:Name="OkButton" Width="100" Click="OkButton_Click">OK</Button>
+            <Button x:Name="TextButton" Width="100" Click="TextButton_Click">Text</Button>
+            <Button x:Name="MakeButton" Width="100" Click="MakeButton_Click">Make</Button>
+            <Button x:Name="ModifyButton" Width="100" Click="ModifyButton_Click">Modify</Button>
             <Button x:Name="CancelButton" Width="100" Click="CancelButton_Click">Cancel</Button>
         </StackPanel>
     </Grid>

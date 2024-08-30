@@ -41,6 +41,12 @@ namespace SqlServerWorkspace
 					break;
 
 				case TreeNodeType.TableNode:
+					{
+						contextMenu.AddMenu("Edit", ContextMenuFunction.Edit);
+						contextMenu.AddMenu("Rename", ContextMenuFunction.Rename);
+					}
+					break;
+
 				case TreeNodeType.ViewNode:
 				case TreeNodeType.FunctionNode:
 				case TreeNodeType.ProcedureNode:
@@ -88,11 +94,11 @@ namespace SqlServerWorkspace
 				case ContextMenuFunction.NewTable:
 					{
 						manager.Database = node.GetDatabaseName();
-						var newTableView = new NewTableView()
+						var view = new TableEditView()
 						{
 							Manager = manager
 						};
-						if (newTableView.ShowDialog() ?? false)
+						if (view.ShowDialog() ?? false)
 						{
 							Common.RefreshMainWindow();
 						}
@@ -163,6 +169,21 @@ namespace SqlServerWorkspace
 		{
 			switch (function)
 			{
+				case ContextMenuFunction.Edit:
+					{
+						manager.Database = node.GetDatabaseName();
+						var view = new TableEditView()
+						{
+							Manager = manager,
+							TableName = node.Name
+						};
+						if (view.ShowDialog() ?? false)
+						{
+							Common.RefreshMainWindow();
+						}
+					}
+					break;
+
 				case ContextMenuFunction.Rename:
 					{
 						var originalName = node.Name;

@@ -9,5 +9,6 @@
 		Properties,
 		NewQuery,
 		NewTable,
+		Edit,
 	}
 }

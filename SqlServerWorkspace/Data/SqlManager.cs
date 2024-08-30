@@ -157,6 +157,64 @@ namespace SqlServerWorkspace.Data
 			return Execute($"EXEC sp_rename '{source}', '{destination}'");
 		}
 
+		public string RenameColumn(string tableName, string sourceColumnName, string destinationColumnName)
+		{
+			return Execute($"EXEC sp_rename '{tableName}.{sourceColumnName}', '{destinationColumnName}', 'COLUMN'");
+		}
+
+		public string AddColumn(string tableName, string columnName, string dataTypeString, string? description = null)
+		{
+			var result = Execute($"ALTER TABLE {tableName} ADD {columnName} {dataTypeString}");
+
+			if (result != string.Empty)
+			{
+				return result;
+			}
+
+			if (description != null)
+			{
+				result = SetDescription(tableName, columnName, description);
+			}
+
+			return result;
+		}
+
+		public string DropColumn(string tableName, string columnName)
+		{
+			var result = Execute($"ALTER TABLE {tableName} DROP COLUMN {columnName}");
+
+			return result;
+		}
+
+		public string ModifyColumn(string tableName, string sourceColumnName, string? destinationColumnName = null, string? dataTypeString = null, string? description = null)
+		{
+			var result = string.Empty;
+			if (description != null)
+			{
+				result = SetDescription(tableName, sourceColumnName, description);
+			}
+			if (result != string.Empty)
+			{
+				return result;
+			}
+
+			if (dataTypeString != null)
+			{
+				result = Execute($"ALTER TABLE {tableName} ALTER COLUMN {sourceColumnName} {dataTypeString}");
+			}
+			if (result != string.Empty)
+			{
+				return result;
+			}
+
+			if (destinationColumnName != null)
+			{
+				result = RenameColumn(tableName, sourceColumnName, destinationColumnName);
+			}
+
+			return result;
+		}
+
 		#region Transaction
 		public string TableTransaction(string tableName, DataTable originalTable, DataTable modifiedTable)
 		{
@@ -240,26 +298,31 @@ namespace SqlServerWorkspace.Data
 		#endregion
 
 		#region Table
-		public string NewTable(string tableName, IEnumerable<TableColumnInfo> columns)
+		public string GetNewTableQuery(string tableName, IEnumerable<TableColumnInfo> columns)
+		{
+			var builder = new StringBuilder();
+			builder.AppendLine($"CREATE TABLE {tableName} (");
+			var columnStrings = columns.Select(x => $"{x.Name} {x.TypeString} {(x.IsNotNull ? "NOT NULL" : "NULL")}");
+			builder.AppendLine(string.Join("," + Environment.NewLine, columnStrings));
+			builder.AppendLine($")");
+			builder.AppendLine();
+			builder.AppendLine($"ALTER TABLE {tableName}");
+			builder.AppendLine($"ADD CONSTRAINT XPK_{tableName} PRIMARY KEY NONCLUSTERED (");
+			var keyColumns = columns.Where(x => x.IsKey);
+			var keyColumnStrings = keyColumns.Select(x => $"{x.Name} ASC");
+			builder.AppendLine(string.Join("," + Environment.NewLine, keyColumnStrings));
+			builder.AppendLine($")");
+
+			return builder.ToString();
+		}
+
+		public string MakeTable(string tableName, IEnumerable<TableColumnInfo> columns)
 		{
 			try
 			{
-				var builder = new StringBuilder();
-				builder.AppendLine($"CREATE TABLE {tableName} (");
-				var columnStrings = columns.Select(x => $"{x.Name} {x.TypeString} {(x.IsNotNull ? "NOT NULL" : "NULL")}");
-				builder.AppendLine(string.Join("," + Environment.NewLine, columnStrings));
-				builder.AppendLine($")");
-				builder.AppendLine();
-				builder.AppendLine($"ALTER TABLE {tableName}");
-				builder.AppendLine($"ADD CONSTRAINT XPK_{tableName} PRIMARY KEY NONCLUSTERED (");
-				var keyColumns = columns.Where(x => x.IsKey);
-				var keyColumnStrings = keyColumns.Select(x => $"{x.Name} ASC");
-				builder.AppendLine(string.Join("," + Environment.NewLine, keyColumnStrings));
-				builder.AppendLine($")");
+				var result = Execute(GetNewTableQuery(tableName, columns));
 
-				var result = Execute(builder.ToString());
-
-				if(result != string.Empty)
+				if (result != string.Empty)
 				{
 					return result;
 				}
@@ -285,7 +348,7 @@ namespace SqlServerWorkspace.Data
 		public TableInfo GetTableInfo(string tableName)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
-			string query = $"SELECT TABLE_NAME, TABLE_CATALOG, TABLE_SCHEMA, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{tableName}'";
+			string query = $"SELECT TABLE_NAME, TABLE_CATALOG, TABLE_SCHEMA, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{tableName}'";
 			var command = new SqlCommand(query, connection);
 			string query2 = $"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1 AND TABLE_NAME = '{tableName}'";
 			var command2 = new SqlCommand(query2, connection);
@@ -308,8 +371,9 @@ namespace SqlServerWorkspace.Data
 					var columnName = reader["COLUMN_NAME"].ToString() ?? string.Empty;
 					var dataType = reader["DATA_TYPE"].ToString() ?? string.Empty;
 					var maxLength = reader["CHARACTER_MAXIMUM_LENGTH"].ToString() ?? string.Empty;
+					var isNotNull = (reader["IS_NULLABLE"].ToString() ?? string.Empty) == "NO";
 
-					columns.Add(new TableColumnInfo(columnName, dataType, maxLength));
+					columns.Add(new TableColumnInfo(columnName, dataType, maxLength, isNotNull));
 				}
 				reader.Close();
 
@@ -581,12 +645,26 @@ namespace SqlServerWorkspace.Data
 			try
 			{
 				var builder = new StringBuilder();
-				builder.AppendLine($"exec sp_addextendedproperty");
-				builder.AppendLine($"@name = N'{descriptionName}',");
-				builder.AppendLine($"@value = N'{description}',");
-				builder.AppendLine($"@level0type = N'SCHEMA', @level0name = N'dbo',");
-				builder.AppendLine($"@level1type = N'TABLE',  @level1name = N'{tableName}',");
-				builder.AppendLine($"@level2type = N'COLUMN', @level2name = N'{columnName}'");
+				var descriptions = GetDescription(tableName, columnName);
+
+				if (descriptions.Any())
+				{
+					builder.AppendLine($"exec sp_updateextendedproperty");
+					builder.AppendLine($"@name = N'{descriptionName}',");
+					builder.AppendLine($"@value = N'{description}',");
+					builder.AppendLine($"@level0type = N'SCHEMA', @level0name = N'dbo',");
+					builder.AppendLine($"@level1type = N'TABLE',  @level1name = N'{tableName}',");
+					builder.AppendLine($"@level2type = N'COLUMN', @level2name = N'{columnName}'");
+				}
+				else
+				{
+					builder.AppendLine($"exec sp_addextendedproperty");
+					builder.AppendLine($"@name = N'{descriptionName}',");
+					builder.AppendLine($"@value = N'{description}',");
+					builder.AppendLine($"@level0type = N'SCHEMA', @level0name = N'dbo',");
+					builder.AppendLine($"@level1type = N'TABLE',  @level1name = N'{tableName}',");
+					builder.AppendLine($"@level2type = N'COLUMN', @level2name = N'{columnName}'");
+				}
 
 				var result = Execute(builder.ToString());
 
@@ -598,13 +676,17 @@ namespace SqlServerWorkspace.Data
 			}
 		}
 
-		public IEnumerable<ColumnDescription> GetDescription(string tableName = "", string descriptionName = "MS_Description")
+		public IEnumerable<ColumnDescription> GetDescription(string tableName = "", string columnName = "", string descriptionName = "MS_Description")
 		{
 			using var connection = new SqlConnection(GetConnectionString());
 			string query = $"SELECT tbl.name AS TableName, col.name AS ColumnName, ep.value AS Description FROM sys.extended_properties AS ep INNER JOIN sys.columns AS col ON ep.major_id = col.object_id AND ep.minor_id = col.column_id INNER JOIN sys.tables AS tbl ON col.object_id = tbl.object_id WHERE ep.name = '{descriptionName}'";
-			if (query != string.Empty)
+			if (tableName != string.Empty)
 			{
 				query += $" AND tbl.name = '{tableName}'";
+			}
+			if(columnName != string.Empty)
+			{
+				query += $" AND col.name = '{columnName}'";
 			}
 			var command = new SqlCommand(query, connection);
 
