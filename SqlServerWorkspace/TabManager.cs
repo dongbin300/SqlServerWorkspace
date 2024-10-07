@@ -97,99 +97,123 @@ namespace SqlServerWorkspace
 						switch (e.Key)
 						{
 							case Key.F5: // Run Script
-								var selectedText = await webView.GetSelectedText();
-								var text = string.IsNullOrEmpty(selectedText) ? await webView.GetEditorText() : selectedText;
-								text = text.Replace("\n", "\r\n");
-
-								if (text.Split(' ')[0].Equals("exec", StringComparison.OrdinalIgnoreCase))
+								try
 								{
-									var execText = text[(text.IndexOf("exec", StringComparison.OrdinalIgnoreCase) + 4)..].Trim();
-									var table = manager.ExecuteStoredProcedure(execText);
+									var selectedText = await webView.GetSelectedText();
+									var text = string.IsNullOrEmpty(selectedText) ? await webView.GetEditorText() : selectedText;
+									text = text.Replace("\n", "\r\n");
+									var parts = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+									var firstKeyword = parts[0].Trim();
 
-									var mainWindowStatusPanel = ((MainWindow)Common.MainWindow).StatusPanel;
-									var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == "SPER");
-
-									if (anchorables.Any())
+									if (firstKeyword.Equals("exec", StringComparison.OrdinalIgnoreCase))
 									{
-										var anchorable = anchorables.First();
-										var dataGrid = new DataGrid()
-										{
-											Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
-											ItemsSource = table.DefaultView
-										};
-										dataGrid.FillSqlDataTableSimple(table);
+										var procedureName = parts[1].Trim().Replace("[", "").Replace("]", "");
 
-										anchorable.Content = dataGrid;
+										// Add Parameters
+										var parameters = new Dictionary<string, string>();
+										var parameterNames = manager.GetProcedureParameterNames(procedureName);
+										if (parameterNames.Any())
+										{
+											var parameterString = text[text.IndexOf(parts[2][0])..].Trim();
+											var parameterParts = parameterString.Split(',');
+											for (int i = 0; i < parameterParts.Length; i++)
+											{
+												parameters.Add(parameterNames.ElementAt(i), parameterParts[i].Trim().Trim('\''));
+											}
+										}
+
+										// Execute SP
+										var table = manager.ExecuteStoredProcedure(procedureName, parameters);
+
+										var mainWindowStatusPanel = ((MainWindow)Common.MainWindow).StatusPanel;
+										var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == "SPER");
+
+										if (anchorables.Any())
+										{
+											var anchorable = anchorables.First();
+											var dataGrid = new DataGrid()
+											{
+												Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+												ItemsSource = table.DefaultView
+											};
+											dataGrid.FillSqlDataTableSimple(table);
+
+											anchorable.Content = dataGrid;
+										}
+										else
+										{
+											var tablePanel = new LayoutAnchorable()
+											{
+												ContentId = "SPER",
+												Title = "Stored Procedure Execute Result"
+											};
+											var dataGrid = new DataGrid()
+											{
+												Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+												ItemsSource = table.DefaultView
+											};
+											dataGrid.FillSqlDataTableSimple(table);
+
+											tablePanel.Content = dataGrid;
+											mainWindowStatusPanel.Children.Add(tablePanel);
+										}
+
+										var anchorable2 = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().First(a => a.ContentId == "SPER");
+										mainWindowStatusPanel.SelectedContentIndex = mainWindowStatusPanel.Children.IndexOf(anchorable2);
+									}
+									else if (firstKeyword.Equals("select", StringComparison.OrdinalIgnoreCase))
+									{
+										var table = manager.Select(text);
+
+										var mainWindowStatusPanel = ((MainWindow)Common.MainWindow).StatusPanel;
+										var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == "SR");
+
+										if (anchorables.Any())
+										{
+											var anchorable = anchorables.First();
+											var dataGrid = new DataGrid()
+											{
+												Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+												ItemsSource = table.DefaultView
+											};
+											dataGrid.FillSqlDataTableSimple(table);
+
+											anchorable.Content = dataGrid;
+										}
+										else
+										{
+											var tablePanel = new LayoutAnchorable()
+											{
+												ContentId = "SR",
+												Title = "Result"
+											};
+											var dataGrid = new DataGrid()
+											{
+												Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+												ItemsSource = table.DefaultView
+											};
+											dataGrid.FillSqlDataTableSimple(table);
+
+											tablePanel.Content = dataGrid;
+											mainWindowStatusPanel.Children.Add(tablePanel);
+										}
 									}
 									else
 									{
-										var tablePanel = new LayoutAnchorable()
+										var result = manager.Execute(text);
+										if (!string.IsNullOrEmpty(result))
 										{
-											ContentId = "SPER",
-											Title = "Stored Procedure Execute Result"
-										};
-										var dataGrid = new DataGrid()
-										{
-											Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
-											ItemsSource = table.DefaultView
-										};
-										dataGrid.FillSqlDataTableSimple(table);
-
-										tablePanel.Content = dataGrid;
-										mainWindowStatusPanel.Children.Add(tablePanel);
+											Common.Log(result, LogType.Error);
+											break;
+										}
 									}
 
-									var anchorable2 = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().First(a => a.ContentId == "SPER");
-									mainWindowStatusPanel.SelectedContentIndex = mainWindowStatusPanel.Children.IndexOf(anchorable2);
+									Common.Log("Run Complete", LogType.Success);
 								}
-								else if(text.Split(' ')[0].Equals("select", StringComparison.OrdinalIgnoreCase))
+								catch (Exception ex)
 								{
-									var table = manager.Select(text);
-
-									var mainWindowStatusPanel = ((MainWindow)Common.MainWindow).StatusPanel;
-									var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == "SR");
-
-									if (anchorables.Any())
-									{
-										var anchorable = anchorables.First();
-										var dataGrid = new DataGrid()
-										{
-											Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
-											ItemsSource = table.DefaultView
-										};
-										dataGrid.FillSqlDataTableSimple(table);
-
-										anchorable.Content = dataGrid;
-									}
-									else
-									{
-										var tablePanel = new LayoutAnchorable()
-										{
-											ContentId = "SR",
-											Title = "Result"
-										};
-										var dataGrid = new DataGrid()
-										{
-											Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
-											ItemsSource = table.DefaultView
-										};
-										dataGrid.FillSqlDataTableSimple(table);
-
-										tablePanel.Content = dataGrid;
-										mainWindowStatusPanel.Children.Add(tablePanel);
-									}
+									Common.Log(ex.Message, LogType.Error);
 								}
-								else
-								{
-									var result = manager.Execute(text);
-									if (!string.IsNullOrEmpty(result))
-									{
-										Common.Log(result, LogType.Error);
-										break;
-									}
-								}
-
-								Common.Log("Run Complete", LogType.Success);
 								break;
 
 							default:

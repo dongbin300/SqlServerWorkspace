@@ -5,7 +5,6 @@ using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Extensions;
 
 using System.Data;
-using System.Data.Common;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -135,7 +134,7 @@ namespace SqlServerWorkspace.Data
 		#endregion
 
 		#region Execute SQL Object
-		public DataTable ExecuteStoredProcedure(string procedureName)
+		public DataTable ExecuteStoredProcedure(string procedureName, Dictionary<string, string>? parameters = null)
 		{
 			var dataTable = new DataTable();
 
@@ -143,6 +142,14 @@ namespace SqlServerWorkspace.Data
 			{
 				using var command = new SqlCommand(procedureName, connection);
 				command.CommandType = CommandType.StoredProcedure;
+
+				if (parameters != null)
+				{
+					foreach (var parameter in parameters)
+					{
+						command.Parameters.AddWithValue(parameter.Key, parameter.Value);
+					}
+				}
 
 				using var adapter = new SqlDataAdapter(command);
 				connection.Open();
@@ -677,6 +684,11 @@ namespace SqlServerWorkspace.Data
 		{
 			return Select("routine_name", "INFORMATION_SCHEMA.ROUTINES", "ROUTINE_TYPE = 'PROCEDURE'", "routine_name").Field("routine_name");
 		}
+
+		public IEnumerable<string> GetProcedureParameterNames(string procedureName)
+		{
+			return Select("ORDINAL_POSITION,PARAMETER_NAME", "INFORMATION_SCHEMA.PARAMETERS", $"SPECIFIC_NAME = '{procedureName}'", "ORDINAL_POSITION").Field("PARAMETER_NAME");
+		}
 		#endregion
 
 		#region Object
@@ -889,7 +901,7 @@ namespace SqlServerWorkspace.Data
 			{
 				query += $" AND tbl.name = '{tableName}'";
 			}
-			if(columnName != string.Empty)
+			if (columnName != string.Empty)
 			{
 				query += $" AND col.name = '{columnName}'";
 			}
