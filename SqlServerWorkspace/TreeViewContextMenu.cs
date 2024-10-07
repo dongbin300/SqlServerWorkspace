@@ -5,7 +5,6 @@ using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
 
-using System.Windows;
 using System.Windows.Controls;
 
 namespace SqlServerWorkspace

@@ -8,6 +8,7 @@ using System.Data;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Xml.Linq;
 
 namespace SqlServerWorkspace.Views.Controls
 {
@@ -65,7 +66,7 @@ namespace SqlServerWorkspace.Views.Controls
 			try
 			{
 				var currentTable = TableDataGrid.ToDataTable();
-				var result = Manager.TableTransaction(SelectTableName, SelectTable, currentTable);
+				var result = Manager.TableTransactionV2(SelectTableName, SelectTable, currentTable);
 
 				if (!string.IsNullOrEmpty(result))
 				{
@@ -192,6 +193,19 @@ namespace SqlServerWorkspace.Views.Controls
 			Clipboard.SetText(text);
 		}
 
+		private void EditButton_Click(object sender, RoutedEventArgs e)
+		{
+			var view = new TableEditView()
+			{
+				Manager = Manager,
+				TableName = SelectTableName
+			};
+			if (view.ShowDialog() ?? false)
+			{
+				Common.RefreshMainWindow();
+			}
+		}
+
 		private void PasteMenuItem_Click(object sender, RoutedEventArgs e)
 		{
 			if (TableDataGrid.ItemsSource is not DataView || TableDataGrid.SelectedItem == null)
@@ -273,5 +287,5 @@ namespace SqlServerWorkspace.Views.Controls
 			int selectedIndex = TableDataGrid.SelectedIndex;
 			dataView.Table.Rows.InsertAt(newRow, selectedIndex + 1);
 		}
-	}
+    }
 }

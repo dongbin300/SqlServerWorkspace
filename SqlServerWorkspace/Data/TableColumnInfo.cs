@@ -25,7 +25,7 @@ namespace SqlServerWorkspace.Data
 
 		public string Name { get; set; }
 		public string Type { get; set; }
-		public SqlDbType TrueType => (SqlDbType)Enum.Parse(typeof(SqlDbType), Type);
+		public SqlDbType TrueType => (SqlDbType)Enum.Parse(typeof(SqlDbType), Type, true);
 		public string Length { get; set; }
 		public int TrueLength => int.Parse(Length);
 		public bool IsKey { get; set; } = false;

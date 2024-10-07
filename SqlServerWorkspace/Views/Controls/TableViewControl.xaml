@@ -17,11 +17,12 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal">
-            <Button x:Name="RunButton" Width="80" Click="RunButton_Click">Run</Button>
-            <Button x:Name="SaveButton" Width="80" Click="SaveButton_Click">Save</Button>
-            <Button x:Name="MergeButton" Width="80" Click="MergeButton_Click">Merge</Button>
-            <Button x:Name="CreateButton" Width="80" Click="CreateButton_Click">Create</Button>
-            <Button x:Name="CopyButton" Width="80" Click="CopyButton_Click">Copy</Button>
+            <Button x:Name="RunButton" Width="80" Style="{StaticResource HorizontalButton}" Click="RunButton_Click">Run</Button>
+            <Button x:Name="SaveButton" Width="80" Style="{StaticResource HorizontalButton}" Click="SaveButton_Click">Save</Button>
+            <Button x:Name="MergeButton" Width="80" Style="{StaticResource HorizontalButton}" Click="MergeButton_Click">Merge</Button>
+            <Button x:Name="CreateButton" Width="80" Style="{StaticResource HorizontalButton}" Click="CreateButton_Click">Create</Button>
+            <Button x:Name="CopyButton" Width="80" Style="{StaticResource HorizontalButton}" Click="CopyButton_Click">Copy</Button>
+            <Button x:Name="EditButton" Width="80" Style="{StaticResource HorizontalButton}" Click="EditButton_Click">Edit</Button>
         </StackPanel>
 
         <wv:WebView2 Grid.Row="1" x:Name="WebView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" NavigationCompleted="WebView_NavigationCompleted" KeyDown="WebView_KeyDown"/>

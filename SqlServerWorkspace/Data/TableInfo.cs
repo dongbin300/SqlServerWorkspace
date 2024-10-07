@@ -6,5 +6,7 @@
 		public string Catalog { get; set; } = catalog;
 		public string Schema { get; set; } = schema;
 		public List<TableColumnInfo> Columns { get; set; } = columns;
+
+		public TableColumnInfo GetColumn(string columnName) => Columns.FirstOrDefault(c => c.Name == columnName) ?? default!;
 	}
 }

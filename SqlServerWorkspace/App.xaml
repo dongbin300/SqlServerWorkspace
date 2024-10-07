@@ -230,13 +230,46 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
                         <Border Name="Border"
-                        Background="{TemplateBinding Background}">
+                                Background="{TemplateBinding Background}">
                             <TextBlock Name="TextBlock" 
-                          Text="{TemplateBinding Content}" 
-                          Margin="{TemplateBinding Padding}"
-                          Foreground="{TemplateBinding Foreground}"
-                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                       Text="{TemplateBinding Content}" 
+                                       Margin="{TemplateBinding Padding}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource SswColor}" />
+                                <Setter TargetName="TextBlock" Property="Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type Button}" x:Key="HorizontalButton">
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
+            <Setter Property="FontWeight" Value="UltraBold" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource SswColor}" />
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{StaticResource SswColor}"
+                                BorderThickness="0 0 1 0">
+                            <TextBlock Name="TextBlock" 
+                                       Text="{TemplateBinding Content}" 
+                                       Margin="{TemplateBinding Padding}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">

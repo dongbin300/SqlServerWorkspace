@@ -228,33 +228,141 @@ namespace SqlServerWorkspace.Data
 			//var updateSetCompareNonKeyColumnNames = string.Join(" or ", nonKeyColumnNames.Select(x => $"target.{x} <> source.{x}"));
 			var updateSetCompareNonKeyColumnNames = string.Join(" or ", nonKeyColumnNames.Select(x => $"(target.{x} <> source.{x} or (target.{x} is null and source.{x} is not null) or (target.{x} is not null and source.{x} is null))"));
 			var targetPrimaryKeyNames = string.Join(" and ", primaryKeyNames.Select(x => $"target.{x} = source.{x}"));
-			var mergeQuery = new StringBuilder();
-			mergeQuery.AppendLine($"MERGE INTO {tableName} AS target");
-			mergeQuery.AppendLine("USING (VALUES");
 
-			for (int i = 0; i < modifiedTable.Rows.Count; i++)
+			const int batchSize = 40;
+
+			using var connection = new SqlConnection(GetConnectionString());
+			connection.Open();
+			using var transaction = connection.BeginTransaction();
+
+
+			//var mergeQuery = new StringBuilder();
+			//mergeQuery.AppendLine($"MERGE INTO {tableName} AS target");
+			//mergeQuery.AppendLine("USING (VALUES");
+
+			//for (int i = 0; i < modifiedTable.Rows.Count; i++)
+			//{
+			//	mergeQuery.Append('(');
+			//	for (int j = 0; j < columnNames.Count(); j++)
+			//	{
+			//		mergeQuery.Append($"@{columnNames.ElementAt(j)}{i}");
+			//		if (j < columnNames.Count() - 1)
+			//			mergeQuery.Append(',');
+			//	}
+			//	mergeQuery.Append(')');
+			//	if (i < modifiedTable.Rows.Count - 1)
+			//		mergeQuery.Append(',');
+			//}
+
+			//mergeQuery.AppendLine($") AS source ({columnNameSequence})");
+			//mergeQuery.AppendLine($"ON {targetPrimaryKeyNames}");
+			//mergeQuery.AppendLine($"WHEN MATCHED AND ({updateSetCompareNonKeyColumnNames}) THEN");
+			//mergeQuery.AppendLine($"UPDATE SET {updateSetNonKeyColumnNames}");
+			//mergeQuery.AppendLine("WHEN NOT MATCHED BY target THEN");
+			//mergeQuery.AppendLine($"INSERT ({columnNameSequence})");
+			//mergeQuery.AppendLine($"VALUES ({sourceColumnNameSequence})");
+			//mergeQuery.AppendLine("WHEN NOT MATCHED BY source THEN");
+			//mergeQuery.AppendLine("DELETE;");
+
+			//using var connection = new SqlConnection(GetConnectionString());
+			//connection.Open();
+			//using var transaction = connection.BeginTransaction();
+
+			try
 			{
-				mergeQuery.Append('(');
-				for (int j = 0; j < columnNames.Count(); j++)
+				for (int batchStart = 0; batchStart < modifiedTable.Rows.Count; batchStart += batchSize)
 				{
-					mergeQuery.Append($"@{columnNames.ElementAt(j)}{i}");
-					if (j < columnNames.Count() - 1)
-						mergeQuery.Append(',');
-				}
-				mergeQuery.Append(')');
-				if (i < modifiedTable.Rows.Count - 1)
-					mergeQuery.Append(',');
-			}
+					int batchEnd = Math.Min(batchStart + batchSize, modifiedTable.Rows.Count);
+					var batchTable = modifiedTable.AsEnumerable().Skip(batchStart).Take(batchEnd - batchStart).CopyToDataTable();
 
-			mergeQuery.AppendLine($") AS source ({columnNameSequence})");
-			mergeQuery.AppendLine($"ON {targetPrimaryKeyNames}");
-			mergeQuery.AppendLine($"WHEN MATCHED AND ({updateSetCompareNonKeyColumnNames}) THEN");
-			mergeQuery.AppendLine($"UPDATE SET {updateSetNonKeyColumnNames}");
-			mergeQuery.AppendLine("WHEN NOT MATCHED BY target THEN");
-			mergeQuery.AppendLine($"INSERT ({columnNameSequence})");
-			mergeQuery.AppendLine($"VALUES ({sourceColumnNameSequence})");
-			mergeQuery.AppendLine("WHEN NOT MATCHED BY source THEN");
-			mergeQuery.AppendLine("DELETE;");
+					var mergeQuery = new StringBuilder();
+					mergeQuery.AppendLine($"MERGE INTO {tableName} AS target");
+					mergeQuery.AppendLine("USING (VALUES");
+
+					for (int i = 0; i < batchTable.Rows.Count; i++)
+					{
+						mergeQuery.Append('(');
+						for (int j = 0; j < columnNames.Count(); j++)
+						{
+							mergeQuery.Append($"@{columnNames.ElementAt(j)}{i}");
+							if (j < columnNames.Count() - 1)
+								mergeQuery.Append(',');
+						}
+						mergeQuery.Append(')');
+						if (i < batchTable.Rows.Count - 1)
+							mergeQuery.Append(',');
+					}
+
+					mergeQuery.AppendLine($") AS source ({columnNameSequence})");
+					mergeQuery.AppendLine($"ON {targetPrimaryKeyNames}");
+					mergeQuery.AppendLine($"WHEN MATCHED AND ({updateSetCompareNonKeyColumnNames}) THEN");
+					mergeQuery.AppendLine($"UPDATE SET {updateSetNonKeyColumnNames}");
+					mergeQuery.AppendLine("WHEN NOT MATCHED BY target THEN");
+					mergeQuery.AppendLine($"INSERT ({columnNameSequence})");
+					mergeQuery.AppendLine($"VALUES ({sourceColumnNameSequence})");
+					mergeQuery.AppendLine("WHEN NOT MATCHED BY source THEN");
+					mergeQuery.AppendLine("DELETE;");
+
+					using var cmd = new SqlCommand(mergeQuery.ToString(), connection, transaction);
+					for (int i = 0; i < batchTable.Rows.Count; i++)
+					{
+						foreach (var columnName in columnNames)
+						{
+							var value = batchTable.Rows[i][columnName];
+							var column = table.GetColumn(columnName);
+							if (column.TrueType == SqlDbType.Binary ||
+								column.TrueType == SqlDbType.Image ||
+								column.TrueType == SqlDbType.Timestamp ||
+								column.TrueType == SqlDbType.VarBinary
+								) // Array of byte type
+							{
+								cmd.Parameters.Add(new SqlParameter($"@{columnName}{i}", SqlDbType.VarBinary) { Value = (byte[])value });
+							}
+							//else if (table.Columns[columnName].DataType == typeof(string) && table.Columns[columnName].MaxLength == -1) // nvarchar(max)
+							//{
+							//	cmd.Parameters.Add(new SqlParameter($"@{columnName}{i}", SqlDbType.NVarChar, -1) { Value = value });
+							//}
+							else
+							{
+								cmd.Parameters.AddWithValue($"@{columnName}{i}", value == DBNull.Value ? DBNull.Value : value);
+							}
+						}
+					}
+
+					cmd.ExecuteNonQuery();
+				}
+				//	using (var cmd = new SqlCommand(mergeQuery.ToString(), connection, transaction))
+				//{
+				//	for (int i = 0; i < modifiedTable.Rows.Count; i++)
+				//	{
+				//		foreach (var columnName in columnNames)
+				//		{
+				//			var value = modifiedTable.Rows[i][columnName];
+				//			cmd.Parameters.AddWithValue($"@{columnName}{i}", value == DBNull.Value ? DBNull.Value : value);
+				//		}
+				//	}
+
+				//	cmd.ExecuteNonQuery();
+				//}
+
+				transaction.Commit();
+				return string.Empty;
+			}
+			catch (Exception ex)
+			{
+				transaction.Rollback();
+				return ex.Message;
+			}
+		}
+
+		public string TableTransactionV2(string tableName, DataTable originalTable, DataTable modifiedTable)
+		{
+			var table = GetTableInfo(tableName);
+			var primaryKeyNames = GetTablePrimaryKeyNames(tableName);
+			var columnNames = table.Columns.Select(x => x.Name);
+			var nonKeyColumnNames = columnNames.Except(primaryKeyNames);
+			var columnNameSequence = string.Join(',', columnNames);
+			var primaryKeyCondition = string.Join(" AND ", primaryKeyNames.Select(x => $"{x} = @{x}"));
 
 			using var connection = new SqlConnection(GetConnectionString());
 			connection.Open();
@@ -262,18 +370,114 @@ namespace SqlServerWorkspace.Data
 
 			try
 			{
-				using (var cmd = new SqlCommand(mergeQuery.ToString(), connection, transaction))
+				// 1. INSERT: modifiedTable에 있고 originalTable에 없는 행
+				foreach (DataRow modifiedRow in modifiedTable.Rows)
 				{
-					for (int i = 0; i < modifiedTable.Rows.Count; i++)
+					var primaryKeyFilter = string.Join(" AND ", primaryKeyNames.Select(key => $"{key} = '{modifiedRow[key]}'"));
+					var foundRows = originalTable.Select(primaryKeyFilter);
+
+					// originalTable에 해당 키가 없으면 새로 추가된 행 (INSERT)
+					if (foundRows.Length == 0)
 					{
+						var insertQuery = new StringBuilder();
+						insertQuery.AppendLine($"INSERT INTO {tableName} ({columnNameSequence})");
+						insertQuery.AppendLine($"VALUES ({string.Join(",", columnNames.Select(x => $"@{x}"))})");
+
+						using var cmd = new SqlCommand(insertQuery.ToString(), connection, transaction);
 						foreach (var columnName in columnNames)
 						{
-							var value = modifiedTable.Rows[i][columnName];
-							cmd.Parameters.AddWithValue($"@{columnName}{i}", value == DBNull.Value ? DBNull.Value : value);
+							var value = modifiedRow[columnName];
+							var column = table.GetColumn(columnName);
+
+							if (column.TrueType == SqlDbType.Binary ||
+								column.TrueType == SqlDbType.Image ||
+								column.TrueType == SqlDbType.Timestamp ||
+								column.TrueType == SqlDbType.VarBinary ||
+								column.TrueType == SqlDbType.NVarChar)
+							{
+								cmd.Parameters.Add(new SqlParameter($"@{columnName}", column.TrueType)
+								{
+									Value = value == DBNull.Value ? DBNull.Value : value
+								});
+							}
+							else
+							{
+								cmd.Parameters.Add(new SqlParameter($"@{columnName}", value == DBNull.Value ? DBNull.Value : value));
+							}
+						}
+
+						cmd.ExecuteNonQuery();
+					}
+				}
+
+				// 2. UPDATE: modifiedTable과 originalTable의 행이 일치하지만, 데이터가 변경된 경우
+				foreach (DataRow modifiedRow in modifiedTable.Rows)
+				{
+					var primaryKeyFilter = string.Join(" AND ", primaryKeyNames.Select(key => $"{key} = '{modifiedRow[key]}'"));
+					var foundRows = originalTable.Select(primaryKeyFilter);
+
+					if (foundRows.Length == 1) // 수정된 행이 있는 경우
+					{
+						var originalRow = foundRows[0];
+						var isModified = nonKeyColumnNames.Any(col => !Equals(originalRow[col], modifiedRow[col]));
+
+						if (isModified) // 수정된 컬럼이 있으면 UPDATE
+						{
+							var updateQuery = new StringBuilder();
+							var updateSet = string.Join(", ", nonKeyColumnNames.Select(x => $"{x} = @{x}"));
+							updateQuery.AppendLine($"UPDATE {tableName} SET {updateSet}");
+							updateQuery.AppendLine($"WHERE {primaryKeyCondition}");
+
+							using var cmd = new SqlCommand(updateQuery.ToString(), connection, transaction);
+							foreach (var columnName in columnNames)
+							{
+								var value = modifiedRow[columnName];
+								var column = table.GetColumn(columnName);
+
+								if (column.TrueType == SqlDbType.Binary ||
+									column.TrueType == SqlDbType.Image ||
+									column.TrueType == SqlDbType.Timestamp ||
+									column.TrueType == SqlDbType.VarBinary ||
+									column.TrueType == SqlDbType.NVarChar)
+								{
+									cmd.Parameters.Add(new SqlParameter($"@{columnName}", column.TrueType)
+									{
+										Value = value == DBNull.Value ? DBNull.Value : value
+									});
+								}
+								else
+								{
+									cmd.Parameters.Add(new SqlParameter($"@{columnName}", value == DBNull.Value ? DBNull.Value : value));
+								}
+							}
+
+							cmd.ExecuteNonQuery();
 						}
 					}
+				}
 
-					cmd.ExecuteNonQuery();
+				// 3. DELETE: originalTable에 있고 modifiedTable에 없는 행
+				foreach (DataRow originalRow in originalTable.Rows)
+				{
+					var primaryKeyFilter = string.Join(" AND ", primaryKeyNames.Select(key => $"{key} = '{originalRow[key]}'"));
+					var foundRows = modifiedTable.Select(primaryKeyFilter);
+
+					// modifiedTable에 해당 키가 없으면 삭제된 행 (DELETE)
+					if (foundRows.Length == 0)
+					{
+						var deleteQuery = new StringBuilder();
+						deleteQuery.AppendLine($"DELETE FROM {tableName}");
+						deleteQuery.AppendLine($"WHERE {primaryKeyCondition}");
+
+						using var cmd = new SqlCommand(deleteQuery.ToString(), connection, transaction);
+						foreach (var primaryKey in primaryKeyNames)
+						{
+							var value = originalRow[primaryKey];
+							cmd.Parameters.AddWithValue($"@{primaryKey}", value);
+						}
+
+						cmd.ExecuteNonQuery();
+					}
 				}
 
 				transaction.Commit();
@@ -285,6 +489,7 @@ namespace SqlServerWorkspace.Data
 				return ex.Message;
 			}
 		}
+
 		#endregion
 		#endregion
 
