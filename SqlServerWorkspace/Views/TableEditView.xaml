@@ -76,12 +76,9 @@
                 </Style>
             </DataGridComboBoxColumn.EditingElementStyle>
         </DataGridComboBoxColumn>-->
-                    <DataGridCheckBoxColumn Header="Key" Width="1*" Binding="{Binding Key}"
-                                            ElementStyle="{StaticResource SswCheckBox}"
-                                            EditingElementStyle="{StaticResource SswCheckBox}"/>
-                    <DataGridCheckBoxColumn Header="Not Null" Width="1*" Binding="{Binding NotNull}"
-                                            ElementStyle="{StaticResource SswCheckBox}"
-                                            EditingElementStyle="{StaticResource SswCheckBox}"/>
+                    <DataGridCheckBoxColumn Header="Not Null" Width="1*" Binding="{Binding NotNull}" ElementStyle="{StaticResource SswCheckBox}" EditingElementStyle="{StaticResource SswCheckBox}"/>
+                    <DataGridCheckBoxColumn Header="Key" Width="1*" Binding="{Binding Key}" ElementStyle="{StaticResource SswCheckBox}" EditingElementStyle="{StaticResource SswCheckBox}"/>
+
                     <DataGridTemplateColumn x:Name="SaveColumn" Header="" Width="1*" CellStyle="{StaticResource ButtonCell}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
@@ -99,7 +96,7 @@
                 </DataGrid.Columns>
             </DataGrid>
         </ScrollViewer>
-        
+
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
             <Button x:Name="TextButton" Width="100" Click="TextButton_Click">Text</Button>
             <Button x:Name="MakeButton" Width="100" Click="MakeButton_Click">Make</Button>

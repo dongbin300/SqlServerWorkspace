@@ -134,93 +134,15 @@ namespace SqlServerWorkspace.Data
 		#endregion
 
 		#region Execute SQL Object
-		public DataTable ExecuteStoredProcedure(string procedureName, Dictionary<string, string>? parameters = null)
+
+		#region Database
+		public IEnumerable<string> SelectDatabaseNames()
 		{
-			var dataTable = new DataTable();
-
-			using (var connection = new SqlConnection(GetConnectionString()))
-			{
-				using var command = new SqlCommand(procedureName, connection);
-				command.CommandType = CommandType.StoredProcedure;
-
-				if (parameters != null)
-				{
-					foreach (var parameter in parameters)
-					{
-						command.Parameters.AddWithValue(parameter.Key, parameter.Value);
-					}
-				}
-
-				using var adapter = new SqlDataAdapter(command);
-				connection.Open();
-				adapter.Fill(dataTable);
-			}
-
-			return dataTable;
+			return Select("name", "sys.databases", "", "name").Field("name");
 		}
+		#endregion
 
-		public string Rename(string source, string destination)
-		{
-			return Execute($"EXEC sp_rename '{source}', '{destination}'");
-		}
-
-		public string RenameColumn(string tableName, string sourceColumnName, string destinationColumnName)
-		{
-			return Execute($"EXEC sp_rename '{tableName}.{sourceColumnName}', '{destinationColumnName}', 'COLUMN'");
-		}
-
-		public string AddColumn(string tableName, string columnName, string dataTypeString, string? description = null)
-		{
-			var result = Execute($"ALTER TABLE {tableName} ADD {columnName} {dataTypeString}");
-
-			if (result != string.Empty)
-			{
-				return result;
-			}
-
-			if (description != null)
-			{
-				result = SetDescription(tableName, columnName, description);
-			}
-
-			return result;
-		}
-
-		public string DropColumn(string tableName, string columnName)
-		{
-			var result = Execute($"ALTER TABLE {tableName} DROP COLUMN {columnName}");
-
-			return result;
-		}
-
-		public string ModifyColumn(string tableName, string sourceColumnName, string? destinationColumnName = null, string? dataTypeString = null, string? description = null)
-		{
-			var result = string.Empty;
-			if (description != null)
-			{
-				result = SetDescription(tableName, sourceColumnName, description);
-			}
-			if (result != string.Empty)
-			{
-				return result;
-			}
-
-			if (dataTypeString != null)
-			{
-				result = Execute($"ALTER TABLE {tableName} ALTER COLUMN {sourceColumnName} {dataTypeString}");
-			}
-			if (result != string.Empty)
-			{
-				return result;
-			}
-
-			if (destinationColumnName != null)
-			{
-				result = RenameColumn(tableName, sourceColumnName, destinationColumnName);
-			}
-
-			return result;
-		}
+		#region Table
 
 		#region Transaction
 		public string TableTransaction(string tableName, DataTable originalTable, DataTable modifiedTable)
@@ -498,18 +420,7 @@ namespace SqlServerWorkspace.Data
 		}
 
 		#endregion
-		#endregion
 
-		#region Select SQL Object
-
-		#region Database
-		public IEnumerable<string> SelectDatabaseNames()
-		{
-			return Select("name", "sys.databases", "", "name").Field("name");
-		}
-		#endregion
-
-		#region Table
 		public string GetNewTableQuery(string tableName, IEnumerable<TableColumnInfo> columns)
 		{
 			var builder = new StringBuilder();
@@ -663,154 +574,105 @@ namespace SqlServerWorkspace.Data
 				throw;
 			}
 		}
-		#endregion
 
-		#region View
-		public IEnumerable<string> SelectViewNames()
+		public string Rename(string source, string destination)
 		{
-			return Select("table_name", "INFORMATION_SCHEMA.VIEWS").Field("table_name");
+			return Execute($"EXEC sp_rename '{source}', '{destination}'");
 		}
 		#endregion
 
-		#region Function
-		public IEnumerable<string> SelectFunctionNames()
+		#region Table Column
+		public string RenameColumn(string tableName, string sourceColumnName, string destinationColumnName)
 		{
-			return Select("name", "sys.objects", "type IN ('FN', 'IF', 'TF', 'FS', 'FT')", "name").Field("name");
-		}
-		#endregion
-
-		#region Procedure
-		public IEnumerable<string> SelectProcedureNames()
-		{
-			return Select("routine_name", "INFORMATION_SCHEMA.ROUTINES", "ROUTINE_TYPE = 'PROCEDURE'", "routine_name").Field("routine_name");
+			return Execute($"EXEC sp_rename '{tableName}.{sourceColumnName}', '{destinationColumnName}', 'COLUMN'");
 		}
 
-		public IEnumerable<string> GetProcedureParameterNames(string procedureName)
+		public string AddColumn(string tableName, string columnName, string dataTypeString, string? description = null, bool? isNotNull = null)
 		{
-			return Select("ORDINAL_POSITION,PARAMETER_NAME", "INFORMATION_SCHEMA.PARAMETERS", $"SPECIFIC_NAME = '{procedureName}'", "ORDINAL_POSITION").Field("PARAMETER_NAME");
-		}
-		#endregion
-
-		#region Object
-		public string GetObject(string objectName)
-		{
-			using var connection = new SqlConnection(GetConnectionString());
-			string query = $"SELECT OBJECT_DEFINITION(OBJECT_ID('{objectName}'))";
-			var command = new SqlCommand(query, connection);
-
-			try
+			var query = $"ALTER TABLE {tableName} ADD {columnName} {dataTypeString}";
+			if (isNotNull != null)
 			{
-				connection.Open();
+				query += isNotNull.Value ? " NOT NULL" : " NULL";
+			}
+			var result = Execute(query);
 
-				var result = command.ExecuteScalar();
-				if (result == null || result == DBNull.Value)
+			if (result != string.Empty)
+			{
+				return result;
+			}
+
+			if (description != null)
+			{
+				result = SetDescription(tableName, columnName, description);
+			}
+
+			return result;
+		}
+
+		public string DropColumn(string tableName, string columnName)
+		{
+			var result = Execute($"ALTER TABLE {tableName} DROP COLUMN {columnName}");
+
+			return result;
+		}
+
+		public string ModifyColumn(string tableName, string sourceColumnName, string? destinationColumnName = null, string? dataTypeString = null, string? description = null, bool? isNotNull = null)
+		{
+			var result = string.Empty;
+			if (description != null)
+			{
+				result = SetDescription(tableName, sourceColumnName, description);
+			}
+			if (result != string.Empty)
+			{
+				return result;
+			}
+
+			if (dataTypeString != null)
+			{
+				var query = $"ALTER TABLE {tableName} ALTER COLUMN {sourceColumnName} {dataTypeString}";
+				if (isNotNull != null)
 				{
-					return string.Empty;
+					query += isNotNull.Value ? " NOT NULL" : " NULL";
 				}
-
-				return (string)result;
+				result = Execute(query);
 			}
-			catch
+			if (result != string.Empty)
 			{
-				throw;
+				return result;
 			}
+
+			if (destinationColumnName != null)
+			{
+				result = RenameColumn(tableName, sourceColumnName, destinationColumnName);
+			}
+
+			return result;
 		}
 		#endregion
 
-		#region Etc
-		public IEnumerable<string> GetRecentlyModifiedItems(string periodHour)
+		#region Constraint
+		public string ModifyConstraint(string tableName, IEnumerable<string> primaryKeyColumnNames)
 		{
-			using var connection = new SqlConnection(GetConnectionString());
-			string query = $"DECLARE @ago DATETIME; SET @ago = DATEADD(HOUR, -{periodHour}, GETDATE()); SELECT 'Table' AS Type, name AS Name, modify_date AS ModDate FROM sys.tables WHERE modify_date >= @ago UNION ALL SELECT 'Procedure' AS Type, name AS Name, modify_date AS ModDate FROM sys.procedures WHERE modify_date >= @ago UNION ALL SELECT 'Function' AS Type, name AS Name, modify_date AS ModDate FROM sys.objects WHERE type_desc = 'SQL_SCALAR_FUNCTION' and modify_date >= @ago ORDER BY Type, Name;";
-			var command = new SqlCommand(query, connection);
+			var result = string.Empty;
+			var columnStrings = string.Join(",", primaryKeyColumnNames.Select(x => $"{x} ASC"));
 
-			try
+			var constraintName = GetConstraintName(tableName);
+			if (constraintName != null)
 			{
-				connection.Open();
-				var reader = command.ExecuteReader();
-
-				var dataTable = new DataTable();
-				dataTable.Load(reader);
-				reader.Close();
-
-				return dataTable.Field("Name");
+				result = Execute($"ALTER TABLE {tableName} DROP CONSTRAINT {constraintName}");
 			}
-			catch
-			{
-				throw;
-			}
+
+			result = Execute($"ALTER TABLE {tableName} ADD CONSTRAINT XPK_{tableName} PRIMARY KEY NONCLUSTERED ( {columnStrings} )");
+
+			return result;
 		}
-		#endregion
 
-		#endregion
-
-		#region Query Generate
-		public string GetMergeQuery(string tableName)
+		public string? GetConstraintName(string tableName)
 		{
-			var table = GetTableInfo(tableName);
-			var primaryKeyNames = GetTablePrimaryKeyNames(tableName);
-			var columnNames = table.Columns.Select(x => x.Name);
-			var nonKeyColumnNames = columnNames.Except(primaryKeyNames);
-			var columnNameSequence = string.Join(", ", columnNames);
-			var columnNameAlphaSequence = string.Join(", ", columnNames.Select(x => $"@{x}"));
-			var targetPrimaryKeyNames = string.Join(" and ", primaryKeyNames.Select(x => $"target.{x} = @{x}"));
-			var updateSetNonKeyColumnNames = string.Join(", ", nonKeyColumnNames.Select(x => $"{x} = @{x}"));
-
-			var builder = new StringBuilder();
-			builder.AppendLine($"MERGE {tableName} AS target");
-			builder.AppendLine($"USING ( VALUES ( {columnNameAlphaSequence} ) ) AS source ( {columnNameSequence} )");
-			builder.AppendLine($"ON ( {targetPrimaryKeyNames} )");
-			builder.AppendLine($"WHEN MATCHED AND @vi_act = 'd' THEN");
-			builder.AppendLine($"DELETE");
-			builder.AppendLine($"WHEN MATCHED THEN");
-			builder.AppendLine($"UPDATE SET");
-			builder.AppendLine($"{updateSetNonKeyColumnNames}");
-			builder.AppendLine($"WHEN NOT MATCHED THEN");
-			builder.AppendLine($"INSERT ( {columnNameSequence} )");
-			builder.AppendLine($"VALUES ( {columnNameAlphaSequence} );");
-
-			return builder.ToString();
+			return Select("CONSTRAINT_NAME", "INFORMATION_SCHEMA.TABLE_CONSTRAINTS", $"TABLE_NAME = '{tableName}'").Field("CONSTRAINT_NAME").FirstOrDefault();
 		}
 
-		public string GetCreateTableQuery(string tableName)
-		{
-			var table = GetTableInfo(tableName);
-			var primaryKeyConstraints = string.Join(',', table.Columns.Where(x => x.IsKey).Select(x => $"{x.Name} ASC"));
-
-			var builder = new StringBuilder();
-			builder.AppendLine($"CREATE TABLE {tableName}");
-			builder.AppendLine("(");
-			foreach (var column in table.Columns)
-			{
-				builder.AppendLine($"{column.Name} {column.ToTypeString()} {(column.IsKey ? "NOT NULL" : "NULL")},");
-			}
-			builder.AppendLine(")");
-			builder.AppendLine("go");
-			builder.AppendLine();
-			builder.AppendLine($"ALTER TABLE {tableName}");
-			builder.AppendLine($"ADD CONSTRAINT XPK_{tableName} PRIMARY KEY NONCLUSTERED (");
-			builder.AppendLine($"{primaryKeyConstraints}");
-			builder.AppendLine(")");
-			builder.AppendLine("go");
-
-			return builder.ToString();
-		}
-
-		public string GetCopyDataQuery(string sourceTableName, string destinationTableName)
-		{
-			var sourceTable = GetTableInfo(sourceTableName);
-			var destinationTable = GetTableInfo(destinationTableName);
-			var sourceTableColumnNameSequence = string.Join(',', sourceTable.Columns.Select(x => x.Name));
-			var destinationTableColumnNameSequence = string.Join(',', destinationTable.Columns.Select(x => x.Name));
-
-			var builder = new StringBuilder();
-			builder.AppendLine($"INSERT INTO {destinationTableName}");
-			builder.AppendLine($"({destinationTableColumnNameSequence})");
-			builder.AppendLine($"SELECT {sourceTableColumnNameSequence}");
-			builder.AppendLine($"FROM {sourceTableName}");
-
-			return builder.ToString();
-		}
 		#endregion
 
 		#region Description
@@ -929,6 +791,180 @@ namespace SqlServerWorkspace.Data
 			{
 				throw;
 			}
+		}
+		#endregion
+
+		#region View
+		public IEnumerable<string> SelectViewNames()
+		{
+			return Select("table_name", "INFORMATION_SCHEMA.VIEWS").Field("table_name");
+		}
+		#endregion
+
+		#region Function
+		public IEnumerable<string> SelectFunctionNames()
+		{
+			return Select("name", "sys.objects", "type IN ('FN', 'IF', 'TF', 'FS', 'FT')", "name").Field("name");
+		}
+		#endregion
+
+		#region Procedure
+		public IEnumerable<string> SelectProcedureNames()
+		{
+			return Select("routine_name", "INFORMATION_SCHEMA.ROUTINES", "ROUTINE_TYPE = 'PROCEDURE'", "routine_name").Field("routine_name");
+		}
+
+		public IEnumerable<string> GetProcedureParameterNames(string procedureName)
+		{
+			return Select("ORDINAL_POSITION,PARAMETER_NAME", "INFORMATION_SCHEMA.PARAMETERS", $"SPECIFIC_NAME = '{procedureName}'", "ORDINAL_POSITION").Field("PARAMETER_NAME");
+		}
+
+		public DataTable ExecuteStoredProcedure(string procedureName, Dictionary<string, string>? parameters = null)
+		{
+			var dataTable = new DataTable();
+
+			using (var connection = new SqlConnection(GetConnectionString()))
+			{
+				using var command = new SqlCommand(procedureName, connection);
+				command.CommandType = CommandType.StoredProcedure;
+
+				if (parameters != null)
+				{
+					foreach (var parameter in parameters)
+					{
+						command.Parameters.AddWithValue(parameter.Key, parameter.Value);
+					}
+				}
+
+				using var adapter = new SqlDataAdapter(command);
+				connection.Open();
+				adapter.Fill(dataTable);
+			}
+
+			return dataTable;
+		}
+		#endregion
+
+		#region Object
+		public string GetObject(string objectName)
+		{
+			using var connection = new SqlConnection(GetConnectionString());
+			string query = $"SELECT OBJECT_DEFINITION(OBJECT_ID('{objectName}'))";
+			var command = new SqlCommand(query, connection);
+
+			try
+			{
+				connection.Open();
+
+				var result = command.ExecuteScalar();
+				if (result == null || result == DBNull.Value)
+				{
+					return string.Empty;
+				}
+
+				return (string)result;
+			}
+			catch
+			{
+				throw;
+			}
+		}
+		#endregion
+
+		#region Etc
+		public IEnumerable<string> GetRecentlyModifiedItems(string periodHour)
+		{
+			using var connection = new SqlConnection(GetConnectionString());
+			string query = $"DECLARE @ago DATETIME; SET @ago = DATEADD(HOUR, -{periodHour}, GETDATE()); SELECT 'Table' AS Type, name AS Name, modify_date AS ModDate FROM sys.tables WHERE modify_date >= @ago UNION ALL SELECT 'Procedure' AS Type, name AS Name, modify_date AS ModDate FROM sys.procedures WHERE modify_date >= @ago UNION ALL SELECT 'Function' AS Type, name AS Name, modify_date AS ModDate FROM sys.objects WHERE type_desc = 'SQL_SCALAR_FUNCTION' and modify_date >= @ago ORDER BY Type, Name;";
+			var command = new SqlCommand(query, connection);
+
+			try
+			{
+				connection.Open();
+				var reader = command.ExecuteReader();
+
+				var dataTable = new DataTable();
+				dataTable.Load(reader);
+				reader.Close();
+
+				return dataTable.Field("Name");
+			}
+			catch
+			{
+				throw;
+			}
+		}
+		#endregion
+
+		#endregion
+
+		#region Query Generate
+		public string GetMergeQuery(string tableName)
+		{
+			var table = GetTableInfo(tableName);
+			var primaryKeyNames = GetTablePrimaryKeyNames(tableName);
+			var columnNames = table.Columns.Select(x => x.Name);
+			var nonKeyColumnNames = columnNames.Except(primaryKeyNames);
+			var columnNameSequence = string.Join(", ", columnNames);
+			var columnNameAlphaSequence = string.Join(", ", columnNames.Select(x => $"@{x}"));
+			var targetPrimaryKeyNames = string.Join(" and ", primaryKeyNames.Select(x => $"target.{x} = @{x}"));
+			var updateSetNonKeyColumnNames = string.Join(", ", nonKeyColumnNames.Select(x => $"{x} = @{x}"));
+
+			var builder = new StringBuilder();
+			builder.AppendLine($"MERGE {tableName} AS target");
+			builder.AppendLine($"USING ( VALUES ( {columnNameAlphaSequence} ) )");
+			builder.AppendLine($"AS source ( {columnNameSequence} )");
+			builder.AppendLine($"ON ( {targetPrimaryKeyNames} )");
+			builder.AppendLine($"WHEN MATCHED AND @vi_act = 'd' THEN");
+			builder.AppendLine($"	DELETE");
+			builder.AppendLine($"WHEN MATCHED THEN");
+			builder.AppendLine($"	UPDATE SET");
+			builder.AppendLine($"	{updateSetNonKeyColumnNames}");
+			builder.AppendLine($"WHEN NOT MATCHED THEN");
+			builder.AppendLine($"	INSERT ( {columnNameSequence} )");
+			builder.AppendLine($"	VALUES ( {columnNameAlphaSequence} );");
+
+			return builder.ToString();
+		}
+
+		public string GetCreateTableQuery(string tableName)
+		{
+			var table = GetTableInfo(tableName);
+			var primaryKeyConstraints = string.Join(',', table.Columns.Where(x => x.IsKey).Select(x => $"{x.Name} ASC"));
+
+			var builder = new StringBuilder();
+			builder.AppendLine($"CREATE TABLE {tableName}");
+			builder.AppendLine("(");
+			foreach (var column in table.Columns)
+			{
+				builder.AppendLine($"{column.Name} {column.ToTypeString()} {(column.IsKey ? "NOT NULL" : "NULL")},");
+			}
+			builder.AppendLine(")");
+			builder.AppendLine("go");
+			builder.AppendLine();
+			builder.AppendLine($"ALTER TABLE {tableName}");
+			builder.AppendLine($"ADD CONSTRAINT XPK_{tableName} PRIMARY KEY NONCLUSTERED (");
+			builder.AppendLine($"{primaryKeyConstraints}");
+			builder.AppendLine(")");
+			builder.AppendLine("go");
+
+			return builder.ToString();
+		}
+
+		public string GetCopyDataQuery(string sourceTableName, string destinationTableName)
+		{
+			var sourceTable = GetTableInfo(sourceTableName);
+			var destinationTable = GetTableInfo(destinationTableName);
+			var sourceTableColumnNameSequence = string.Join(',', sourceTable.Columns.Select(x => x.Name));
+			var destinationTableColumnNameSequence = string.Join(',', destinationTable.Columns.Select(x => x.Name));
+
+			var builder = new StringBuilder();
+			builder.AppendLine($"INSERT INTO {destinationTableName}");
+			builder.AppendLine($"({destinationTableColumnNameSequence})");
+			builder.AppendLine($"SELECT {sourceTableColumnNameSequence}");
+			builder.AppendLine($"FROM {sourceTableName}");
+
+			return builder.ToString();
 		}
 		#endregion
 	}

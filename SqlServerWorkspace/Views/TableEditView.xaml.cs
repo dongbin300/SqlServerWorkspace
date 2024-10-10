@@ -1,4 +1,6 @@
-﻿using SqlServerWorkspace.Data;
+﻿using AvalonDock.Controls;
+
+using SqlServerWorkspace.Data;
 using SqlServerWorkspace.Extensions;
 
 using System.Windows;
@@ -71,6 +73,47 @@ namespace SqlServerWorkspace.Views
 				ModifyButton.Visibility = Visibility.Collapsed;
 				SaveColumn.Visibility = Visibility.Collapsed;
 				DeleteColumn.Visibility = Visibility.Collapsed;
+			}
+
+			foreach (var column in ColumnDataGrid.Columns)
+			{
+				if (column is DataGridCheckBoxColumn checkBoxColumn)
+				{
+					foreach (var item in ColumnDataGrid.Items)
+					{
+						var row = (DataGridRow)ColumnDataGrid.ItemContainerGenerator.ContainerFromItem(item);
+						if (row != null)
+						{
+							// 체크박스가 포함된 셀 찾기
+							var cell = (DataGridCell)checkBoxColumn.GetCellContent(row)?.Parent;
+							if (cell != null)
+							{
+								// 시각적 트리를 탐색하여 CheckBox 찾기
+								var checkBox = cell.FindVisualChildren<CheckBox>().First();
+								if (checkBox != null)
+								{
+									// CheckBox를 찾았을 때의 로직
+									checkBox.Checked += (sender, e) =>
+									{
+										var checkBox = sender as CheckBox;
+										if (checkBox?.DataContext is TableEditView_ColumnDataGrid dataContext)
+										{
+											dataContext.NotNull = true;
+										}
+									};
+									checkBox.Unchecked += (sender, e) =>
+									{
+										var checkBox = sender as CheckBox;
+										if (checkBox?.DataContext is TableEditView_ColumnDataGrid dataContext)
+										{
+											dataContext.NotNull = false;
+										}
+									};
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -149,6 +192,8 @@ namespace SqlServerWorkspace.Views
 				return;
 			}
 
+			var isNotNull = ColumnDataGrid.Columns[3].GetCellContent(button.FindParent<DataGridRow>()).Parent.FindVisualChildren<CheckBox>().First().IsChecked;
+
 			if (button.DataContext is not TableEditView_ColumnDataGrid column)
 			{
 				return;
@@ -160,17 +205,50 @@ namespace SqlServerWorkspace.Views
 				return;
 			}
 
+			/* Constraint */
+			List<string> checkedKeyNames = [];
+			for (int i = 0; i < ColumnDataGrid.Items.Count; i++)
+			{
+				var row = (DataGridRow)ColumnDataGrid.ItemContainerGenerator.ContainerFromIndex(i);
+				if (row == null)
+				{
+					continue;
+				}
+
+				var cell = (DataGridCell)ColumnDataGrid.Columns[4].GetCellContent(row).Parent;
+				if (cell == null)
+				{
+					continue;
+				}
+
+				var checkBox = cell.FindVisualChildren<CheckBox>().First();
+				if (checkBox != null)
+				{
+					if (checkBox.IsChecked ?? false)
+					{
+						checkedKeyNames.Add(((TableEditView_ColumnDataGrid)ColumnDataGrid.Items[i]).NamePrev);
+					}
+				}
+			}
+			var primaryKeyNames = Manager.GetTablePrimaryKeyNames(TableName);
+
 			string? result;
 			if (column.NamePrev == string.Empty) // 새로운 컬럼 추가
 			{
-				result = Manager.AddColumn(TableName, column.Name, column.DataType, column.Description);
+				result = Manager.AddColumn(TableName, column.Name, column.DataType, column.Description, isNotNull);
 			}
 			else // 기존 컬럼 변경
 			{
-				var dataType = column.DataType == column.DataTypePrev ? null : column.DataType;
+				var dataType = column.DataType;
 				var description = column.Description == column.DescriptionPrev ? null : column.Description;
-				result = Manager.ModifyColumn(TableName, column.NamePrev, column.Name, dataType, description);
+				result = Manager.ModifyColumn(TableName, column.NamePrev, column.Name, dataType, description, isNotNull);
 			}
+
+			if (!checkedKeyNames.SequenceEqual(primaryKeyNames)) // 기본 키 변경
+			{
+				result = Manager.ModifyConstraint(TableName, checkedKeyNames);
+			}
+
 			if (result != string.Empty)
 			{
 				MessageBox.Show(result);
