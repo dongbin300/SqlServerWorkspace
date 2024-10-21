@@ -287,5 +287,55 @@ namespace SqlServerWorkspace.Views.Controls
 			int selectedIndex = TableDataGrid.SelectedIndex;
 			dataView.Table.Rows.InsertAt(newRow, selectedIndex + 1);
 		}
-    }
+
+		private void TableDataGrid_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+			{
+				PasteClipboardContent();
+				e.Handled = true;
+			}
+		}
+
+		/// <summary>
+		/// 테이블 데이터를 복사 붙여넣기로 간단 입력
+		/// 행은 줄바꿈, 열은 탭으로 구분
+		/// </summary>
+		private void PasteClipboardContent()
+		{
+			try
+			{
+				string clipboardText = Clipboard.GetText();
+
+				string[] lines = clipboardText.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries);
+
+				var selectedCell = TableDataGrid.SelectedCells.FirstOrDefault();
+
+				int startRowIndex = TableDataGrid.Items.IndexOf(selectedCell.Item);
+				int startColIndex = selectedCell.Column.DisplayIndex;
+
+				for (int i = 0; i < lines.Length; i++)
+				{
+					int rowIndex = startRowIndex + i;
+					if (rowIndex >= TableDataGrid.Items.Count) break;
+
+					var row = TableDataGrid.Items[rowIndex];
+					var values = lines[i].Split('\t');
+
+					for (int j = 0; j < values.Length; j++)
+					{
+						int colIndex = startColIndex + j;
+						if (colIndex >= TableDataGrid.Columns.Count) break;
+
+						var column = TableDataGrid.Columns[colIndex];
+						column.OnPastingCellClipboardContent(row, values[j]);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message);
+			}
+		}
+	}
 }
