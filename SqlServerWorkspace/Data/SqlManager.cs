@@ -13,6 +13,7 @@ namespace SqlServerWorkspace.Data
 	public class SqlManager(AuthenticationType authenticationType, string server)
 	{
 		public AuthenticationType AuthenticationType { get; set; } = authenticationType;
+		public string Id { get; set; } = string.Empty;
 		public string Server { get; set; } = server;
 		public string User { get; set; } = string.Empty;
 		public string Password { get; set; } = string.Empty;

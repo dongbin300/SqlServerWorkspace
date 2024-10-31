@@ -1,9 +1,5 @@
-﻿using AvalonDock.Controls;
-using AvalonDock.Layout;
+﻿using AvalonDock.Layout;
 
-using Microsoft.VisualBasic.Devices;
-
-using SqlServerWorkspace.Data;
 using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;

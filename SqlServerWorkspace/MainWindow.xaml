@@ -81,7 +81,7 @@
             </Style>
         </ResourceDictionary>
     </Window.Resources>
-    
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="26"/>

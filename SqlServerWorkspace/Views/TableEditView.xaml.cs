@@ -85,7 +85,7 @@ namespace SqlServerWorkspace.Views
 						if (row != null)
 						{
 							// 체크박스가 포함된 셀 찾기
-							var cell = (DataGridCell)checkBoxColumn.GetCellContent(row)?.Parent;
+							var cell = (DataGridCell)checkBoxColumn.GetCellContent(row).Parent;
 							if (cell != null)
 							{
 								// 시각적 트리를 탐색하여 CheckBox 찾기

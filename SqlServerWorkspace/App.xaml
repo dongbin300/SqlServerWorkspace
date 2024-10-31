@@ -290,8 +290,8 @@
             <Setter Property="HeadersVisibility" Value="Column" />
             <Setter Property="HorizontalGridLinesBrush" Value="#AAAAAA" />
             <Setter Property="VerticalGridLinesBrush" Value="#AAAAAA" />
-            <Setter Property="ColumnHeaderHeight" Value="30"/>
-            <Setter Property="RowHeight" Value="30"/>
+            <Setter Property="ColumnHeaderHeight" Value="26"/>
+            <Setter Property="RowHeight" Value="26"/>
             <Setter Property="CanUserAddRows" Value="True"/>
             <Setter Property="CanUserDeleteRows" Value="True"/>
             <Setter Property="AutoGenerateColumns" Value="False"/>
@@ -348,12 +348,13 @@
             <Setter Property="HeadersVisibility" Value="All"/>
             <Setter Property="HorizontalGridLinesBrush" Value="#565656" />
             <Setter Property="VerticalGridLinesBrush" Value="#565656" />
-            <Setter Property="RowHeight" Value="30"/>
+            <Setter Property="RowHeight" Value="26"/>
             <Setter Property="CanUserAddRows" Value="True"/>
             <Setter Property="CanUserDeleteRows" Value="True"/>
             <Setter Property="AutoGenerateColumns" Value="False"/>
             <Setter Property="IsReadOnly" Value="False"/>
             <Setter Property="ClipboardCopyMode" Value="IncludeHeader"/>
+            <Setter Property="BorderThickness" Value="0" />
             <Setter Property="RowHeaderWidth" Value="40"/>
             <Setter Property="RowHeaderStyle">
                 <Setter.Value>
@@ -416,7 +417,7 @@
                                     <!--<TextBox Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Content.Text, Mode=TwoWay, UpdateSourceTrigger=Default}"
                                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0" BorderThickness="0" Background="{TemplateBinding Background}"/>-->
                                     <Grid Background="{TemplateBinding Background}">
-                                        <ContentPresenter x:Name="PART_ContentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
+                                        <ContentPresenter x:Name="PART_ContentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="3"/>
                                     </Grid>
                                 </ControlTemplate>
                             </Setter.Value>
@@ -442,7 +443,7 @@
             <Setter Property="HeadersVisibility" Value="Column"/>
             <Setter Property="HorizontalGridLinesBrush" Value="#565656" />
             <Setter Property="VerticalGridLinesBrush" Value="#565656" />
-            <Setter Property="RowHeight" Value="30"/>
+            <Setter Property="RowHeight" Value="26"/>
             <Setter Property="AutoGenerateColumns" Value="False"/>
             <Setter Property="IsReadOnly" Value="True"/>
             <Setter Property="ColumnHeaderStyle">

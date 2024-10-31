@@ -23,6 +23,8 @@ namespace SqlServerWorkspace
 		public static List<SqlManager> Connections = [];
 		public static IEnumerable<IEnumerable<TreeNode>> ConnectionsNodes => Connections.Select(c => c.Nodes);
 		public static Settings Settings = default!;
+		private static Random random = new ();
+		private static readonly string Code = "1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
 
 		/* Icon Resource */
 		public static readonly string ServerIcon = "M6 3h4v1H6V3zm0 6h4v1H6V9zm0 2h4v1H6v-1zm9.14 5H.86l1.25-5H4V2a.95.95 0 0 1 .078-.383c.052-.12.123-.226.211-.32a.922.922 0 0 1 .32-.219A1.01 1.01 0 0 1 5 1h6a.95.95 0 0 1 .383.078c.12.052.226.123.32.211a.922.922 0 0 1 .219.32c.052.125.078.256.078.391v9h1.89l1.25 5zM5 13h6V2H5v11zm8.86 2l-.75-3H12v2H4v-2H2.89l-.75 3h11.72z";
@@ -66,18 +68,18 @@ namespace SqlServerWorkspace
 				return null;
 			}
 
-			var server = topTreeViewItem.Tag.ToString();
-			if (server == null)
+			var id = topTreeViewItem.Tag.ToString();
+			if (id == null)
 			{
 				return null;
 			}
 
-			return GetSqlManager(server);
+			return GetSqlManager(id);
 		}
 
-		public static SqlManager? GetSqlManager(string server)
+		public static SqlManager? GetSqlManager(string id)
 		{
-			return Connections.Find(x => x.Server.Equals(server));
+			return Connections.Find(x => x.Id.Equals(id));
 		}
 
 		public static void LoadSettings()
@@ -123,57 +125,66 @@ namespace SqlServerWorkspace
 				var database = connection.Database;
 				var user = connection.User;
 				var password = connection.Password;
+				var id = $"{server}_{random.Next(Code, 4)}";
+				connection.Id = id;
 				//TreeNode databaseNode = default!;
 				switch (connection.AuthenticationType)
 				{
 					case AuthenticationType.WindowsAuthentication:
-						var databaseNode = new TreeNode(database, TreeNodeType.DatabaseNode, database);
-
-						var tableNode = new TreeNode("Table", TreeNodeType.TableTitleNode, databaseNode.Path.CombinePath("Table"));
-						var viewNode = new TreeNode("View", TreeNodeType.ViewTitleNode, databaseNode.Path.CombinePath("View"));
-						var functionNode = new TreeNode("Function", TreeNodeType.FunctionTitleNode, databaseNode.Path.CombinePath("Function"));
-						var procedureNode = new TreeNode("Procedure", TreeNodeType.ProcedureTitleNode, databaseNode.Path.CombinePath("Procedure"));
-						var tableNames = connection.SelectTableNames();
-						foreach (var tableName in tableNames)
 						{
-							tableNode.Children.Add(new TreeNode(tableName, TreeNodeType.TableNode, tableNode.Path.CombinePath(tableName)));
-						}
-						databaseNode.Children.Add(tableNode);
+							var databaseNode = new TreeNode(database, TreeNodeType.DatabaseNode, database);
 
-						var viewNames = connection.SelectViewNames();
-						foreach (var viewName in viewNames)
-						{
-							viewNode.Children.Add(new TreeNode(viewName, TreeNodeType.ViewNode, tableNode.Path.CombinePath(viewName)));
-						}
-						databaseNode.Children.Add(viewNode);
+							var tableNode = new TreeNode("Table", TreeNodeType.TableTitleNode, databaseNode.Path.CombinePath("Table"));
+							var viewNode = new TreeNode("View", TreeNodeType.ViewTitleNode, databaseNode.Path.CombinePath("View"));
+							var functionNode = new TreeNode("Function", TreeNodeType.FunctionTitleNode, databaseNode.Path.CombinePath("Function"));
+							var procedureNode = new TreeNode("Procedure", TreeNodeType.ProcedureTitleNode, databaseNode.Path.CombinePath("Procedure"));
+							var tableNames = connection.SelectTableNames();
+							foreach (var tableName in tableNames)
+							{
+								tableNode.Children.Add(new TreeNode(tableName, TreeNodeType.TableNode, tableNode.Path.CombinePath(tableName)));
+							}
+							databaseNode.Children.Add(tableNode);
 
-						var functionNames = connection.SelectFunctionNames();
-						foreach (var functionName in functionNames)
-						{
-							functionNode.Children.Add(new TreeNode(functionName, TreeNodeType.FunctionNode, tableNode.Path.CombinePath(functionName), FunctionIcon));
-						}
-						databaseNode.Children.Add(functionNode);
+							var viewNames = connection.SelectViewNames();
+							foreach (var viewName in viewNames)
+							{
+								viewNode.Children.Add(new TreeNode(viewName, TreeNodeType.ViewNode, tableNode.Path.CombinePath(viewName)));
+							}
+							databaseNode.Children.Add(viewNode);
 
-						var procedureNames = connection.SelectProcedureNames();
-						foreach (var procedureName in procedureNames)
-						{
-							procedureNode.Children.Add(new TreeNode(procedureName, TreeNodeType.ProcedureNode, tableNode.Path.CombinePath(procedureName)));
-						}
-						databaseNode.Children.Add(procedureNode);
+							var functionNames = connection.SelectFunctionNames();
+							foreach (var functionName in functionNames)
+							{
+								functionNode.Children.Add(new TreeNode(functionName, TreeNodeType.FunctionNode, tableNode.Path.CombinePath(functionName), FunctionIcon));
+							}
+							databaseNode.Children.Add(functionNode);
 
-						connection.Nodes.Add(databaseNode);
+							var procedureNames = connection.SelectProcedureNames();
+							foreach (var procedureName in procedureNames)
+							{
+								procedureNode.Children.Add(new TreeNode(procedureName, TreeNodeType.ProcedureNode, tableNode.Path.CombinePath(procedureName)));
+							}
+							databaseNode.Children.Add(procedureNode);
+
+							connection.Nodes.Add(databaseNode);
+						}
 						break;
 
 					case AuthenticationType.SqlServerAuthentication:
-						var serverNode = new TreeNode(server, TreeNodeType.ServerNode, server, ServerIcon, ServerIconColor);
-
-						var databaseNames = connection.SelectDatabaseNames();
-						foreach (var databaseName in databaseNames)
 						{
-							serverNode.Children.Add(new TreeNode(databaseName, TreeNodeType.DatabaseNode, serverNode.Path.CombinePath(databaseName), DatabaseIcon, DatabaseIconColor));
-						}
+							var serverNode = new TreeNode(id, TreeNodeType.ServerNode, id, ServerIcon, ServerIconColor)
+							{
+								IsExpanded = !string.IsNullOrEmpty(database)
+							};
 
-						connection.Nodes.Add(serverNode);
+							var databaseNames = string.IsNullOrEmpty(database) ? connection.SelectDatabaseNames() : database.Split(',', StringSplitOptions.RemoveEmptyEntries);
+							foreach (var databaseName in databaseNames)
+							{
+								serverNode.Children.Add(new TreeNode(databaseName, TreeNodeType.DatabaseNode, serverNode.Path.CombinePath(databaseName), DatabaseIcon, DatabaseIconColor));
+							}
+
+							connection.Nodes.Add(serverNode);
+						}
 						break;
 
 					default:
@@ -190,6 +201,21 @@ namespace SqlServerWorkspace
 		public static void SaveConnectionInfo()
 		{
 			File.WriteAllText(connectionFileName, JsonSerializer.Serialize<IEnumerable<SqlManager>>(Connections, options));
+		}
+
+		public static string Next(this Random random, string str)
+		{
+			return str[random.Next(str.Length)].ToString();
+		}
+
+		public static string Next(this Random random, string str, int count)
+		{
+			string result = string.Empty;
+			for (int i = 0; i < count; i++)
+			{
+				result += random.Next(str);
+			}
+			return result;
 		}
 	}
 }
