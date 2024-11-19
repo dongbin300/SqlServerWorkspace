@@ -1,4 +1,6 @@
-﻿using SqlServerWorkspace.Enums;
+﻿using AvalonDock.Layout;
+
+using SqlServerWorkspace.Enums;
 
 using System.Windows;
 using System.Windows.Documents;
@@ -26,6 +28,8 @@ namespace SqlServerWorkspace
                 mainWindow.StatusTextBlock.Inlines.Add(run);
                 mainWindow.StatusTextBlock.Inlines.Add(new LineBreak());
                 mainWindow.StatusTextScrollViewer.ScrollToEnd();
+
+				SetStatusPanelSelectedIndex("LOG");
 			}
 		}
 
@@ -33,7 +37,7 @@ namespace SqlServerWorkspace
         {
             if (MainWindow is MainWindow mainWindow)
             {
-                var currentTab = mainWindow.EntryPane.GetCurrentTab();
+                var currentTab = mainWindow.EntryDocumentPane.GetCurrentTab();
                 var tabHeader = currentTab == null ? string.Empty : currentTab.Title;
 
 				var run = new Run($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}/{tabHeader}] {text}")
@@ -50,6 +54,8 @@ namespace SqlServerWorkspace
 				mainWindow.StatusTextBlock.Inlines.Add(run);
 				mainWindow.StatusTextBlock.Inlines.Add(new LineBreak());
                 mainWindow.StatusTextScrollViewer.ScrollToEnd();
+
+				SetStatusPanelSelectedIndex("LOG");
 			}
         }
 
@@ -59,6 +65,14 @@ namespace SqlServerWorkspace
             {
                 mainWindow.Refresh();
             }
+		}
+
+		public static void SetStatusPanelSelectedIndex(string contentId)
+		{
+            if (MainWindow is MainWindow mainWindow)
+			{
+				mainWindow.StatusPanel.SelectedContentIndex = mainWindow.StatusPanel.Children.OfType<LayoutAnchorable>().ToList().FindIndex(x => x.ContentId == contentId);
+			}
 		}
 	}
 }

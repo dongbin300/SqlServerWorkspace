@@ -1,6 +1,9 @@
-﻿using System.Collections.ObjectModel;
+﻿using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.Wpf;
+
+using System.IO;
 using System.Windows;
-using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace TreeViewTest
 {
@@ -9,50 +12,73 @@ namespace TreeViewTest
 	/// </summary>
 	public partial class MainWindow : Window
 	{
-		public List<List<TreeNode>> RootTreeNodes { get; set; }
-		public List<TreeNode> TreeNodes { get; set; }
+		static readonly string _monacoHtmlPath = Path.Combine("Resources", "monaco.html");
+		static readonly string _userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SqlServerWorkspace");
+
+		WebView2 webView;
 
 		public MainWindow()
 		{
 			InitializeComponent();
-
-			TreeNodes =
-			[
-				new TreeNode("Rooooooooooooooooooooooot")
-				{
-					Children =                  
-					[
-						new TreeNode("Child 1")
-						{
-							Children =
-							[
-								new TreeNode("Item 1"),
-								new TreeNode("Item 2"),
-								new TreeNode("Item 3")
-							]
-						},
-						new TreeNode("Child 2"),
-						new TreeNode("Child 3"),
-						new TreeNode("Child 4")
-					]
-				}
-			];
-			RootTreeNodes = new List<List<TreeNode>>();
-			RootTreeNodes.Add(TreeNodes);
-
-			treeView.ItemsSource = RootTreeNodes;
 		}
 
-		private void Border_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		public static async Task InitWebView(WebView2 webView)
 		{
-			if (sender is Border border && border.TemplatedParent is TreeViewItem item)
+			try
 			{
-				if (item.HasItems)
-				{
-					item.IsExpanded = !item.IsExpanded;
-				}
-				e.Handled = true;
+				var env = await CoreWebView2Environment.CreateAsync(null, _userDataFolder);
+				await webView.EnsureCoreWebView2Async(env);
+				webView.CoreWebView2.Settings.IsScriptEnabled = true;
+				webView.CoreWebView2.NavigateToString(File.ReadAllText(_monacoHtmlPath));
 			}
+			catch (ArgumentException)
+			{
+
+			}
+		}
+
+		private async void TestButton_Click(object sender, RoutedEventArgs e)
+		{
+			TestButton.Visibility = Visibility.Collapsed;
+
+			webView = new WebView2
+			{
+				HorizontalAlignment = HorizontalAlignment.Left,
+				VerticalAlignment = VerticalAlignment.Top
+			};
+
+			MainGrid.Children.Add(webView);
+
+			await InitWebView(webView);
+
+			SetWebViewSize(Width, Height);
+		}
+
+		private void SetWebViewSize(double width, double height)
+		{
+			webView.Width = width;
+			webView.Height = height;
+
+			var scaleX = width / webView.ActualWidth;
+			var scaleY = height / webView.ActualHeight;
+			webView.RenderTransform = new ScaleTransform(scaleX, scaleY);
+		}
+
+		private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			if(webView != null)
+			{
+				SetWebViewSize(Width, Height);
+			}
+
+			//var webViews = MainGrid.Children.OfType<WebView2>();
+			//if (webViews.Any())
+			//{
+			//	var webView = webViews.First();
+			//	webView.Width = Width;
+			//	webView.Height = Height;
+			//	webView.UpdateLayout();
+			//}
 		}
 	}
 }

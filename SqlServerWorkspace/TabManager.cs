@@ -21,6 +21,7 @@ namespace SqlServerWorkspace
 	{
 		static readonly string _monacoHtmlPath = Path.Combine("Resources", "monaco.html");
 		static readonly string _userDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SqlServerWorkspace");
+		static bool _isFirstNewTab = true;
 
 		public static async Task Init(this WebView2 webView)
 		{
@@ -59,6 +60,10 @@ namespace SqlServerWorkspace
 			if (layoutContent != null)
 			{
 				layoutContent.IsSelected = true;
+				//if (layoutContent.Content is WebView2 webView)
+				//{
+				//	webView.Reload();
+				//}
 				return;
 			}
 
@@ -67,6 +72,11 @@ namespace SqlServerWorkspace
 			{
 				Title = header
 			};
+			if (_isFirstNewTab)
+			{
+				_isFirstNewTab = false;
+				layoutDocumentPane.Children.Clear();
+			}
 			layoutDocumentPane.Children.Add(newLayoutContent);
 
 			switch (type)
@@ -158,8 +168,7 @@ namespace SqlServerWorkspace
 											mainWindowStatusPanel.Children.Add(tablePanel);
 										}
 
-										var anchorable2 = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().First(a => a.ContentId == "SPER");
-										mainWindowStatusPanel.SelectedContentIndex = mainWindowStatusPanel.Children.IndexOf(anchorable2);
+										Common.SetStatusPanelSelectedIndex("SPER");
 									}
 									else if (firstKeyword.Equals("select", StringComparison.OrdinalIgnoreCase))
 									{
@@ -197,6 +206,8 @@ namespace SqlServerWorkspace
 											tablePanel.Content = dataGrid;
 											mainWindowStatusPanel.Children.Add(tablePanel);
 										}
+
+										Common.SetStatusPanelSelectedIndex("SR");
 									}
 									else
 									{
@@ -206,9 +217,9 @@ namespace SqlServerWorkspace
 											Common.Log(result, LogType.Error);
 											break;
 										}
-									}
 
-									Common.Log("Run Complete", LogType.Success);
+										Common.Log("Run Complete", LogType.Success);
+									}
 								}
 								catch (Exception ex)
 								{

@@ -9,7 +9,7 @@ using System.Windows.Media;
 
 namespace SqlServerWorkspace
 {
-    public static class TreeViewManager
+	public static class TreeViewManager
 	{
 		public static void ExpandAll(this TreeView treeView, ItemsControl parent)
 		{
@@ -221,7 +221,7 @@ namespace SqlServerWorkspace
 
 		public static void AddMenu(this ContextMenu contextMenu, string header, ContextMenuFunction function)
 		{
-			if(Application.Current.MainWindow is MainWindow mainWindow)
+			if (Application.Current.MainWindow is MainWindow mainWindow)
 			{
 				var menu = new MenuItem { Header = header, Tag = function };
 				menu.Click += mainWindow.TreeViewMenuItem_Click;

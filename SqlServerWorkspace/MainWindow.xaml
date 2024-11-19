@@ -13,7 +13,7 @@
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/AvalonDock.Themes.VS2013;component/DarkBrushs.xaml" />
+                <ResourceDictionary Source="/AvalonDock.Themes.VS2022;component/DarkBrushs.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!-- DataTemplate for TreeNode -->
@@ -104,22 +104,57 @@
 
         <!-- AVALONDOCK LAYOUT -->
         <Grid Grid.Row="1">
-            <dock:DockingManager x:Name="MainDockingManager">
-                <dock:DockingManager.Theme>
-                    <dock:Vs2013DarkTheme/>
-                </dock:DockingManager.Theme>
-                <dock:LayoutRoot>
-                    <dock:LayoutPanel Orientation="Horizontal">
+            <DockingManager x:Name="MainDockingManager">
+                <DockingManager.Theme>
+                    <VS2022DarkTheme/>
+                </DockingManager.Theme>
+                <!-- 메뉴아이템 스타일 적용이 안됨 ㅠㅠ -->
+                <dock:DockingManager.Resources>
+                    <Style TargetType="{x:Type MenuItem}">
+                        <Setter Property="Height" Value="26" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type MenuItem}">
+                                    <Grid Background="{StaticResource TitleBarBackground}" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border x:Name="_border" Background="{StaticResource TitleBarBackground}"/>
+                                        <TextBlock Foreground="#eee" Grid.Column="1" Margin="15,0" VerticalAlignment="Center" x:Name="_txt" Text="{Binding Title,RelativeSource={RelativeSource TemplatedParent}}" />
+                                        <Popup Placement="Bottom" x:Name="SubMenuPopup" AllowsTransparency="True"  Focusable="False" IsOpen="{TemplateBinding IsSubmenuOpen}" >
+                                            <ScrollViewer ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                                <Border Background="#888" Name="SubmenuBorder" BorderBrush="LightGray" BorderThickness="1" SnapsToDevicePixels="True"  >
+                                                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                                                </Border>
+                                            </ScrollViewer>
+                                        </Popup>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="true">
+                                            <Setter TargetName="_border" Property="Background" Value="{StaticResource TitleBarMouseOver}"/>
+                                            <Setter TargetName="_txt" Property="Foreground" Value="White"/>
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="false">
+                                            <Setter TargetName="_txt" Property="Foreground" Value="Gray"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </dock:DockingManager.Resources>
+                <LayoutRoot>
+                    <LayoutPanel Orientation="Horizontal">
                         <!-- 1. LEFT-SIDE DATABASE HIERARCHY TREE VIEW -->
-                        <dock:LayoutAnchorablePane x:Name="DatabasePane" DockWidth="300">
-                            <dock:LayoutAnchorable Title="Object Explorer" Hiding="LayoutAnchorable_Hiding">
+                        <LayoutAnchorablePane x:Name="DatabasePane" DockWidth="300">
+                            <LayoutAnchorable Title="Object Explorer" Hiding="LayoutAnchorable_Hiding">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="24"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
-                                    <TextBox x:Name="DatabaseTreeViewFilterTextBox" TextChanged="DatabaseTreeViewFilterTextBox_TextChanged"/>
+                                    <TextBox x:Name="DatabaseTreeViewFilterTextBox" KeyDown="DatabaseTreeViewFilterTextBox_KeyDown"/>
 
                                     <TreeView x:Name="DatabaseTreeView" Grid.Row="1" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard"
                                               Foreground="{StaticResource DarkForeground}" Background="{StaticResource DarkBackground}"
@@ -136,31 +171,30 @@
                                         </TreeView.ItemTemplate>
                                     </TreeView>
                                 </Grid>
-                            </dock:LayoutAnchorable>
-                        </dock:LayoutAnchorablePane>
+                            </LayoutAnchorable>
+                        </LayoutAnchorablePane>
 
-                        <dock:LayoutPanel Orientation="Vertical">
+                        <LayoutPanel Orientation="Vertical">
                             <!-- 2. CONTENTS TAB GROUP -->
-                            <dock:LayoutDocumentPaneGroup>
-                                <dock:LayoutDocumentPane x:Name="EntryPane">
-                                    <!-- ADD TAB HERE -->
-                                </dock:LayoutDocumentPane>
-                            </dock:LayoutDocumentPaneGroup>
+                            <LayoutDocumentPane x:Name="EntryDocumentPane">
+                                <LayoutDocument/>
+                                <!-- ADD LAYOUTDOCUMENT HERE -->
+                            </LayoutDocumentPane>
 
                             <!-- 3. STATUS PANEL -->
-                            <dock:LayoutAnchorablePane x:Name="StatusPanel" DockHeight="240" >
-                                <dock:LayoutAnchorable Title="Logs" Hiding="LayoutAnchorable_Hiding">
+                            <LayoutAnchorablePane x:Name="StatusPanel" DockHeight="240" >
+                                <LayoutAnchorable Title="Logs" Hiding="LayoutAnchorable_Hiding" ContentId="LOG">
                                     <ScrollViewer x:Name="StatusTextScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                                         <Grid>
                                             <TextBlock x:Name="StatusTextBlock" Style="{StaticResource StatusText}"/>
                                         </Grid>
                                     </ScrollViewer>
-                                </dock:LayoutAnchorable>
-                            </dock:LayoutAnchorablePane>
-                        </dock:LayoutPanel>
-                    </dock:LayoutPanel>
-                </dock:LayoutRoot>
-            </dock:DockingManager>
+                                </LayoutAnchorable>
+                            </LayoutAnchorablePane>
+                        </LayoutPanel>
+                    </LayoutPanel>
+                </LayoutRoot>
+            </DockingManager>
         </Grid>
     </Grid>
 </Window>

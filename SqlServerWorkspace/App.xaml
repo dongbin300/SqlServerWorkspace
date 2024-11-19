@@ -516,39 +516,6 @@
             <Setter Property="Foreground" Value="{StaticResource TitleBarForeground}" />
         </Style>
 
-        <Style TargetType="{x:Type MenuItem}" x:Key="AvalonMenuItem">
-            <Setter Property="Height" Value="26" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type MenuItem}">
-                        <Grid Background="{StaticResource TitleBarBackground}" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Border x:Name="_border" Background="{StaticResource TitleBarBackground}"/>
-                            <TextBlock Foreground="#eee" Grid.Column="1" Margin="15,0" VerticalAlignment="Center" x:Name="_txt" Text="{Binding Title,RelativeSource={RelativeSource TemplatedParent}}" />
-                            <Popup Placement="Bottom" x:Name="SubMenuPopup" AllowsTransparency="True"  Focusable="False" IsOpen="{TemplateBinding IsSubmenuOpen}" >
-                                <ScrollViewer ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                    <Border Background="#888" Name="SubmenuBorder" BorderBrush="LightGray" BorderThickness="1" SnapsToDevicePixels="True"  >
-                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
-                                    </Border>
-                                </ScrollViewer>
-                            </Popup>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="true">
-                                <Setter TargetName="_border" Property="Background" Value="{StaticResource TitleBarMouseOver}"/>
-                                <Setter TargetName="_txt" Property="Foreground" Value="White"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="false">
-                                <Setter TargetName="_txt" Property="Foreground" Value="Gray"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        
         <Style TargetType="{x:Type MenuItem}" x:Key="MainMenuItem">
             <Setter Property="Height" Value="26" />
             <Setter Property="Template">

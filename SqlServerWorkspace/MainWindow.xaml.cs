@@ -41,11 +41,11 @@ namespace SqlServerWorkspace
 			SaveSettingsTimer.Start();
 		}
 
-		public void Refresh()
+		public void Refresh(bool isTitleExpand = false)
 		{
 			var keyword = DatabaseTreeViewFilterTextBox.Text;
 
-			DatabaseTreeView.ItemsSource = DatabaseTreeViewFilterTextBox.Text.Length < 1 ?
+			DatabaseTreeView.ItemsSource = isTitleExpand || DatabaseTreeViewFilterTextBox.Text.Length < 1 ?
 				ResourceManager.ConnectionsNodes :
 				Filter(ResourceManager.ConnectionsNodes, keyword);
 		}
@@ -72,9 +72,12 @@ namespace SqlServerWorkspace
 			return filteredItems;
 		}
 
-		private void DatabaseTreeViewFilterTextBox_TextChanged(object sender, TextChangedEventArgs e)
+		private void DatabaseTreeViewFilterTextBox_KeyDown(object sender, KeyEventArgs e)
 		{
-			Refresh();
+			if (e.Key == Key.Enter)
+			{
+				Refresh();
+			}
 		}
 
 		private async void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -99,14 +102,14 @@ namespace SqlServerWorkspace
 							case TreeNodeType.ViewNode:
 							case TreeNodeType.FunctionNode:
 							case TreeNodeType.ProcedureNode:
-								await EntryPane.CreateNewOrOpenTab(manager, node);
+								await EntryDocumentPane.CreateNewOrOpenTab(manager, node);
 								break;
 
 							case TreeNodeType.DatabaseNode:
 								if (node.Children.Count == 0)
 								{
 									TreeViewManager.MakeDatabaseTree(node);
-									Refresh();
+									Refresh(true);
 								}
 								break;
 
@@ -114,7 +117,7 @@ namespace SqlServerWorkspace
 								if (node.Children.Count == 0)
 								{
 									TreeViewManager.MakeTableTree(manager, node);
-									Refresh();
+									Refresh(true);
 								}
 								break;
 
@@ -122,7 +125,7 @@ namespace SqlServerWorkspace
 								if (node.Children.Count == 0)
 								{
 									TreeViewManager.MakeViewTree(manager, node);
-									Refresh();
+									Refresh(true);
 								}
 								break;
 
@@ -130,7 +133,7 @@ namespace SqlServerWorkspace
 								if (node.Children.Count == 0)
 								{
 									TreeViewManager.MakeFunctionTree(manager, node);
-									Refresh();
+									Refresh(true);
 								}
 								break;
 
@@ -138,7 +141,7 @@ namespace SqlServerWorkspace
 								if (node.Children.Count == 0)
 								{
 									TreeViewManager.MakeProcedureTree(manager, node);
-									Refresh();
+									Refresh(true);
 								}
 								break;
 
@@ -276,7 +279,7 @@ namespace SqlServerWorkspace
 					switch (node.Type)
 					{
 						case TreeNodeType.DatabaseNode:
-							await TreeViewContextMenu.ProcessDatabaseNodeMenu(function, node, manager, EntryPane);
+							await TreeViewContextMenu.ProcessDatabaseNodeMenu(function, node, manager, EntryDocumentPane);
 							break;
 						case TreeNodeType.TableTitleNode:
 							TreeViewContextMenu.ProcessTableTitleNodeMenu(function, node, manager);
