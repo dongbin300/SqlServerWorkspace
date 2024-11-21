@@ -31,9 +31,9 @@
                       BeginningEdit="ColumnDataGrid_BeginningEdit"
                       CellEditEnding="ColumnDataGrid_CellEditEnding">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name" Width="2*" Binding="{Binding Name}"/>
-                    <DataGridTextColumn Header="Data Type" Width="2*" Binding="{Binding DataType}"/>
-                    <DataGridTextColumn Header="Description" Width="2*" Binding="{Binding Description}"/>
+                    <DataGridTextColumn Header="Name" Width="1*" Binding="{Binding Name}"/>
+                    <DataGridTextColumn Header="Data Type" Width="120" Binding="{Binding DataType}"/>
+                    <DataGridTextColumn Header="Description" Width="1*" Binding="{Binding Description}"/>
                     <!--<DataGridComboBoxColumn Header="Data Type" Width="2*" SelectedItemBinding="{Binding DataType}">
             <DataGridComboBoxColumn.ElementStyle>
                 <Style TargetType="ComboBox">
@@ -76,17 +76,17 @@
                 </Style>
             </DataGridComboBoxColumn.EditingElementStyle>
         </DataGridComboBoxColumn>-->
-                    <DataGridCheckBoxColumn Header="Not Null" Width="1*" Binding="{Binding NotNull}" ElementStyle="{StaticResource SswCheckBox}" EditingElementStyle="{StaticResource SswCheckBox}"/>
-                    <DataGridCheckBoxColumn Header="Key" Width="1*" Binding="{Binding Key}" ElementStyle="{StaticResource SswCheckBox}" EditingElementStyle="{StaticResource SswCheckBox}"/>
+                    <DataGridCheckBoxColumn Header="Not Null" Width="60" Binding="{Binding NotNull}" ElementStyle="{StaticResource SswCheckBox}" EditingElementStyle="{StaticResource SswCheckBox}"/>
+                    <DataGridCheckBoxColumn Header="Key" Width="60" Binding="{Binding Key}" ElementStyle="{StaticResource SswCheckBox}" EditingElementStyle="{StaticResource SswCheckBox}"/>
 
-                    <DataGridTemplateColumn x:Name="SaveColumn" Header="" Width="1*" CellStyle="{StaticResource ButtonCell}">
+                    <DataGridTemplateColumn x:Name="SaveColumn" Header="" Width="60" CellStyle="{StaticResource ButtonCell}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Content="Save" Style="{StaticResource DataGridButton}" Click="ColumnSaveButton_Click"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTemplateColumn x:Name="DeleteColumn" Header="" Width="1*" CellStyle="{StaticResource ButtonCell}">
+                    <DataGridTemplateColumn x:Name="DeleteColumn" Header="" Width="60" CellStyle="{StaticResource ButtonCell}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Content="Delete" Style="{StaticResource DataGridButton}" Click="ColumnDeleteButton_Click"/>

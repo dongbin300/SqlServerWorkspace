@@ -472,7 +472,7 @@ namespace SqlServerWorkspace.Data
 		public TableInfo GetTableInfo(string tableName)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
-			string query = $"SELECT TABLE_NAME, TABLE_CATALOG, TABLE_SCHEMA, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{tableName}'";
+			string query = $"SELECT TABLE_NAME, TABLE_CATALOG, TABLE_SCHEMA, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{tableName}'";
 			var command = new SqlCommand(query, connection);
 			string query2 = $"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1 AND TABLE_NAME = '{tableName}'";
 			var command2 = new SqlCommand(query2, connection);
@@ -495,6 +495,14 @@ namespace SqlServerWorkspace.Data
 					var columnName = reader["COLUMN_NAME"].ToString() ?? string.Empty;
 					var dataType = reader["DATA_TYPE"].ToString() ?? string.Empty;
 					var maxLength = reader["CHARACTER_MAXIMUM_LENGTH"].ToString() ?? string.Empty;
+					if (maxLength == string.Empty)
+					{
+						maxLength = $"{reader["NUMERIC_PRECISION"]},{reader["NUMERIC_SCALE"]}";
+					}
+					if(maxLength == ",")
+					{
+						maxLength = string.Empty;
+					}
 					var isNotNull = (reader["IS_NULLABLE"].ToString() ?? string.Empty) == "NO";
 
 					columns.Add(new TableColumnInfo(columnName, dataType, maxLength, isNotNull));
