@@ -31,9 +31,9 @@
                       BeginningEdit="ColumnDataGrid_BeginningEdit"
                       CellEditEnding="ColumnDataGrid_CellEditEnding">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name" Width="1*" Binding="{Binding Name}"/>
-                    <DataGridTextColumn Header="Data Type" Width="120" Binding="{Binding DataType}"/>
-                    <DataGridTextColumn Header="Description" Width="1*" Binding="{Binding Description}"/>
+                    <DataGridTextColumn Header="Name" Width="1*" Binding="{Binding Name}" EditingElementStyle="{StaticResource DataGridCellTextBox}"/>
+                    <DataGridTextColumn Header="Data Type" Width="120" Binding="{Binding DataType}" EditingElementStyle="{StaticResource DataGridCellTextBox}"/>
+                    <DataGridTextColumn Header="Description" Width="1*" Binding="{Binding Description}" EditingElementStyle="{StaticResource DataGridCellTextBox}"/>
                     <!--<DataGridComboBoxColumn Header="Data Type" Width="2*" SelectedItemBinding="{Binding DataType}">
             <DataGridComboBoxColumn.ElementStyle>
                 <Style TargetType="ComboBox">

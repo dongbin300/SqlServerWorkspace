@@ -1,8 +1,10 @@
 ﻿using SqlServerWorkspace.Data;
 
 using System.Data;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace SqlServerWorkspace.Extensions
 {
@@ -77,14 +79,21 @@ namespace SqlServerWorkspace.Extensions
 				var dataGridColumn = new DataGridTextColumn
 				{
 					Header = new string[]
-					{ 
+					{
 						column.ColumnName,				// Column Name
 						tableColumn.ToTypeString(),		// Column DataType
 						tableColumn.IsKey ? "*" : "",	// Column Key Flag
 						tableColumn.Description,		// Column Description
 					},
-					Binding = binding
+					Binding = binding,
+					EditingElementStyle = (Style)Application.Current.Resources["DataGridCellTextBox"]
 				};
+
+				//var textBoxStyle = new Style(typeof(TextBox));
+				//textBoxStyle.Setters.Add(new Setter(Control.ForegroundProperty, Application.Current.Resources["DarkForeground"]));
+				//textBoxStyle.Setters.Add(new Setter(Control.BackgroundProperty, Brushes.Transparent));
+				//textBoxStyle.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(0)));
+				//textBoxStyle.Setters.Add(new Setter(System.Windows.Controls.Primitives.TextBoxBase.CaretBrushProperty, Application.Current.Resources["DarkForeground"]));
 
 				//var cellStyle = new Style(typeof(DataGridCell));
 				//cellStyle.Setters.Add(new Setter(DataGridCell.BackgroundProperty, new SolidColorBrush(Color.FromRgb(63, 63, 63))));
