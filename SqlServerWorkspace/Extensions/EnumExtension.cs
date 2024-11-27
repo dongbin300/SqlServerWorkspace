@@ -10,12 +10,12 @@ namespace SqlServerWorkspace.Extensions
 		{
 			string normalizedInput = NormalizeString(input);
 
-			foreach (var value in Enum.GetValues(typeof(T)))
+			foreach (var value in Enum.GetValues<T>())
 			{
 				string normalizedEnumName = NormalizeString(value.ToString() ?? string.Empty);
 				if (normalizedEnumName == normalizedInput)
 				{
-					return (T)value;
+					return value;
 				}
 			}
 

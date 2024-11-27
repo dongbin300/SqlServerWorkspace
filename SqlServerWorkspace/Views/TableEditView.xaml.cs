@@ -296,7 +296,7 @@ namespace SqlServerWorkspace.Views
 				if (nameProperty != null)
 				{
 					var nameValue = nameProperty.GetValue(e.Row.DataContext);
-					var prevName = nameValue;
+					prevName = nameValue?.ToString() ?? "";
 				}
 
 				prev = textBlock.Text;
