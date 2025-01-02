@@ -24,16 +24,23 @@ namespace SqlServerWorkspace.DataModels
 			return parts.Length < 2 ? string.Empty : parts[1];
 		}
 
+		/// <summary>
+		/// ";" 구분자를 이용하여 다중 검색 지원
+		/// </summary>
+		/// <param name="keyword"></param>
+		/// <returns></returns>
 		public List<TreeNode> Search(string keyword)
 		{
 			List<TreeNode> results = [];
 
+			var keywords = keyword.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 			bool ContainsKeyword(TreeNode node) =>
-				node.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase) &&
+				keywords.Any(k => node.Name.Contains(k, StringComparison.OrdinalIgnoreCase)) &&
 				(node.Type == TreeNodeType.TableNode ||
-				 node.Type == TreeNodeType.ViewNode ||
-				 node.Type == TreeNodeType.FunctionNode ||
-				 node.Type == TreeNodeType.ProcedureNode);
+				node.Type == TreeNodeType.ViewNode ||
+				node.Type == TreeNodeType.FunctionNode ||
+				node.Type == TreeNodeType.ProcedureNode);
 
 			bool IsAlwaysIncluded(TreeNode node) =>
 				node.Type == TreeNodeType.ServerNode ||

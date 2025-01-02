@@ -1,0 +1,44 @@
+﻿<UserControl x:Class="SqlServerWorkspace.Views.CustomControls.ClearableTextBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:SqlServerWorkspace.Views.CustomControls"
+             mc:Ignorable="d" 
+            d:DesignHeight="50" d:DesignWidth="200">
+    <Grid>
+        <TextBox x:Name="TextBoxPart"
+                 VerticalAlignment="Center"
+                 Padding="5"
+                 Text="{Binding Text, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}" />
+        
+        <Image x:Name="ClearButton"
+               Width="12"
+               Height="12"
+               VerticalAlignment="Center"
+               HorizontalAlignment="Right"
+               Margin="0"
+               Visibility="Collapsed"
+               Cursor="Hand"
+               MouseDown="ClearButton_MouseDown">
+            <Image.Source>
+                <DrawingImage>
+                    <DrawingImage.Drawing>
+                        <GeometryDrawing Brush="Transparent">
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="White" Thickness="1" />
+                            </GeometryDrawing.Pen>
+                            <GeometryDrawing.Geometry>
+                                <GeometryGroup>
+                                    <LineGeometry StartPoint="0,0" EndPoint="4,4" />
+                                    <LineGeometry StartPoint="4,0" EndPoint="0,4" />
+                                </GeometryGroup>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingImage.Drawing>
+                </DrawingImage>
+            </Image.Source>
+        </Image>
+        
+    </Grid>
+</UserControl>
