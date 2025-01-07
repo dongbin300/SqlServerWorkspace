@@ -351,5 +351,17 @@ namespace SqlServerWorkspace
 				}
 			}
 		}
+
+		#region LOGS MENU
+		private void CopyLog_Click(object sender, RoutedEventArgs e)
+		{
+			Clipboard.SetText(StatusTextBlock.Text);
+		}
+
+		private void CopyLatestLog_Click(object sender, RoutedEventArgs e)
+		{
+			Clipboard.SetText(StatusTextBlock.Text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Last());
+		}
+		#endregion
 	}
 }

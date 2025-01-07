@@ -188,6 +188,13 @@
                                 <LayoutAnchorable Title="Logs" Hiding="LayoutAnchorable_Hiding" ContentId="LOG">
                                     <ScrollViewer x:Name="StatusTextScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                                         <Grid>
+                                            <Grid.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="Copy Log" Click="CopyLog_Click"/>
+                                                    <MenuItem Header="Copy Latest Log" Click="CopyLatestLog_Click"/>
+                                                </ContextMenu>
+                                            </Grid.ContextMenu>
+                                            
                                             <TextBlock x:Name="StatusTextBlock" Style="{StaticResource StatusText}"/>
                                         </Grid>
                                     </ScrollViewer>

@@ -25,7 +25,7 @@
         <SolidColorBrush x:Key="SelectedBackground" Color="#444D56"/>
 
         <FontFamily x:Key="BaseFont">Meiryo UI</FontFamily>
-        <sys:Double x:Key="BaseFontSize">12</sys:Double>
+        <sys:Double x:Key="BaseFontSize">12.5</sys:Double>
 
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="btv"/>
