@@ -27,6 +27,6 @@
 
         <wv:WebView2 Grid.Row="1" x:Name="WebView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" NavigationCompleted="WebView_NavigationCompleted" KeyDown="WebView_KeyDown"/>
         <GridSplitter Grid.Row="2" Height="3" HorizontalAlignment="Stretch" Background="{StaticResource DarkBackground}"/>
-        <DataGrid Grid.Row="3" x:Name="TableDataGrid" Style="{StaticResource DarkDataGrid}" MouseRightButtonUp="TableDataGrid_MouseRightButtonUp" KeyDown="TableDataGrid_KeyDown"/>
+        <DataGrid Grid.Row="3" x:Name="TableDataGrid" Style="{StaticResource DarkDataGrid}" MouseRightButtonUp="TableDataGrid_MouseRightButtonUp" KeyDown="TableDataGrid_KeyDown" LoadingRow="TableDataGrid_LoadingRow"/>
     </Grid>
 </UserControl>

@@ -38,16 +38,19 @@
                 base: 'vs-dark',
                 inherit: true,
                 rules: [
-                    { token: 'comment', foreground: '87c38a' },
+                    { token: 'comment', foreground: '888888' },
                     { token: 'keyword', foreground: '569cd6' },
                     { token: 'number', foreground: 'b5cea8' },
+                    { token: 'string.sql', foreground: 'ef6e15' },
+                    { token: 'function', foreground: '0fec50' },
+                    { token: 'delimiter', foreground: 'cc96f8', fontStyle: 'bold' },
                 ],
                 colors: {
                     'editor.background': '#1e1e1e',
                     'editor.foreground': '#d4d4d4',
                 }
             });
-            
+
             var editor = monaco.editor.create(document.getElementById('editor'), {
                 value: "",
                 language: "sql",

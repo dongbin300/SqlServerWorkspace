@@ -337,5 +337,10 @@ namespace SqlServerWorkspace.Views.Controls
 				MessageBox.Show(ex.Message);
 			}
 		}
-	}
+
+		private void TableDataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
+		{
+			e.Row.Header = (e.Row.GetIndex() + 1).ToString();
+		}
+    }
 }

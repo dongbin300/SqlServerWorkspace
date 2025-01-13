@@ -162,6 +162,7 @@ namespace SqlServerWorkspace.Extensions
 			{
 				var binding = new Binding(column.ColumnName)
 				{
+					Path = new PropertyPath($"[{column.ColumnName}]")
 				};
 
 				if (column.DataType == typeof(DateTime))

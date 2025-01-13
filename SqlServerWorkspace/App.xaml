@@ -12,6 +12,7 @@
         <SolidColorBrush x:Key="DarkBackground" Color="#1E1E1E"/>
         <SolidColorBrush x:Key="DarkForeground" Color="#F1F1F1"/>
         <SolidColorBrush x:Key="SswColor" Color="#CC96F8"/>
+        <SolidColorBrush x:Key="SswColor2" Color="#9C66C8"/>
         <SolidColorBrush x:Key="InfoColor" Color="#F1F1F1"/>
         <SolidColorBrush x:Key="SuccessColor" Color="#3BCF86"/>
         <SolidColorBrush x:Key="WarningColor" Color="#FCD535"/>
@@ -382,6 +383,7 @@
                         <Setter Property="Foreground" Value="{StaticResource DarkForeground}" />
                         <Setter Property="BorderBrush" Value="#565656" />
                         <Setter Property="BorderThickness" Value="0,0,0,1" />
+                        <Setter Property="Padding" Value="5 0" />
                     </Style>
                 </Setter.Value>
             </Setter>
@@ -405,7 +407,8 @@
                                                     <Style TargetType="Run">
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding Path=[2]}" Value="*">
-                                                                <Setter Property="TextDecorations"  Value="Underline" />
+                                                                <Setter Property="FontStyle" Value="Oblique" />
+                                                                <Setter Property="TextDecorations" Value="Underline" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
