@@ -38,16 +38,19 @@
                 base: 'vs-dark',
                 inherit: true,
                 rules: [
-                    { token: 'comment', foreground: '888888' },
-                    { token: 'keyword', foreground: '569cd6' },
-                    { token: 'number', foreground: 'b5cea8' },
+                    { token: 'comment.sql', foreground: '888888' },
+                    { token: 'keyword.sql', foreground: '569cd6', fontStyle: 'bold' },
+                    { token: 'number.sql', foreground: 'b5cea8' },
                     { token: 'string.sql', foreground: 'ef6e15' },
-                    { token: 'function', foreground: '0fec50' },
-                    { token: 'delimiter', foreground: 'cc96f8', fontStyle: 'bold' },
+                    { token: 'predefined.sql', foreground: 'efe528', fontStyle: 'bold' },
+                    { token: 'delimiter.sql', foreground: 'cc96f8' },
+                    { token: 'delimiter.parenthesis.sql', foreground: '8899aa', fontStyle: 'bold' },
+                    { token: 'operator.sql', foreground: 'cc96f8' },
+                    //{ token: 'predefined.sql', foreground: '0fec50', fontStyle: 'bold' },
                 ],
                 colors: {
                     'editor.background': '#1e1e1e',
-                    'editor.foreground': '#d4d4d4',
+                    'editor.foreground': '#efefef',
                 }
             });
 
@@ -57,8 +60,22 @@
                 theme: "DarkTheme",
                 fontSize: 13.5,
                 fontFamily: 'Consolas, 맑은 고딕, monospace',
-                letterSpacing: -0.6
+                letterSpacing: -0.6,
+                wordWrap: "on"
             });
+
+            window.onresize = () => {
+                const editorContainer = document.getElementById('editor');
+                const width = window.innerWidth;   // 현재 윈도우 가로 크기
+                const height = window.innerHeight; // 현재 윈도우 세로 크기
+
+                // WebView2 내부 요소 크기 조정
+                editorContainer.style.width = `${width}px`;
+                editorContainer.style.height = `${height}px`;
+
+                // Monaco Editor 레이아웃 업데이트
+                editor.layout();
+            };
 
             window.setEditorText = function (text) {
                 text = text.replace(/\\n/g, '\n');
