@@ -67,6 +67,19 @@ namespace SqlServerWorkspace
 			return parent == null ? node : FindTopLevelNode(parent);
 		}
 
+		public static List<TreeViewItem> GetAllTopLevelNodes(this TreeView treeView)
+		{
+			var nodes = new List<TreeViewItem>();
+			foreach (var item in treeView.Items)
+			{
+				if (treeView.ItemContainerGenerator.ContainerFromItem(item) is TreeViewItem treeViewItem)
+				{
+					nodes.Add(treeViewItem);
+				}
+			}
+			return nodes;
+		}
+
 		public static TreeViewItem? GetParentTreeViewItem(TreeViewItem item)
 		{
 			var parent = VisualTreeHelper.GetParent(item);
@@ -91,13 +104,22 @@ namespace SqlServerWorkspace
 			var parent = item.GetParent();
 			if (parent?.Header is not TreeNode node)
 			{
-				if (parent?.DataContext is not TreeNode node2)
+				return parent?.GetNode();
+			}
+			return node;
+		}
+
+		public static TreeNode? GetNode(this TreeViewItem item)
+		{
+			if (item.DataContext is not TreeNode node)
+			{
+				if (item.DataContext is not List<TreeNode> nodes)
 				{
 					return null;
 				}
-				return node2;
+				return nodes[0]; // Server node
 			}
-			return node;
+			return node; // Not server node
 		}
 
 		public static void MakeDatabaseTree(TreeNode databaseNode)

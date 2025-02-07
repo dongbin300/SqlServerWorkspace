@@ -101,6 +101,9 @@
                 <MenuItem Header="Object Explorer" Style="{StaticResource SubMenuItem}" Click="ViewMenu_Click"/>
                 <MenuItem Header="Logs" Style="{StaticResource SubMenuItem}" Click="ViewMenu_Click"/>
             </MenuItem>
+            <MenuItem Header="Tool" Style="{StaticResource MainMenuItem}">
+                <MenuItem Header="External Explorer" Style="{StaticResource SubMenuItem}" Click="ExternalExplorer_Click"/>
+            </MenuItem>
         </Menu>
 
         <!-- AVALONDOCK LAYOUT -->

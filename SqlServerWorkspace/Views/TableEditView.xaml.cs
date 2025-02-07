@@ -64,6 +64,8 @@ namespace SqlServerWorkspace.Views
 			if (isModify)
 			{
 				Title = "Modify Table";
+				ModifyButton.Visibility = Visibility.Collapsed;
+				CancelButton.Visibility = Visibility.Collapsed;
 				MakeButton.Visibility = Visibility.Collapsed;
 				TextButton.Visibility = Visibility.Collapsed;
 			}
@@ -71,6 +73,7 @@ namespace SqlServerWorkspace.Views
 			{
 				Title = "Make Table";
 				ModifyButton.Visibility = Visibility.Collapsed;
+				CancelButton.Visibility = Visibility.Collapsed;
 				SaveColumn.Visibility = Visibility.Collapsed;
 				DeleteColumn.Visibility = Visibility.Collapsed;
 			}
@@ -269,6 +272,11 @@ namespace SqlServerWorkspace.Views
 			}
 
 			if (column.Name == string.Empty || column.DataType == string.Empty)
+			{
+				return;
+			}
+
+			if (MessageBox.Show("Are you sure you want to delete this?", "Confirm", MessageBoxButton.YesNoCancel) != MessageBoxResult.Yes)
 			{
 				return;
 			}

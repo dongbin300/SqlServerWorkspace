@@ -199,6 +199,22 @@ namespace SqlServerWorkspace
 			});
 		}
 		#endregion
+		#region TOOL
+		private void ExternalExplorer_Click(object sender, RoutedEventArgs e)
+		{
+			if (sender is not MenuItem menuItem)
+			{
+				return;
+			}
+
+			var view = new ExternalExplorerView
+			{
+				DatabaseTreeView = DatabaseTreeView,
+				EntryDocumentPane = EntryDocumentPane
+			};
+			view.Show();
+		}
+		#endregion
 		#endregion
 
 		#region TREEVIEWITEM EVENT

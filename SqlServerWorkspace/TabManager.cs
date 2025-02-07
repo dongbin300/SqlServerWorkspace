@@ -50,27 +50,21 @@ namespace SqlServerWorkspace
 			return null;
 		}
 
-		public static async Task CreateNewOrOpenTab(this LayoutDocumentPane layoutDocumentPane, SqlManager manager, TreeNode treeNode)
+		public static async Task CreateNewOrOpenTab(this LayoutDocumentPane layoutDocumentPane, SqlManager manager, string nodeHeader, TreeNodeType nodeType)
 		{
-			var header = treeNode.Name;
-			var type = treeNode.Type;
-			var layoutContent = GetLayoutContent(layoutDocumentPane, header);
+			var layoutContent = GetLayoutContent(layoutDocumentPane, nodeHeader);
 
 			// Open
 			if (layoutContent != null)
 			{
 				layoutContent.IsSelected = true;
-				//if (layoutContent.Content is WebView2 webView)
-				//{
-				//	webView.Reload();
-				//}
 				return;
 			}
 
 			// Create New
 			var newLayoutContent = new LayoutDocument
 			{
-				Title = header
+				Title = nodeHeader
 			};
 			if (_isFirstNewTab)
 			{
@@ -79,13 +73,13 @@ namespace SqlServerWorkspace
 			}
 			layoutDocumentPane.Children.Add(newLayoutContent);
 
-			switch (type)
+			switch (nodeType)
 			{
 				case TreeNodeType.TableNode:
 					var tableViewControl = new TableViewControl()
 					{
 						Manager = manager,
-						Header = header
+						Header = nodeHeader
 					};
 
 					newLayoutContent.Content = tableViewControl;
@@ -96,7 +90,6 @@ namespace SqlServerWorkspace
 				case TreeNodeType.ViewNode:
 				case TreeNodeType.FunctionNode:
 				case TreeNodeType.ProcedureNode:
-					//var grid = new DockPanel() { LastChildFill = true };
 					var webView = new WebView2
 					{
 						HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -232,7 +225,6 @@ namespace SqlServerWorkspace
 						}
 					};
 
-					//grid.Children.Add(webView);
 					newLayoutContent.Content = webView;
 					newLayoutContent.IsSelected = true;
 
@@ -242,11 +234,11 @@ namespace SqlServerWorkspace
 					{
 						if (args.IsSuccess)
 						{
-							var text = manager.GetObject(header);
+							var text = manager.GetObject(nodeHeader);
 							text = CreateProcedureRegex().Replace(text, "ALTER PROCEDURE");
 							text = CreateFunctionRegex().Replace(text, "ALTER FUNCTION");
-							await layoutDocumentPane.SetEditorText(header, text);
-							Common.Log(header, LogType.Info);
+							await layoutDocumentPane.SetEditorText(nodeHeader, text);
+							Common.Log(nodeHeader, LogType.Info);
 						}
 					};
 					break;
@@ -254,6 +246,14 @@ namespace SqlServerWorkspace
 				default:
 					break;
 			}
+		}
+
+		public static async Task CreateNewOrOpenTab(this LayoutDocumentPane layoutDocumentPane, SqlManager manager, TreeNode treeNode)
+		{
+			var header = treeNode.Name;
+			var type = treeNode.Type;
+			
+			await CreateNewOrOpenTab(layoutDocumentPane, manager, header, type);
 		}
 
 		public static LayoutContent? GetLayoutContent(this LayoutDocumentPane layoutDocumentPane, string header)

@@ -39,6 +39,7 @@
                 inherit: true,
                 rules: [
                     { token: 'comment.sql', foreground: '888888' },
+                    { token: 'comment.quote.sql', foreground: '888888' },
                     { token: 'keyword.sql', foreground: '569cd6', fontStyle: 'bold' },
                     { token: 'number.sql', foreground: 'b5cea8' },
                     { token: 'string.sql', foreground: 'ef6e15' },
@@ -61,7 +62,8 @@
                 fontSize: 13.5,
                 fontFamily: 'Consolas, 맑은 고딕, monospace',
                 letterSpacing: -0.6,
-                wordWrap: "on"
+                wordWrap: "on",
+                quickSuggestions: { other: true, comments: true, strings: true } 
             });
 
             window.onresize = () => {
@@ -99,6 +101,65 @@
                 var selectedText = model.getValueInRange(selection);
                 return selectedText;
             };
+
+            monaco.languages.registerCompletionItemProvider('sql', {
+                provideCompletionItems: function (model, position) {
+                    return {
+                        suggestions: [
+                            {
+                                label: 'SELECT',
+                                kind: monaco.languages.CompletionItemKind.Snippet,
+                                insertText: 'SELECT * FROM ${1:table_name} WHERE ${2:condition}',
+                                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                documentation: 'SELECT 문 자동완성'
+                            },
+                            {
+                                label: 'INSERT',
+                                kind: monaco.languages.CompletionItemKind.Snippet,
+                                insertText: 'INSERT INTO ${1:table_name} (${2:columns}) VALUES (${3:values})',
+                                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                documentation: 'INSERT 문 자동완성'
+                            },
+                            {
+                                label: 'UPDATE',
+                                kind: monaco.languages.CompletionItemKind.Snippet,
+                                insertText: 'UPDATE ${1:table_name} SET ${2:column} = ${3:value} WHERE ${4:condition}',
+                                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                documentation: 'UPDATE 문 자동완성'
+                            },
+                            {
+                                label: 'DELETE',
+                                kind: monaco.languages.CompletionItemKind.Snippet,
+                                insertText: 'DELETE FROM ${1:table_name} WHERE ${2:condition}',
+                                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                documentation: 'DELETE 문 자동완성'
+                            },
+                            {
+                                label: 'IF',
+                                kind: monaco.languages.CompletionItemKind.Snippet,
+                                insertText: 'IF ${1:condition} \nBEGIN\n    ${2:statement}\nEND',
+                                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                documentation: 'IF 문 자동완성'
+                            },
+                            {
+                                label: 'IF ELSE',
+                                kind: monaco.languages.CompletionItemKind.Snippet,
+                                insertText: 'IF ${1:condition} \nBEGIN\n    ${2:statement}\nEND\nELSE\nBEGIN\n    ${3:else_statement}\nEND',
+                                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                documentation: 'IF ELSE 문 자동완성'
+                            },
+                            {
+                                label: 'IF ELSE IF',
+                                kind: monaco.languages.CompletionItemKind.Snippet,
+                                insertText: 'IF ${1:condition} \nBEGIN\n    ${2:statement}\nEND\nELSE IF ${3:condition2} \nBEGIN\n    ${4:statement2}\nEND\nELSE\nBEGIN\n    ${5:else_statement}\nEND',
+                                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                documentation: 'IF ELSE IF 문 자동완성'
+                            }
+                        ]
+                    };
+                }
+            });
+
         });
     </script>
 </body>

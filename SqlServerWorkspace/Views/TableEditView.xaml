@@ -29,7 +29,8 @@
                       CanUserAddRows="True" CanUserDeleteRows="True" CanUserResizeColumns="True" IsReadOnly="False" CanUserSortColumns="False" 
                       PreviewMouseWheel="ColumnDataGrid_PreviewMouseWheel"
                       BeginningEdit="ColumnDataGrid_BeginningEdit"
-                      CellEditEnding="ColumnDataGrid_CellEditEnding">
+                      CellEditEnding="ColumnDataGrid_CellEditEnding"
+                      BorderThickness="0">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Width="1*" Binding="{Binding Name}" EditingElementStyle="{StaticResource DataGridCellTextBox}"/>
                     <DataGridTextColumn Header="Data Type" Width="120" Binding="{Binding DataType}" EditingElementStyle="{StaticResource DataGridCellTextBox}"/>

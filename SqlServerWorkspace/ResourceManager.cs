@@ -13,6 +13,9 @@ namespace SqlServerWorkspace
 	public class Settings
 	{
 		public Rectangle WindowPosition { get; set; }
+		public string ExternalExplorerSearchDirectory { get; set; } = string.Empty;
+		public string ExternalExplorerSearchFilePattern { get; set; } = string.Empty;
+		public string ExternalExplorerSearchProcedurePattern { get; set; } = string.Empty;
 	}
 
 	public static class ResourceManager
