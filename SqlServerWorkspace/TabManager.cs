@@ -15,6 +15,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
+using static System.Net.Mime.MediaTypeNames;
+
 namespace SqlServerWorkspace
 {
 	public static partial class TabManager
@@ -136,7 +138,7 @@ namespace SqlServerWorkspace
 											var anchorable = anchorables.First();
 											var dataGrid = new DataGrid()
 											{
-												Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
 												ItemsSource = table.DefaultView
 											};
 											dataGrid.FillSqlDataTableSimple(table);
@@ -152,7 +154,7 @@ namespace SqlServerWorkspace
 											};
 											var dataGrid = new DataGrid()
 											{
-												Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
 												ItemsSource = table.DefaultView
 											};
 											dataGrid.FillSqlDataTableSimple(table);
@@ -175,7 +177,7 @@ namespace SqlServerWorkspace
 											var anchorable = anchorables.First();
 											var dataGrid = new DataGrid()
 											{
-												Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
 												ItemsSource = table.DefaultView
 											};
 											dataGrid.FillSqlDataTableSimple(table);
@@ -191,7 +193,7 @@ namespace SqlServerWorkspace
 											};
 											var dataGrid = new DataGrid()
 											{
-												Style = (Style)Application.Current.Resources["DarkDataGridSimple"],
+												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
 												ItemsSource = table.DefaultView
 											};
 											dataGrid.FillSqlDataTableSimple(table);
@@ -238,6 +240,17 @@ namespace SqlServerWorkspace
 							text = CreateProcedureRegex().Replace(text, "ALTER PROCEDURE");
 							text = CreateFunctionRegex().Replace(text, "ALTER FUNCTION");
 							await layoutDocumentPane.SetEditorText(nodeHeader, text);
+
+							List<AutocompletionItem> autocompleteItems = [];
+
+							var tableNames = manager.SelectTableNames();
+							autocompleteItems.AddRange(tableNames.Select(x => new AutocompletionItem(x, 6, x)));
+							var procedureNames = manager.SelectProcedureNames();
+							autocompleteItems.AddRange(procedureNames.Select(x => new AutocompletionItem(x, 10, x)));
+							var functionNames = manager.SelectFunctionNames();
+							autocompleteItems.AddRange(functionNames.Select(x => new AutocompletionItem(x, 2, x + "()")));
+
+							await layoutDocumentPane.SetAutocompleteData(nodeHeader, autocompleteItems);
 							Common.Log(nodeHeader, LogType.Info);
 						}
 					};
@@ -283,6 +296,23 @@ namespace SqlServerWorkspace
 			}
 
 			await webView.SetEditorText(text);
+		}
+
+		public static async Task SetAutocompleteData(this LayoutDocumentPane layoutDocumentPane, string title, List<AutocompletionItem> items)
+		{
+			var layoutContent = layoutDocumentPane.GetLayoutContent(title);
+
+			if (layoutContent == null)
+			{
+				return;
+			}
+
+			if (layoutContent.Content is not WebView2 webView)
+			{
+				return;
+			}
+
+			await webView.SetAutocompleteData(items);
 		}
 
 		[GeneratedRegex(@"\bcreate\s+procedure\b", RegexOptions.IgnoreCase)]

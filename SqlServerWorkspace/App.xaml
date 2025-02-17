@@ -375,7 +375,7 @@
             <Setter Property="IsReadOnly" Value="False"/>
             <Setter Property="ClipboardCopyMode" Value="IncludeHeader"/>
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="RowHeaderWidth" Value="40"/>
+            <Setter Property="RowHeaderWidth" Value="48"/>
             <Setter Property="RowHeaderStyle">
                 <Setter.Value>
                     <Style TargetType="{x:Type DataGridRowHeader}">
@@ -771,6 +771,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        
         <!--#endregion-->
         
         <!--<Style TargetType="{x:Type TabControl}" x:Key="LightTabControl">

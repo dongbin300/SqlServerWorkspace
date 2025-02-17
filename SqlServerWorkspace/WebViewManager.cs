@@ -1,13 +1,15 @@
 ﻿using Microsoft.Web.WebView2.Wpf;
 
+using SqlServerWorkspace.Data;
+
 using System.Text.Json;
 
 namespace SqlServerWorkspace
 {
 	public static class WebViewManager
-    {
-        public static async Task<string> GetEditorText(this WebView2 webView)
-        {
+	{
+		public static async Task<string> GetEditorText(this WebView2 webView)
+		{
 			string editorText = await webView.CoreWebView2.ExecuteScriptAsync("getEditorText();");
 			return JsonSerializer.Deserialize<string>(editorText) ?? string.Empty;
 		}
@@ -30,6 +32,13 @@ namespace SqlServerWorkspace
 		{
 			string selectedText = await webView.CoreWebView2.ExecuteScriptAsync("getSelectedText();");
 			return JsonSerializer.Deserialize<string>(selectedText) ?? string.Empty;
+		}
+
+		public static async Task SetAutocompleteData(this WebView2 webView, List<AutocompletionItem> items)
+		{
+			var json = JsonSerializer.Serialize(items);
+			var script = $"setAutocompleteData('{json}');";
+			await webView.CoreWebView2.ExecuteScriptAsync(script);
 		}
 	}
 }
