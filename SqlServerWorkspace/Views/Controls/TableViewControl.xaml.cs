@@ -5,10 +5,10 @@ using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Extensions;
 
 using System.Data;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Xml.Linq;
 
 namespace SqlServerWorkspace.Views.Controls
 {
@@ -39,10 +39,15 @@ namespace SqlServerWorkspace.Views.Controls
 			try
 			{
 				var table = Manager.Select(query);
-				SelectTable = table.Copy();
+				var table2 = table.Copy();
+				foreach (DataColumn column in table2.DefaultView.Table?.Columns ?? default!)
+				{
+					column.AllowDBNull = true;
+				}
+				SelectTable = table2;
 				SelectTableName = GetTableNameFromQuery(query);
 				TableDataGrid.Columns.Clear();
-				TableDataGrid.ItemsSource = table.DefaultView;
+				TableDataGrid.ItemsSource = table2.DefaultView;
 				var tableInfo = Manager.GetTableInfo(SelectTableName);
 
 				TableDataGrid.FillSqlDataTable(table, tableInfo);
@@ -290,11 +295,50 @@ namespace SqlServerWorkspace.Views.Controls
 
 		private void TableDataGrid_KeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+			
+		}
+
+		private void TableDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.C && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+			{
+				CopyContent();
+				e.Handled = true;
+			}
+			else if (e.Key == Key.V && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
 			{
 				PasteClipboardContent();
 				e.Handled = true;
 			}
+		}
+
+		private void CopyContent()
+		{
+			try
+			{
+				if (TableDataGrid.Items.Count == 0) return;
+
+				var groupedCells = TableDataGrid.SelectedCells.GroupBy(cell => cell.Item).Select(group => group.OrderBy(cell => cell.Column.DisplayIndex).Select(cell => GetCellValue(cell.Column, cell.Item))).ToList();
+
+				StringBuilder clipboardText = new StringBuilder();
+				foreach (var row in groupedCells)
+				{
+					clipboardText.AppendLine(string.Join("\t", row));
+				}
+
+				Clipboard.SetText(clipboardText.ToString());
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message);
+			}
+		}
+
+		private static string GetCellValue(DataGridColumn column, object row)
+		{
+			if (column.GetCellContent(row) is TextBlock textBlock)
+				return textBlock.Text;
+			return "";
 		}
 
 		/// <summary>
@@ -314,18 +358,32 @@ namespace SqlServerWorkspace.Views.Controls
 				int startRowIndex = TableDataGrid.Items.IndexOf(selectedCell.Item);
 				int startColIndex = selectedCell.Column.DisplayIndex;
 
+				if (TableDataGrid.ItemsSource is not DataView dataView)
+				{
+					return;
+				}
+
 				for (int i = 0; i < lines.Length; i++)
 				{
 					int rowIndex = startRowIndex + i;
-					if (rowIndex >= TableDataGrid.Items.Count) break;
+					if (rowIndex >= dataView.Count)
+					{
+						var table = dataView.Table ?? default!;
+						var newRow = table.NewRow();
+						table.Rows.Add(newRow);
+						rowIndex = dataView.Count - 1;
+					}
 
-					var row = TableDataGrid.Items[rowIndex];
+					var row = dataView[rowIndex];
 					var values = lines[i].Split('\t');
 
 					for (int j = 0; j < values.Length; j++)
 					{
 						int colIndex = startColIndex + j;
-						if (colIndex >= TableDataGrid.Columns.Count) break;
+						if (colIndex >= TableDataGrid.Columns.Count)
+						{
+							break;
+						}
 
 						var column = TableDataGrid.Columns[colIndex];
 						column.OnPastingCellClipboardContent(row, values[j]);
@@ -342,5 +400,22 @@ namespace SqlServerWorkspace.Views.Controls
 		{
 			e.Row.Header = (e.Row.GetIndex() + 1).ToString();
 		}
-    }
+
+		private void TableDataGrid_AddingNewItem(object sender, AddingNewItemEventArgs e)
+		{
+			if (TableDataGrid.ItemsSource is DataView dataView)
+			{
+				var table = dataView.Table ?? default!;
+				var newRow = table.NewRow();
+
+				foreach (DataColumn column in table.Columns)
+				{
+					column.AllowDBNull = true;
+					newRow[column] = DBNull.Value;
+				}
+
+				table.Rows.Add(newRow);
+			}
+		}
+	}
 }

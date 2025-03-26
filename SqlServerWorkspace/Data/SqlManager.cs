@@ -49,7 +49,7 @@ namespace SqlServerWorkspace.Data
 		public string Execute(string query)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
-			var command = new SqlCommand(query, connection);
+			using var command = new SqlCommand(query, connection);
 
 			try
 			{
