@@ -169,7 +169,7 @@
                                         <TreeView.ItemTemplate>
                                             <HierarchicalDataTemplate DataType="{x:Type DataModel:TreeNode}" ItemsSource="{Binding Children}">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Path Data="{Binding SvgData}" Width="16" Height="16" StrokeThickness="0.01" Stretch="Uniform" Margin="0,0,3,0" Stroke="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}" Fill="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}" Cursor="" />
+                                                    <Path Data="{Binding SvgData}" Width="18" Height="18" StrokeThickness="0.01" Stretch="Uniform" Margin="0,0,3,0" Stroke="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}" Fill="{Binding SvgColor, Converter={StaticResource StringToBrushConverter}}" Cursor="" />
                                                     <TextBlock Name="HeaderContent" Text="{Binding Name}" Style="{StaticResource TreeViewText}"/>
                                                 </StackPanel>
                                             </HierarchicalDataTemplate>
