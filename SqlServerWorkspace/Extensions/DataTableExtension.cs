@@ -172,7 +172,7 @@ namespace SqlServerWorkspace.Extensions
 
 				var dataGridColumn = new DataGridTextColumn
 				{
-					Header = column.ColumnName,
+					Header = column.ColumnName.Replace("_", "__"),
 					Binding = binding
 				};
 
