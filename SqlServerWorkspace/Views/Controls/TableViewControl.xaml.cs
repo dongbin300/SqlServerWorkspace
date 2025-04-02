@@ -44,7 +44,7 @@ namespace SqlServerWorkspace.Views.Controls
 				{
 					column.AllowDBNull = true;
 				}
-				SelectTable = table2;
+				SelectTable = table2.Copy();
 				SelectTableName = GetTableNameFromQuery(query);
 				TableDataGrid.Columns.Clear();
 				TableDataGrid.ItemsSource = table2.DefaultView;
