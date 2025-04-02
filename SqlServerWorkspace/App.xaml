@@ -26,7 +26,7 @@
         <SolidColorBrush x:Key="SelectedBackground" Color="#444D56"/>
 
         <FontFamily x:Key="BaseFont">Meiryo UI</FontFamily>
-        <sys:Double x:Key="BaseFontSize">13.5</sys:Double>
+        <sys:Double x:Key="BaseFontSize">12.5</sys:Double>
 
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="btv"/>
@@ -46,7 +46,7 @@
         
         <Style TargetType="{x:Type TextBlock}" x:Key="TreeViewText">
             <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
-            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
+            <Setter Property="FontSize" Value="13.5" />
             <Setter Property="Height" Value="20" />
             <Setter Property="Foreground" Value="#F1F1F1" />
             <Setter Property="Background" Value="Transparent" />
