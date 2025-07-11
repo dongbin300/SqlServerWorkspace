@@ -318,21 +318,37 @@ namespace SqlServerWorkspace.Views.Controls
 			{
 				if (TableDataGrid.Items.Count == 0) return;
 
-				var groupedCells = TableDataGrid.SelectedCells.GroupBy(cell => cell.Item).Select(group => group.OrderBy(cell => cell.Column.DisplayIndex).Select(cell => GetCellValue(cell.Column, cell.Item))).ToList();
+				var selectedCells = TableDataGrid.SelectedCells;
 
-				StringBuilder clipboardText = new StringBuilder();
-				foreach (var row in groupedCells)
+				if (selectedCells.Count == 1)
 				{
-					clipboardText.AppendLine(string.Join("\t", row));
+					var cell = selectedCells[0];
+					var value = GetCellValue(cell.Column, cell.Item);
+					Clipboard.SetText(value?.ToString() ?? "");
 				}
+				else
+				{
+					var groupedCells = selectedCells
+						.GroupBy(cell => cell.Item)
+						.Select(group => group.OrderBy(cell => cell.Column.DisplayIndex)
+						.Select(cell => GetCellValue(cell.Column, cell.Item)))
+						.ToList();
 
-				Clipboard.SetText(clipboardText.ToString());
+					StringBuilder clipboardText = new StringBuilder();
+					foreach (var row in groupedCells)
+					{
+						clipboardText.AppendLine(string.Join("\t", row));
+					}
+
+					Clipboard.SetText(clipboardText.ToString().TrimEnd('\r', '\n'));
+				}
 			}
 			catch (Exception ex)
 			{
 				MessageBox.Show(ex.Message);
 			}
 		}
+
 
 		private static string GetCellValue(DataGridColumn column, object row)
 		{

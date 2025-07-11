@@ -28,6 +28,14 @@
         <FontFamily x:Key="BaseFont">Meiryo UI</FontFamily>
         <sys:Double x:Key="BaseFontSize">12.5</sys:Double>
 
+        <!-- Gradient -->
+        <LinearGradientBrush x:Key="PrimeGradientBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#5AFF62" Offset="0.0"/>
+            <GradientStop Color="#59E99D" Offset="0.33"/>
+            <GradientStop Color="#58C8FA" Offset="0.66"/>
+            <GradientStop Color="#3A67BF" Offset="1.0"/>
+        </LinearGradientBrush>
+
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="btv"/>
         <converter:DBNullToNullStringConverter x:Key="DBNullToNullStringConverter"/>
@@ -230,6 +238,40 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Border" Property="Background" Value="{StaticResource SswColor}" />
+                                <Setter TargetName="TextBlock" Property="Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type Button}" x:Key="PrimeButton">
+            <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
+            <Setter Property="FontWeight" Value="UltraBold" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource PrimeGradientBrush}" />
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Name="Border"
+                        CornerRadius="3"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{StaticResource PrimeGradientBrush}"
+                        BorderThickness="1">
+                            <TextBlock Name="TextBlock" 
+                          Text="{TemplateBinding Content}" 
+                          Margin="{TemplateBinding Padding}"
+                          Foreground="{TemplateBinding Foreground}"
+                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource PrimeGradientBrush}" />
                                 <Setter TargetName="TextBlock" Property="Foreground" Value="White" />
                             </Trigger>
                         </ControlTemplate.Triggers>

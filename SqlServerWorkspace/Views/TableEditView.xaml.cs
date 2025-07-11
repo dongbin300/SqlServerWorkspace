@@ -369,6 +369,8 @@ namespace SqlServerWorkspace.Views
 					}
 				}
 			}
+
+			QueryTextBox.Text = Manager.GetNewTableQuery(TableNameTextBox.Text, MakeTableColumnInfo());
 		}
 	}
 }
