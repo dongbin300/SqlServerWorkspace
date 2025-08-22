@@ -37,6 +37,6 @@ namespace SqlServerWorkspace.Data
 		/// </summary>
 		public string TypeString { get; set; } = string.Empty;
 
-		public string ToTypeString() => string.IsNullOrEmpty(Length) ? Type : $"{Type}({Length})";
+		public string ToTypeString() => string.IsNullOrEmpty(Length) || TrueType == SqlDbType.Int || TrueType == SqlDbType.BigInt ? Type : $"{Type}({Length})";
 	}
 }
