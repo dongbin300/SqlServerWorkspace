@@ -499,7 +499,7 @@ namespace SqlServerWorkspace.Data
 					{
 						maxLength = $"{reader["NUMERIC_PRECISION"]},{reader["NUMERIC_SCALE"]}";
 					}
-					if(maxLength == ",")
+					if (maxLength == ",")
 					{
 						maxLength = string.Empty;
 					}
