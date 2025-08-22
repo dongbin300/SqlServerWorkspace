@@ -122,6 +122,43 @@ namespace SqlServerWorkspace
 			return node; // Not server node
 		}
 
+		public static TreeViewItem? GetTreeViewItemByNode(this TreeView treeView, TreeNode node)
+		{
+			for (int i = 0; i < treeView.Items.Count; i++)
+			{
+				if (treeView.ItemContainerGenerator.ContainerFromIndex(i) is TreeViewItem container)
+				{
+					var found = container.GetTreeViewItemRecursive(node);
+					if (found != null)
+					{
+						return found;
+					}
+				}
+			}
+			return null;
+		}
+
+		public static TreeViewItem? GetTreeViewItemRecursive(this TreeViewItem item, TreeNode node)
+		{
+			if (item.DataContext == node || (item.DataContext is TreeNode itemNode && itemNode == node))
+			{
+				return item;
+			}
+
+			for (int i = 0; i < item.Items.Count; i++)
+			{
+				if (item.ItemContainerGenerator.ContainerFromIndex(i) is TreeViewItem childContainer)
+				{
+					var found = childContainer.GetTreeViewItemRecursive(node);
+					if (found != null)
+					{
+						return found;
+					}
+				}
+			}
+			return null;
+		}
+
 		public static void MakeDatabaseTree(TreeNode databaseNode)
 		{
 			try

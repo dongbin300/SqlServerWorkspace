@@ -13,10 +13,7 @@ using SqlServerWorkspace.Views.CustomControls;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
-
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SqlServerWorkspace
 {
@@ -252,6 +249,13 @@ namespace SqlServerWorkspace
 							autocompleteItems.AddRange(functionNames.Select(x => new AutocompletionItem(x, 2, x + "()")));
 
 							await layoutDocumentPane.SetAutocompleteData(nodeHeader, autocompleteItems);
+
+							// Add references object
+							if (nodeType == TreeNodeType.ProcedureNode)
+							{
+								await layoutDocumentPane.AnalyzeAndAddReferences(manager, nodeHeader);
+							}
+
 							Common.Log(nodeHeader, LogType.Info);
 						}
 					};

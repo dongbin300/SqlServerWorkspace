@@ -7,6 +7,7 @@ using SqlServerWorkspace.Extensions;
 using System.Data;
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace SqlServerWorkspace.Data
 {
@@ -808,12 +809,70 @@ namespace SqlServerWorkspace.Data
 		{
 			return Select("table_name", "INFORMATION_SCHEMA.VIEWS").Field("table_name");
 		}
+
+		public string CopyView(string source, string destination)
+		{
+			try
+			{
+				return Execute($@"DECLARE @sql NVARCHAR(MAX)
+   									SELECT @sql = OBJECT_DEFINITION(OBJECT_ID('{source}'))
+   									SET @sql = REPLACE(@sql, 'CREATE VIEW [dbo].[{source}]', 'CREATE VIEW [dbo].[{destination}]')
+   									SET @sql = REPLACE(@sql, 'ALTER VIEW', 'CREATE VIEW')
+   									EXEC sp_executesql @sql");
+			}
+			catch (Exception ex)
+			{
+				return $"Error copying view: {ex.Message}";
+			}
+		}
+
+		public string RemoveView(string viewName)
+		{
+			try
+			{
+				return Execute($@"IF OBJECT_ID('[dbo].[{viewName}]', 'V') IS NOT NULL
+   									DROP VIEW [dbo].[{viewName}]");
+			}
+			catch (Exception ex)
+			{
+				return $"Error removing view: {ex.Message}";
+			}
+		}
 		#endregion
 
 		#region Function
 		public IEnumerable<string> SelectFunctionNames()
 		{
 			return Select("name", "sys.objects", "type IN ('FN', 'IF', 'TF', 'FS', 'FT')", "name").Field("name");
+		}
+
+		public string CopyFunction(string source, string destination)
+		{
+			try
+			{
+				return Execute($@"DECLARE @sql NVARCHAR(MAX)
+   									SELECT @sql = OBJECT_DEFINITION(OBJECT_ID('{source}'))
+   									SET @sql = REPLACE(@sql, 'CREATE FUNCTION [dbo].[{source}]', 'CREATE FUNCTION [dbo].[{destination}]')
+   									SET @sql = REPLACE(@sql, 'ALTER FUNCTION', 'CREATE FUNCTION')
+   									EXEC sp_executesql @sql");
+			}
+			catch (Exception ex)
+			{
+				return $"Error copying function: {ex.Message}";
+			}
+		}
+
+		public string RemoveFunction(string functionName)
+		{
+			try
+			{
+				return Execute($@"IF OBJECT_ID('[dbo].[{functionName}]', 'FN') IS NOT NULL
+   									DROP FUNCTION [dbo].[{functionName}]");
+			}
+			catch (Exception ex)
+			{
+				return $"Error removing function: {ex.Message}";
+			}
 		}
 		#endregion
 
@@ -851,6 +910,35 @@ namespace SqlServerWorkspace.Data
 			}
 
 			return dataTable;
+		}
+
+		public string CopyProcedure(string source, string destination)
+		{
+			try
+			{
+				return Execute($@"DECLARE @sql NVARCHAR(MAX)
+									SELECT @sql = OBJECT_DEFINITION(OBJECT_ID('{source}'))
+									SET @sql = REPLACE(@sql, 'CREATE PROCEDURE [dbo].[{source}]', 'CREATE PROCEDURE [dbo].[{destination}]')
+									SET @sql = REPLACE(@sql, 'ALTER PROCEDURE', 'CREATE PROCEDURE')
+									EXEC sp_executesql @sql");
+			}
+			catch (Exception ex)
+			{
+				return $"Error copying procedure: {ex.Message}";
+			}
+		}
+
+		public string RemoveProcedure(string procedureName)
+		{
+			try
+			{
+				return Execute($@"IF OBJECT_ID('[dbo].[{procedureName}]', 'P') IS NOT NULL
+									DROP PROCEDURE [dbo].[{procedureName}]");
+			}
+			catch (Exception ex)
+			{
+				return $"Error removing procedure: {ex.Message}";
+			}
 		}
 		#endregion
 

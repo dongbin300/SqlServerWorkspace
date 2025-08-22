@@ -1,8 +1,11 @@
-﻿using Microsoft.Web.WebView2.Wpf;
+﻿using AvalonDock.Layout;
+
+using Microsoft.Web.WebView2.Wpf;
 
 using SqlServerWorkspace.Data;
 
 using System.Text.Json;
+using System.Windows.Input;
 
 namespace SqlServerWorkspace
 {
@@ -39,6 +42,30 @@ namespace SqlServerWorkspace
 			var json = JsonSerializer.Serialize(items);
 			var script = $"setAutocompleteData('{json}');";
 			await webView.CoreWebView2.ExecuteScriptAsync(script);
+		}
+
+		public static void AddReferenceAnalysisKeyBinding(this WebView2 webView, LayoutDocumentPane layoutDocumentPane, SqlManager manager, string procedureName)
+		{
+			webView.KeyDown += async (s, e) =>
+			{
+				if (e.Key == Key.F6)
+				{
+					await layoutDocumentPane.AnalyzeAndAddReferences(manager, procedureName);
+				}
+			};
+		}
+
+		public static void UpdateExistingKeyDownHandler(this WebView2 webView, LayoutDocumentPane layoutDocumentPane, SqlManager manager, string nodeHeader)
+		{
+			// 기존 KeyDown 이벤트에 case 추가
+			/*
+			case Key.F6: // Analyze References
+				if (nodeType == TreeNodeType.ProcedureNode)
+				{
+					await layoutDocumentPane.AnalyzeAndAddReferences(manager, nodeHeader);
+				}
+				break;
+			*/
 		}
 	}
 }

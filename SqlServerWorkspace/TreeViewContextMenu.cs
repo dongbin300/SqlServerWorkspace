@@ -5,6 +5,7 @@ using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
 
+using System.Windows;
 using System.Windows.Controls;
 
 namespace SqlServerWorkspace
@@ -50,7 +51,9 @@ namespace SqlServerWorkspace
 				case TreeNodeType.FunctionNode:
 				case TreeNodeType.ProcedureNode:
 					{
+						contextMenu.AddMenu("Copy", ContextMenuFunction.Copy);
 						contextMenu.AddMenu("Rename", ContextMenuFunction.Rename);
+						contextMenu.AddMenu("Remove", ContextMenuFunction.Remove);
 					}
 					break;
 
@@ -252,6 +255,59 @@ namespace SqlServerWorkspace
 						}
 					}
 					break;
+
+				case ContextMenuFunction.Copy:
+					{
+						var originalName = node.Name;
+						var copyView = new NameView
+						{
+							Owner = Common.MainWindow,
+							NameText = originalName
+						};
+						if (copyView.ShowDialog() ?? false)
+						{
+							var newName = copyView.NameText;
+							var result = manager.CopyView(originalName, newName);
+							if (!string.IsNullOrEmpty(result))
+							{
+								Common.Log(result, LogType.Error);
+								return;
+							}
+							Common.Log($"Copy, {originalName} -> {newName}", LogType.Success);
+							var parentNode = item.GetParentNode();
+							if (parentNode == null)
+							{
+								return;
+							}
+							TreeViewManager.MakeViewTree(manager, parentNode);
+							Common.RefreshMainWindow();
+						}
+					}
+					break;
+
+				case ContextMenuFunction.Remove:
+					{
+						if (MessageBox.Show("Are you sure you want to remove this view?", "Remove View", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+						{
+							return;
+						}
+						var result = manager.RemoveView(node.Name);
+						if (!string.IsNullOrEmpty(result))
+						{
+							Common.Log(result, LogType.Error);
+							return;
+						}
+						Common.Log($"Remove, {node.Name}", LogType.Success);
+						var parentNode = item.GetParentNode();
+						if (parentNode == null)
+						{
+							return;
+						}
+						TreeViewManager.MakeViewTree(manager, parentNode);
+						Common.RefreshMainWindow();
+					}
+					break;
+
 				default:
 					break;
 			}
@@ -291,6 +347,59 @@ namespace SqlServerWorkspace
 						}
 					}
 					break;
+
+				case ContextMenuFunction.Copy:
+					{
+						var originalName = node.Name;
+						var copyView = new NameView
+						{
+							Owner = Common.MainWindow,
+							NameText = originalName
+						};
+						if (copyView.ShowDialog() ?? false)
+						{
+							var newName = copyView.NameText;
+							var result = manager.CopyFunction(originalName, newName);
+							if (!string.IsNullOrEmpty(result))
+							{
+								Common.Log(result, LogType.Error);
+								return;
+							}
+							Common.Log($"Copy, {originalName} -> {newName}", LogType.Success);
+							var parentNode = item.GetParentNode();
+							if (parentNode == null)
+							{
+								return;
+							}
+							TreeViewManager.MakeFunctionTree(manager, parentNode);
+							Common.RefreshMainWindow();
+						}
+					}
+					break;
+
+				case ContextMenuFunction.Remove:
+					{
+						if (MessageBox.Show("Are you sure you want to remove this function?", "Remove Function", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+						{
+							return;
+						}
+						var result = manager.RemoveFunction(node.Name);
+						if (!string.IsNullOrEmpty(result))
+						{
+							Common.Log(result, LogType.Error);
+							return;
+						}
+						Common.Log($"Remove, {node.Name}", LogType.Success);
+						var parentNode = item.GetParentNode();
+						if (parentNode == null)
+						{
+							return;
+						}
+						TreeViewManager.MakeFunctionTree(manager, parentNode);
+						Common.RefreshMainWindow();
+					}
+					break;
+
 				default:
 					break;
 			}
@@ -330,6 +439,60 @@ namespace SqlServerWorkspace
 						}
 					}
 					break;
+
+				case ContextMenuFunction.Copy:
+					{
+						var originalName = node.Name;
+						var copyView = new NameView
+						{
+							Owner = Common.MainWindow,
+							NameText = originalName
+						};
+						if (copyView.ShowDialog() ?? false)
+						{
+							var newName = copyView.NameText;
+							var result = manager.CopyProcedure(originalName, newName);
+							if (!string.IsNullOrEmpty(result))
+							{
+								Common.Log(result, LogType.Error);
+								return;
+							}
+							Common.Log($"Copy, {originalName} -> {newName}", LogType.Success);
+							var parentNode = item.GetParentNode();
+							if (parentNode == null)
+							{
+								return;
+							}
+							TreeViewManager.MakeProcedureTree(manager, parentNode);
+							Common.RefreshMainWindow();
+						}
+					}
+					break;
+
+				case ContextMenuFunction.Remove:
+					{
+						if (MessageBox.Show("Are you sure you want to remove this procedure?", "Remove Procedure", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+						{
+							return;
+						}
+
+						var result = manager.RemoveProcedure(node.Name);
+						if (!string.IsNullOrEmpty(result))
+						{
+							Common.Log(result, LogType.Error);
+							return;
+						}
+						Common.Log($"Remove, {node.Name}", LogType.Success);
+						var parentNode = item.GetParentNode();
+						if (parentNode == null)
+						{
+							return;
+						}
+						TreeViewManager.MakeProcedureTree(manager, parentNode);
+						Common.RefreshMainWindow();
+					}
+					break;
+
 				default:
 					break;
 			}
