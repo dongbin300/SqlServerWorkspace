@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:SqlServerWorkspace.Views"
+        xmlns:cc="clr-namespace:SqlServerWorkspace.Views.CustomControls"
         mc:Ignorable="d"
         Title="Edit Table" Height="800" Width="600" Loaded="Window_Loaded">
     <Grid Background="{StaticResource DarkBackground}">
@@ -26,13 +27,13 @@
         </Grid>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <DataGrid x:Name="ColumnDataGrid" Style="{StaticResource DarkDataGridSimple}"
-                      CanUserAddRows="True" CanUserDeleteRows="True" CanUserResizeColumns="True" IsReadOnly="False" CanUserSortColumns="False" 
-                      PreviewMouseWheel="ColumnDataGrid_PreviewMouseWheel"
-                      BeginningEdit="ColumnDataGrid_BeginningEdit"
-                      CellEditEnding="ColumnDataGrid_CellEditEnding"
-                      BorderThickness="0">
-                <DataGrid.Columns>
+            <cc:AdvanceDataGrid x:Name="ColumnDataGrid" Style="{StaticResource DarkDataGridSimple}"
+                                CanUserAddRows="True" CanUserDeleteRows="True" CanUserResizeColumns="True" IsReadOnly="False" CanUserSortColumns="False" 
+                                PreviewMouseWheel="ColumnDataGrid_PreviewMouseWheel"
+                                BeginningEdit="ColumnDataGrid_BeginningEdit"
+                                CellEditEnding="ColumnDataGrid_CellEditEnding"
+                                BorderThickness="0">
+                <cc:AdvanceDataGrid.Columns>
                     <DataGridTextColumn Header="Name" Width="1*" Binding="{Binding Name}" EditingElementStyle="{StaticResource DataGridCellTextBox}"/>
                     <DataGridTextColumn Header="Data Type" Width="120" Binding="{Binding DataType}" EditingElementStyle="{StaticResource DataGridCellTextBox}"/>
                     <DataGridTextColumn Header="Description" Width="1*" Binding="{Binding Description}" EditingElementStyle="{StaticResource DataGridCellTextBox}"/>
@@ -95,8 +96,8 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+                </cc:AdvanceDataGrid.Columns>
+            </cc:AdvanceDataGrid>
         </ScrollViewer>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">

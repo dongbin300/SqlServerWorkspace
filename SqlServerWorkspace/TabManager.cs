@@ -8,6 +8,7 @@ using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Extensions;
 using SqlServerWorkspace.Views.Controls;
+using SqlServerWorkspace.Views.CustomControls;
 
 using System.IO;
 using System.Text.RegularExpressions;
@@ -136,7 +137,7 @@ namespace SqlServerWorkspace
 										if (anchorables.Any())
 										{
 											var anchorable = anchorables.First();
-											var dataGrid = new DataGrid()
+											var dataGrid = new AdvanceDataGrid()
 											{
 												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
 												ItemsSource = table.DefaultView
@@ -152,7 +153,7 @@ namespace SqlServerWorkspace
 												ContentId = "SPER",
 												Title = "Stored Procedure Execute Result"
 											};
-											var dataGrid = new DataGrid()
+											var dataGrid = new AdvanceDataGrid()
 											{
 												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
 												ItemsSource = table.DefaultView
@@ -175,7 +176,7 @@ namespace SqlServerWorkspace
 										if (anchorables.Any())
 										{
 											var anchorable = anchorables.First();
-											var dataGrid = new DataGrid()
+											var dataGrid = new AdvanceDataGrid()
 											{
 												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
 												ItemsSource = table.DefaultView
@@ -191,7 +192,7 @@ namespace SqlServerWorkspace
 												ContentId = "SR",
 												Title = "Result"
 											};
-											var dataGrid = new DataGrid()
+											var dataGrid = new AdvanceDataGrid()
 											{
 												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
 												ItemsSource = table.DefaultView

@@ -3,6 +3,7 @@
 using SqlServerWorkspace.Data;
 using SqlServerWorkspace.Extensions;
 
+using System.Data;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -31,34 +32,54 @@ namespace SqlServerWorkspace.Views
 		public SqlManager Manager = default!;
 		public string TableName = string.Empty;
 		private bool isModify = false;
+		private DataTable columnDataTable = new DataTable();
 
 		public TableEditView()
 		{
 			InitializeComponent();
+			InitializeDataTable();
+		}
+
+		private void InitializeDataTable()
+		{
+			columnDataTable.Columns.Add("Name", typeof(string));
+			columnDataTable.Columns.Add("DataType", typeof(string));
+			columnDataTable.Columns.Add("Description", typeof(string));
+			columnDataTable.Columns.Add("Key", typeof(bool));
+			columnDataTable.Columns.Add("NotNull", typeof(bool));
+			columnDataTable.Columns.Add("NamePrev", typeof(string));
+			columnDataTable.Columns.Add("DataTypePrev", typeof(string));
+			columnDataTable.Columns.Add("DescriptionPrev", typeof(string));
+			columnDataTable.Columns.Add("KeyPrev", typeof(bool));
+			columnDataTable.Columns.Add("NotNullPrev", typeof(bool));
 		}
 
 		private void Window_Loaded(object sender, RoutedEventArgs e)
 		{
-			ColumnDataGrid.ItemsSource = new List<TableEditView_ColumnDataGrid>();
+			ColumnDataGrid.ItemsSource = columnDataTable.DefaultView;
+
 			if (TableName != string.Empty)
 			{
 				isModify = true;
 				var result = Manager.GetTableInfo(TableName);
 				TableNameTextBox.Text = result.Name;
-				ColumnDataGrid.ItemsSource = result.Columns.Select(x => new TableEditView_ColumnDataGrid()
-				{
-					Name = x.Name,
-					DataType = x.ToTypeString(),
-					Description = x.Description,
-					Key = x.IsKey,
-					NotNull = x.IsNotNull,
 
-					NamePrev = x.Name,
-					DataTypePrev = x.ToTypeString(),
-					DescriptionPrev = x.Description,
-					KeyPrev = x.IsKey,
-					NotNullPrev = x.IsNotNull
-				}).ToList();
+				foreach (var column in result.Columns)
+				{
+					var row = columnDataTable.NewRow();
+					row["Name"] = column.Name;
+					row["DataType"] = column.ToTypeString();
+					row["Description"] = column.Description;
+					row["Key"] = column.IsKey;
+					row["NotNull"] = column.IsNotNull;
+					row["NamePrev"] = column.Name;
+					row["DataTypePrev"] = column.ToTypeString();
+					row["DescriptionPrev"] = column.Description;
+					row["KeyPrev"] = column.IsKey;
+					row["NotNullPrev"] = column.IsNotNull;
+
+					columnDataTable.Rows.Add(row);
+				}
 			}
 
 			if (isModify)
@@ -82,34 +103,31 @@ namespace SqlServerWorkspace.Views
 			{
 				if (column is DataGridCheckBoxColumn checkBoxColumn)
 				{
-					foreach (var item in ColumnDataGrid.Items)
+					foreach (DataRowView rowView in columnDataTable.DefaultView)
 					{
-						var row = (DataGridRow)ColumnDataGrid.ItemContainerGenerator.ContainerFromItem(item);
+						var row = (DataGridRow)ColumnDataGrid.ItemContainerGenerator.ContainerFromItem(rowView);
 						if (row != null)
 						{
-							// 체크박스가 포함된 셀 찾기
 							var cell = (DataGridCell)checkBoxColumn.GetCellContent(row).Parent;
 							if (cell != null)
 							{
-								// 시각적 트리를 탐색하여 CheckBox 찾기
 								var checkBox = cell.FindVisualChildren<CheckBox>().First();
 								if (checkBox != null)
 								{
-									// CheckBox를 찾았을 때의 로직
 									checkBox.Checked += (sender, e) =>
 									{
 										var checkBox = sender as CheckBox;
-										if (checkBox?.DataContext is TableEditView_ColumnDataGrid dataContext)
+										if (checkBox?.DataContext is DataRowView dataRowView)
 										{
-											dataContext.NotNull = true;
+											dataRowView["NotNull"] = true;
 										}
 									};
 									checkBox.Unchecked += (sender, e) =>
 									{
 										var checkBox = sender as CheckBox;
-										if (checkBox?.DataContext is TableEditView_ColumnDataGrid dataContext)
+										if (checkBox?.DataContext is DataRowView dataRowView)
 										{
-											dataContext.NotNull = false;
+											dataRowView["NotNull"] = false;
 										}
 									};
 								}
@@ -123,19 +141,21 @@ namespace SqlServerWorkspace.Views
 		private List<TableColumnInfo> MakeTableColumnInfo()
 		{
 			var columns = new List<TableColumnInfo>();
-			for (int i = 0; i < ColumnDataGrid.Items.Count; i++)
+
+			foreach (DataRowView rowView in columnDataTable.DefaultView)
 			{
-				if (ColumnDataGrid.Items[i] is not TableEditView_ColumnDataGrid item)
+				var name = rowView["Name"]?.ToString() ?? string.Empty;
+				if (name == string.Empty)
 				{
 					continue;
 				}
 
-				if (item.Name == string.Empty)
-				{
-					continue;
-				}
+				var dataType = rowView["DataType"]?.ToString() ?? string.Empty;
+				var description = rowView["Description"]?.ToString() ?? string.Empty;
+				var key = Convert.ToBoolean(rowView["Key"]);
+				var notNull = Convert.ToBoolean(rowView["NotNull"]);
 
-				columns.Add(new TableColumnInfo(item.Name, item.DataType, item.Key, item.NotNull, item.Description));
+				columns.Add(new TableColumnInfo(name, dataType, key, notNull, description));
 			}
 
 			return columns;
@@ -195,14 +215,18 @@ namespace SqlServerWorkspace.Views
 				return;
 			}
 
-			var isNotNull = ColumnDataGrid.Columns[3].GetCellContent(button.FindParent<DataGridRow>()).Parent.FindVisualChildren<CheckBox>().First().IsChecked;
-
-			if (button.DataContext is not TableEditView_ColumnDataGrid column)
+			var row = button.FindParent<DataGridRow>();
+			if (row?.DataContext is not DataRowView rowView)
 			{
 				return;
 			}
 
-			if (column.Name == string.Empty || column.DataType == string.Empty)
+			var isNotNull = ColumnDataGrid.Columns[3].GetCellContent(row).Parent.FindVisualChildren<CheckBox>().First().IsChecked;
+
+			var name = rowView["Name"]?.ToString() ?? string.Empty;
+			var dataType = rowView["DataType"]?.ToString() ?? string.Empty;
+
+			if (name == string.Empty || dataType == string.Empty)
 			{
 				MessageBox.Show("No column name or data type");
 				return;
@@ -210,15 +234,15 @@ namespace SqlServerWorkspace.Views
 
 			/* Constraint */
 			List<string> checkedKeyNames = [];
-			for (int i = 0; i < ColumnDataGrid.Items.Count; i++)
+			foreach (DataRowView item in columnDataTable.DefaultView)
 			{
-				var row = (DataGridRow)ColumnDataGrid.ItemContainerGenerator.ContainerFromIndex(i);
-				if (row == null)
+				var itemRow = (DataGridRow)ColumnDataGrid.ItemContainerGenerator.ContainerFromItem(item);
+				if (itemRow == null)
 				{
 					continue;
 				}
 
-				var cell = (DataGridCell)ColumnDataGrid.Columns[4].GetCellContent(row).Parent;
+				var cell = (DataGridCell)ColumnDataGrid.Columns[4].GetCellContent(itemRow).Parent;
 				if (cell == null)
 				{
 					continue;
@@ -229,22 +253,25 @@ namespace SqlServerWorkspace.Views
 				{
 					if (checkBox.IsChecked ?? false)
 					{
-						checkedKeyNames.Add(((TableEditView_ColumnDataGrid)ColumnDataGrid.Items[i]).NamePrev);
+						checkedKeyNames.Add(item["NamePrev"]?.ToString() ?? string.Empty);
 					}
 				}
 			}
 			var primaryKeyNames = Manager.GetTablePrimaryKeyNames(TableName);
 
 			string? result;
-			if (column.NamePrev == string.Empty) // 새로운 컬럼 추가
+			var namePrev = rowView["NamePrev"]?.ToString() ?? string.Empty;
+			var description = rowView["Description"]?.ToString() ?? string.Empty;
+			var descriptionPrev = rowView["DescriptionPrev"]?.ToString() ?? string.Empty;
+
+			if (namePrev == string.Empty) // 새로운 컬럼 추가
 			{
-				result = Manager.AddColumn(TableName, column.Name, column.DataType, column.Description, isNotNull);
+				result = Manager.AddColumn(TableName, name, dataType, description, isNotNull);
 			}
 			else // 기존 컬럼 변경
 			{
-				var dataType = column.DataType;
-				var description = column.Description == column.DescriptionPrev ? null : column.Description;
-				result = Manager.ModifyColumn(TableName, column.NamePrev, column.Name, dataType, description, isNotNull);
+				var descriptionToUpdate = description == descriptionPrev ? null : description;
+				result = Manager.ModifyColumn(TableName, namePrev, name, dataType, descriptionToUpdate, isNotNull);
 			}
 
 			if (!checkedKeyNames.SequenceEqual(primaryKeyNames)) // 기본 키 변경
@@ -266,12 +293,16 @@ namespace SqlServerWorkspace.Views
 				return;
 			}
 
-			if (button.DataContext is not TableEditView_ColumnDataGrid column)
+			var row = button.FindParent<DataGridRow>();
+			if (row?.DataContext is not DataRowView rowView)
 			{
 				return;
 			}
 
-			if (column.Name == string.Empty || column.DataType == string.Empty)
+			var name = rowView["Name"]?.ToString() ?? string.Empty;
+			var dataType = rowView["DataType"]?.ToString() ?? string.Empty;
+
+			if (name == string.Empty || dataType == string.Empty)
 			{
 				return;
 			}
@@ -281,17 +312,15 @@ namespace SqlServerWorkspace.Views
 				return;
 			}
 
-			var result = Manager.DropColumn(TableName, column.Name);
+			var result = Manager.DropColumn(TableName, name);
 			if (result != string.Empty)
 			{
 				MessageBox.Show(result);
 				return;
 			}
 
-			var itemsSource = ColumnDataGrid.ItemsSource as List<TableEditView_ColumnDataGrid> ?? default!;
-			itemsSource?.Remove(column);
-			ColumnDataGrid.ItemsSource = null;
-			ColumnDataGrid.ItemsSource = itemsSource;
+			// DataTable에서 행 제거
+			rowView.Delete();
 		}
 
 		string prev = string.Empty;
@@ -300,11 +329,9 @@ namespace SqlServerWorkspace.Views
 		{
 			if (e.EditingEventArgs.OriginalSource is TextBlock textBlock)
 			{
-				var nameProperty = e.Row.DataContext.GetType().GetProperty("Name");
-				if (nameProperty != null)
+				if (e.Row.DataContext is DataRowView rowView)
 				{
-					var nameValue = nameProperty.GetValue(e.Row.DataContext);
-					prevName = nameValue?.ToString() ?? "";
+					prevName = rowView["Name"]?.ToString() ?? string.Empty;
 				}
 
 				prev = textBlock.Text;
@@ -328,38 +355,33 @@ namespace SqlServerWorkspace.Views
 					return;
 				}
 
-				if (textBox.Text != prev)
+				if (textBox.Text != prev && e.Row.DataContext is DataRowView rowView)
 				{
-					var itemsSource = ColumnDataGrid.ItemsSource as List<TableEditView_ColumnDataGrid> ?? default!;
-
 					switch (e.Column.Header.ToString())
 					{
 						case "Name":
 							{
-								var row = itemsSource.Find(x => x.Name.Equals(prev));
-								if (row != null && row.NamePrev == string.Empty)
+								if (rowView["NamePrev"]?.ToString() == string.Empty)
 								{
-									row.NamePrev = prev;
+									rowView["NamePrev"] = prev;
 								}
 							}
 							break;
 
 						case "Data Type":
 							{
-								var row = itemsSource.Find(x => x.Name.Equals(prevName));
-								if (row != null && row.DataTypePrev == string.Empty)
+								if (rowView["DataTypePrev"]?.ToString() == string.Empty)
 								{
-									row.DataTypePrev = prev;
+									rowView["DataTypePrev"] = prev;
 								}
 							}
 							break;
 
 						case "Description":
 							{
-								var row = itemsSource.Find(x => x.Name.Equals(prevName));
-								if (row != null && row.DescriptionPrev == string.Empty)
+								if (rowView["DescriptionPrev"]?.ToString() == string.Empty)
 								{
-									row.DescriptionPrev = prev;
+									rowView["DescriptionPrev"] = prev;
 								}
 							}
 							break;
