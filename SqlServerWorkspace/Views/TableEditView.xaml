@@ -23,7 +23,7 @@
             </Grid.ColumnDefinitions>
 
             <TextBlock>Table Name</TextBlock>
-            <TextBox Grid.Column="1" x:Name="TableNameTextBox" Margin="10"/>
+            <TextBox Grid.Column="1" x:Name="TableNameTextBox" Margin="10" TextChanged="TableNameTextBox_TextChanged"/>
         </Grid>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -32,6 +32,7 @@
                                 PreviewMouseWheel="ColumnDataGrid_PreviewMouseWheel"
                                 BeginningEdit="ColumnDataGrid_BeginningEdit"
                                 CellEditEnding="ColumnDataGrid_CellEditEnding"
+                                CurrentCellChanged="ColumnDataGrid_CurrentCellChanged"
                                 BorderThickness="0">
                 <cc:AdvanceDataGrid.Columns>
                     <DataGridTextColumn Header="Name" Width="1*" Binding="{Binding Name}" EditingElementStyle="{StaticResource DataGridCellTextBox}"/>

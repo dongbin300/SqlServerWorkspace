@@ -99,43 +99,7 @@ namespace SqlServerWorkspace.Views
 				DeleteColumn.Visibility = Visibility.Collapsed;
 			}
 
-			foreach (var column in ColumnDataGrid.Columns)
-			{
-				if (column is DataGridCheckBoxColumn checkBoxColumn)
-				{
-					foreach (DataRowView rowView in columnDataTable.DefaultView)
-					{
-						var row = (DataGridRow)ColumnDataGrid.ItemContainerGenerator.ContainerFromItem(rowView);
-						if (row != null)
-						{
-							var cell = (DataGridCell)checkBoxColumn.GetCellContent(row).Parent;
-							if (cell != null)
-							{
-								var checkBox = cell.FindVisualChildren<CheckBox>().First();
-								if (checkBox != null)
-								{
-									checkBox.Checked += (sender, e) =>
-									{
-										var checkBox = sender as CheckBox;
-										if (checkBox?.DataContext is DataRowView dataRowView)
-										{
-											dataRowView["NotNull"] = true;
-										}
-									};
-									checkBox.Unchecked += (sender, e) =>
-									{
-										var checkBox = sender as CheckBox;
-										if (checkBox?.DataContext is DataRowView dataRowView)
-										{
-											dataRowView["NotNull"] = false;
-										}
-									};
-								}
-							}
-						}
-					}
-				}
-			}
+			// 체크박스 이벤트 처리는 데이터바인딩으로 자동 처리됨
 		}
 
 		private List<TableColumnInfo> MakeTableColumnInfo()
@@ -152,8 +116,10 @@ namespace SqlServerWorkspace.Views
 
 				var dataType = rowView["DataType"]?.ToString() ?? string.Empty;
 				var description = rowView["Description"]?.ToString() ?? string.Empty;
-				var key = Convert.ToBoolean(rowView["Key"]);
-				var notNull = Convert.ToBoolean(rowView["NotNull"]);
+				var _key = rowView["Key"]?.ToString() ?? string.Empty;
+				var key = _key == "True";
+				var _notNull = rowView["NotNull"]?.ToString() ?? string.Empty;
+				var notNull = _notNull == "True";
 
 				columns.Add(new TableColumnInfo(name, dataType, key, notNull, description));
 			}
@@ -350,49 +316,88 @@ namespace SqlServerWorkspace.Views
 		{
 			if (e.EditAction == DataGridEditAction.Commit)
 			{
-				if (e.EditingElement is not TextBox textBox)
+				if (e.Column.Header.ToString() == "Key" || e.Column.Header.ToString() == "NotNull")
 				{
-					return;
+					if (e.EditingElement is CheckBox checkBox && e.Row.DataContext is DataRowView rowView)
+					{
+						if (e.Column.Header.ToString() == "Key")
+							rowView["Key"] = checkBox.IsChecked ?? false;
+						else if (e.Column.Header.ToString() == "NotNull")
+							rowView["NotNull"] = checkBox.IsChecked ?? false;
+					}
+					Dispatcher.BeginInvoke(new Action(() =>
+					{
+						if (Manager != null && !string.IsNullOrEmpty(TableNameTextBox?.Text))
+						{
+							var columns = MakeTableColumnInfo();
+							QueryTextBox.Text = Manager.GetNewTableQuery(TableNameTextBox.Text, columns);
+						}
+					}), System.Windows.Threading.DispatcherPriority.Background);
 				}
-
-				if (textBox.Text != prev && e.Row.DataContext is DataRowView rowView)
+				else if (e.EditingElement is TextBox textBox && e.Row.DataContext is DataRowView rowView)
 				{
-					switch (e.Column.Header.ToString())
+					var columnName = e.Column.Header.ToString();
+
+					switch (columnName)
 					{
 						case "Name":
-							{
-								if (rowView["NamePrev"]?.ToString() == string.Empty)
-								{
-									rowView["NamePrev"] = prev;
-								}
-							}
+							if (string.IsNullOrEmpty(rowView["NamePrev"]?.ToString()))
+								rowView["NamePrev"] = prev;
 							break;
-
 						case "Data Type":
-							{
-								if (rowView["DataTypePrev"]?.ToString() == string.Empty)
-								{
-									rowView["DataTypePrev"] = prev;
-								}
-							}
+							if (string.IsNullOrEmpty(rowView["DataTypePrev"]?.ToString()))
+								rowView["DataTypePrev"] = prev;
 							break;
-
 						case "Description":
-							{
-								if (rowView["DescriptionPrev"]?.ToString() == string.Empty)
-								{
-									rowView["DescriptionPrev"] = prev;
-								}
-							}
-							break;
-
-						default:
+							if (string.IsNullOrEmpty(rowView["DescriptionPrev"]?.ToString()))
+								rowView["DescriptionPrev"] = prev;
 							break;
 					}
+					Dispatcher.BeginInvoke(new Action(() =>
+					{
+						if (Manager != null && !string.IsNullOrEmpty(TableNameTextBox?.Text))
+						{
+							var columns = MakeTableColumnInfo();
+							QueryTextBox.Text = Manager.GetNewTableQuery(TableNameTextBox.Text, columns);
+						}
+					}), System.Windows.Threading.DispatcherPriority.Background);
 				}
 			}
+		}
 
-			QueryTextBox.Text = Manager.GetNewTableQuery(TableNameTextBox.Text, MakeTableColumnInfo());
+		private void TableNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
+		{
+			UpdateQuery();
+		}
+
+		private void ColumnDataGrid_CurrentCellChanged(object sender, EventArgs e)
+		{
+			UpdateQuery();
+		}
+
+		private void UpdateQuery()
+		{
+			if (Manager == null || string.IsNullOrEmpty(TableNameTextBox?.Text))
+			{
+				return;
+			}
+
+			Dispatcher.BeginInvoke(new Action(() =>
+			{
+				try
+				{
+					var columns = MakeTableColumnInfo();
+					if (columns.Count > 0 || !isModify)
+					{
+						QueryTextBox.Text = Manager.GetNewTableQuery(TableNameTextBox.Text, columns);
+					}
+				}
+				catch (Exception ex)
+				{
+					System.Diagnostics.Debug.WriteLine($"Query generation error: {ex.Message}");
+					QueryTextBox.Text = ""; // 오류 시 빈 문자열
+				}
+			}), System.Windows.Threading.DispatcherPriority.Background);
 		}
 	}
 }

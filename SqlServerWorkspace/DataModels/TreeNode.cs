@@ -50,6 +50,18 @@ namespace SqlServerWorkspace.DataModels
 				node.Type == TreeNodeType.FunctionTitleNode ||
 				node.Type == TreeNodeType.ProcedureTitleNode;
 
+			bool IsReferenceNode(TreeNode node, TreeNode parent)
+			{
+				// 프로시저 노드의 직접 자식들은 참조 항목으로 간주
+				// 단, 부모 프로시저가 키워드에 매치되어야 함
+				return parent.Type == TreeNodeType.ProcedureNode &&
+					   (node.Type == TreeNodeType.TableNode ||
+						node.Type == TreeNodeType.ViewNode ||
+						node.Type == TreeNodeType.FunctionNode ||
+						node.Type == TreeNodeType.ProcedureNode) &&
+					   ContainsKeyword(parent);
+			}
+
 			TreeNode CloneNode(TreeNode node)
 			{
 				return new TreeNode(node.Name, node.Type, node.Path, node.SvgData, node.SvgColor, node.IsExpanded);
@@ -59,7 +71,7 @@ namespace SqlServerWorkspace.DataModels
 			{
 				foreach (var child in sourceNode.Children)
 				{
-					if (ContainsKeyword(child) || IsAlwaysIncluded(child))
+					if (ContainsKeyword(child) || IsAlwaysIncluded(child) || IsReferenceNode(child, sourceNode))
 					{
 						var clonedChild = CloneNode(child);
 						targetNode.Children.Add(clonedChild);

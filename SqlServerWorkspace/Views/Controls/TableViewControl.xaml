@@ -9,7 +9,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="1000" Loaded="UserControl_Loaded">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <!--<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">-->
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="36"/>
@@ -57,6 +57,6 @@
             <GridSplitter Grid.Row="3" Height="3" HorizontalAlignment="Stretch" Background="{StaticResource DarkBackground}"/>
             <cc:AdvanceDataGrid Grid.Row="4" x:Name="TableDataGrid" Style="{StaticResource DarkDataGrid}"/>
         </Grid>
-    </ScrollViewer>
+    <!--</ScrollViewer>-->
     
 </UserControl>

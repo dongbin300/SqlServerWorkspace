@@ -19,6 +19,9 @@ namespace SqlServerWorkspace
 	public partial class MainWindow : Window
 	{
 		private DispatcherTimer SaveSettingsTimer = new();
+		private List<string> FilterKeywords = new List<string>();
+
+		public bool IsFiltered => FilterKeywords.Count > 0;
 
 		public MainWindow()
 		{
@@ -43,11 +46,60 @@ namespace SqlServerWorkspace
 
 		public void Refresh(bool isTitleExpand = false)
 		{
-			var keyword = DatabaseTreeViewFilterTextBox.Text;
+			// 현재 확장된 아이템들의 경로를 저장
+			var expandedPaths = new HashSet<string>();
+			if (DatabaseTreeView.ItemsSource != null)
+			{
+				SaveExpandedState(DatabaseTreeView, expandedPaths);
+			}
 
-			DatabaseTreeView.ItemsSource = isTitleExpand || DatabaseTreeViewFilterTextBox.Text.Length < 1 ?
+			DatabaseTreeView.ItemsSource = isTitleExpand || FilterKeywords.Count == 0 ?
 				ResourceManager.ConnectionsNodes :
-				Filter(ResourceManager.ConnectionsNodes, keyword);
+				FilterWithKeywords(ResourceManager.ConnectionsNodes, FilterKeywords);
+
+			// 확장 상태를 복원
+			if (expandedPaths.Count > 0)
+			{
+				Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+				{
+					RestoreExpandedState(DatabaseTreeView, expandedPaths);
+				}), System.Windows.Threading.DispatcherPriority.Background);
+			}
+		}
+
+		private void SaveExpandedState(ItemsControl itemsControl, HashSet<string> expandedPaths)
+		{
+			for (int i = 0; i < itemsControl.Items.Count; i++)
+			{
+				var container = itemsControl.ItemContainerGenerator.ContainerFromIndex(i) as TreeViewItem;
+				if (container?.IsExpanded == true && container.Tag is string path)
+				{
+					expandedPaths.Add(path);
+				}
+				
+				if (container != null)
+				{
+					SaveExpandedState(container, expandedPaths);
+				}
+			}
+		}
+
+		private void RestoreExpandedState(ItemsControl itemsControl, HashSet<string> expandedPaths)
+		{
+			for (int i = 0; i < itemsControl.Items.Count; i++)
+			{
+				var container = itemsControl.ItemContainerGenerator.ContainerFromIndex(i) as TreeViewItem;
+				if (container?.Tag is string path && expandedPaths.Contains(path))
+				{
+					container.IsExpanded = true;
+					container.UpdateLayout();
+				}
+				
+				if (container != null)
+				{
+					RestoreExpandedState(container, expandedPaths);
+				}
+			}
 		}
 
 		private void SaveSettingsTimer_Tick(object? sender, EventArgs e)
@@ -72,11 +124,95 @@ namespace SqlServerWorkspace
 			return filteredItems;
 		}
 
+		private IEnumerable<TreeNode> FilterWithKeywords(IEnumerable<IEnumerable<TreeNode>> items, List<string> keywords)
+		{
+			List<TreeNode> filteredItems = [];
+			foreach (var item in items)
+			{
+				foreach (var topNode in item)
+				{
+					var combinedKeyword = string.Join(";", keywords);
+					var nodes = topNode.Search(combinedKeyword);
+					filteredItems.AddRange(nodes);
+				}
+			}
+
+			return filteredItems;
+		}
+
+		private void AddKeyword(string keyword)
+		{
+			if (string.IsNullOrWhiteSpace(keyword) || FilterKeywords.Contains(keyword))
+				return;
+
+			FilterKeywords.Add(keyword);
+			CreateKeywordCard(keyword);
+			Refresh();
+		}
+
+		private void RemoveKeyword(string keyword)
+		{
+			FilterKeywords.Remove(keyword);
+			RemoveKeywordCard(keyword);
+			Refresh();
+		}
+
+		private void CreateKeywordCard(string keyword)
+		{
+			var border = new Border
+			{
+				Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0xCC, 0x96, 0xF8)),
+				CornerRadius = new CornerRadius(4),
+				Margin = new Thickness(2),
+				Padding = new Thickness(8, 4, 8, 4),
+				Cursor = Cursors.Hand,
+				Tag = keyword
+			};
+
+			var textBlock = new TextBlock
+			{
+				Text = keyword,
+				Foreground = Brushes.White,
+				FontSize = 12,
+				VerticalAlignment = VerticalAlignment.Center
+			};
+
+			border.Child = textBlock;
+			border.MouseLeftButtonDown += KeywordCard_MouseLeftButtonDown;
+
+			KeywordCardsPanel.Children.Add(border);
+		}
+
+		private void RemoveKeywordCard(string keyword)
+		{
+			var cardToRemove = KeywordCardsPanel.Children
+				.OfType<Border>()
+				.FirstOrDefault(b => b.Tag?.ToString() == keyword);
+
+			if (cardToRemove != null)
+			{
+				KeywordCardsPanel.Children.Remove(cardToRemove);
+			}
+		}
+
+		private void KeywordCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+		{
+			if (sender is Border border && border.Tag is string keyword)
+			{
+				RemoveKeyword(keyword);
+			}
+		}
+
 		private void DatabaseTreeViewFilterTextBox_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.Key == Key.Enter)
 			{
-				Refresh();
+				var keyword = DatabaseTreeViewFilterTextBox.Text.Trim();
+				if (!string.IsNullOrEmpty(keyword))
+				{
+					AddKeyword(keyword);
+					DatabaseTreeViewFilterTextBox.Text = "";
+				}
 			}
 		}
 
@@ -101,8 +237,41 @@ namespace SqlServerWorkspace
 							case TreeNodeType.TableNode:
 							case TreeNodeType.ViewNode:
 							case TreeNodeType.FunctionNode:
+								await EntryDocumentPane.CreateNewOrOpenTab(manager, node);
+								break;
+								
 							case TreeNodeType.ProcedureNode:
 								await EntryDocumentPane.CreateNewOrOpenTab(manager, node);
+								
+								// 이미 참조 항목이 있는지 확인
+								bool hasReferences = node.Children.Count > 0;
+								
+								if (hasReferences)
+								{
+									// 참조 항목이 있으면 expand 상태를 토글
+									// UI에서 실제 expand 상태를 확인
+									Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+									{
+										bool currentExpandState = item.IsExpanded;
+										item.IsExpanded = !currentExpandState;
+										item.UpdateLayout();
+										
+										// 확실한 토글을 위해 한 번 더 체크
+										Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+										{
+											if (item.IsExpanded != !currentExpandState)
+											{
+												item.IsExpanded = !currentExpandState;
+											}
+										}), System.Windows.Threading.DispatcherPriority.Background);
+									}), System.Windows.Threading.DispatcherPriority.Render);
+								}
+								else
+								{
+									// 참조 항목이 없으면 분석 후 expand
+									await EntryDocumentPane.AnalyzeAndAddReferences(manager, node.Name);
+									item.IsExpanded = true;
+								}
 								break;
 
 							case TreeNodeType.DatabaseNode:
