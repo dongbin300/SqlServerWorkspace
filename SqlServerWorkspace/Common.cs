@@ -3,6 +3,7 @@
 using SqlServerWorkspace.Enums;
 
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 
@@ -16,7 +17,9 @@ namespace SqlServerWorkspace
         {
 			if (MainWindow is MainWindow mainWindow)
             {
-                mainWindow.StatusTextBlock.Inlines.Clear();
+                mainWindow.StatusTextBlock.Document.Blocks.Clear();
+                var paragraph = new Paragraph() { Margin = new Thickness(0), LineHeight = double.NaN };
+                mainWindow.StatusTextBlock.Document.Blocks.Add(paragraph);
 			}
 		}
 
@@ -24,10 +27,14 @@ namespace SqlServerWorkspace
         {
             if (MainWindow is MainWindow mainWindow)
             {
-                var run = new Run(text);
-                mainWindow.StatusTextBlock.Inlines.Add(run);
-                mainWindow.StatusTextBlock.Inlines.Add(new LineBreak());
-                mainWindow.StatusTextScrollViewer.ScrollToEnd();
+                var paragraph = new Paragraph() 
+                { 
+                    Margin = new Thickness(0), 
+                    LineHeight = double.NaN 
+                };
+                paragraph.Inlines.Add(new Run(text));
+                mainWindow.StatusTextBlock.Document.Blocks.Add(paragraph);
+                mainWindow.StatusTextBlock.ScrollToEnd();
 
 				SetStatusPanelSelectedIndex("LOG");
 			}
@@ -40,20 +47,26 @@ namespace SqlServerWorkspace
                 var currentTab = mainWindow.EntryDocumentPane.GetCurrentTab();
                 var tabHeader = currentTab == null ? string.Empty : currentTab.Title;
 
-				var run = new Run($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}/{tabHeader}] {text}")
-				{
-					Foreground = type switch
-					{
-						LogType.Info => (SolidColorBrush)Application.Current.FindResource("InfoColor"),
-						LogType.Success => (SolidColorBrush)Application.Current.FindResource("SuccessColor"),
-						LogType.Warning => (SolidColorBrush)Application.Current.FindResource("WarningColor"),
-						LogType.Error => (SolidColorBrush)Application.Current.FindResource("ErrorColor"),
-						_ => (SolidColorBrush)Application.Current.FindResource("InfoColor")
-					}
-				};
-				mainWindow.StatusTextBlock.Inlines.Add(run);
-				mainWindow.StatusTextBlock.Inlines.Add(new LineBreak());
-                mainWindow.StatusTextScrollViewer.ScrollToEnd();
+                var paragraph = new Paragraph() 
+                { 
+                    Margin = new Thickness(0), 
+                    LineHeight = double.NaN 
+                };
+                var run = new Run($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}/{tabHeader}] {text}")
+                {
+                    Foreground = type switch
+                    {
+                        LogType.Info => (SolidColorBrush)Application.Current.FindResource("InfoColor"),
+                        LogType.Success => (SolidColorBrush)Application.Current.FindResource("SuccessColor"),
+                        LogType.Warning => (SolidColorBrush)Application.Current.FindResource("WarningColor"),
+                        LogType.Error => (SolidColorBrush)Application.Current.FindResource("ErrorColor"),
+                        _ => (SolidColorBrush)Application.Current.FindResource("InfoColor")
+                    }
+                };
+                
+                paragraph.Inlines.Add(run);
+                mainWindow.StatusTextBlock.Document.Blocks.Add(paragraph);
+                mainWindow.StatusTextBlock.ScrollToEnd();
 
 				SetStatusPanelSelectedIndex("LOG");
 			}

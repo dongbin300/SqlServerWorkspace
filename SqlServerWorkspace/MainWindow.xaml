@@ -193,20 +193,34 @@
                             </LayoutDocumentPane>
 
                             <!-- 3. STATUS PANEL -->
-                            <LayoutAnchorablePane x:Name="StatusPanel" DockHeight="240" >
+                            <LayoutAnchorablePane x:Name="StatusPanel" DockHeight="240">
                                 <LayoutAnchorable Title="Logs" Hiding="LayoutAnchorable_Hiding" ContentId="LOG">
-                                    <ScrollViewer x:Name="StatusTextScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                                        <Grid>
-                                            <Grid.ContextMenu>
-                                                <ContextMenu>
-                                                    <MenuItem Header="Copy Log" Click="CopyLog_Click"/>
-                                                    <MenuItem Header="Copy Latest Log" Click="CopyLatestLog_Click"/>
-                                                </ContextMenu>
-                                            </Grid.ContextMenu>
-                                            
-                                            <TextBlock x:Name="StatusTextBlock" Style="{StaticResource StatusText}"/>
-                                        </Grid>
-                                    </ScrollViewer>
+                                    <Grid>
+                                        <Grid.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Copy Log" Click="CopyLog_Click"/>
+                                                <MenuItem Header="Copy Latest Log" Click="CopyLatestLog_Click"/>
+                                            </ContextMenu>
+                                        </Grid.ContextMenu>
+                                        
+                                        <RichTextBox x:Name="StatusTextBlock" 
+                                                     IsReadOnly="True"
+                                                     VerticalScrollBarVisibility="Auto"
+                                                     HorizontalScrollBarVisibility="Auto"
+                                                     FontFamily="{StaticResource BaseFont}"
+                                                     FontSize="{StaticResource BaseFontSize}"
+                                                     Foreground="{StaticResource DarkForeground}"
+                                                     Background="{StaticResource DarkBackground}"
+                                                     BorderThickness="0"
+                                                     Padding="5">
+                                            <FlowDocument PagePadding="0" 
+                                                          TextAlignment="Left" 
+                                                          PageWidth="800" 
+                                                          ColumnWidth="800">
+                                                <Paragraph Margin="0" LineHeight="Auto"/>
+                                            </FlowDocument>
+                                        </RichTextBox>
+                                    </Grid>
                                 </LayoutAnchorable>
                             </LayoutAnchorablePane>
                         </LayoutPanel>

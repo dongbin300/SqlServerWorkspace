@@ -7,6 +7,7 @@ using SqlServerWorkspace.Views;
 using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -540,12 +541,17 @@ namespace SqlServerWorkspace
 		#region LOGS MENU
 		private void CopyLog_Click(object sender, RoutedEventArgs e)
 		{
-			Clipboard.SetText(StatusTextBlock.Text);
+			Clipboard.SetText(GetLogText());
 		}
 
 		private void CopyLatestLog_Click(object sender, RoutedEventArgs e)
 		{
-			Clipboard.SetText(StatusTextBlock.Text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Last());
+			Clipboard.SetText(GetLogText().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Last());
+		}
+
+		private string GetLogText()
+		{
+			return new TextRange(StatusTextBlock.Document.ContentStart, StatusTextBlock.Document.ContentEnd).Text;
 		}
 		#endregion
 	}
