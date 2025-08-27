@@ -43,7 +43,7 @@ namespace SqlServerWorkspace
 
 				AddReferenceNodesToTree(spNode, references);
 
-				Common.Log($"Found {references.Tables.Count + references.Views.Count + references.Functions.Count + references.Procedures.Count} references in {procedureName}", LogType.Info);
+				//Common.Log($"Found {references.Tables.Count + references.Views.Count + references.Functions.Count + references.Procedures.Count} references in {procedureName}", LogType.Info);
 			}
 			catch (Exception ex)
 			{

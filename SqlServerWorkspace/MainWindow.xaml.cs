@@ -250,7 +250,7 @@ namespace SqlServerWorkspace
 								{
 									// 참조 항목이 있으면 expand 상태를 토글
 									// UI에서 실제 expand 상태를 확인
-									Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+									await Application.Current.Dispatcher.BeginInvoke(new Action(() =>
 									{
 										bool currentExpandState = item.IsExpanded;
 										item.IsExpanded = !currentExpandState;
@@ -263,8 +263,8 @@ namespace SqlServerWorkspace
 											{
 												item.IsExpanded = !currentExpandState;
 											}
-										}), System.Windows.Threading.DispatcherPriority.Background);
-									}), System.Windows.Threading.DispatcherPriority.Render);
+										}), DispatcherPriority.Background);
+									}), DispatcherPriority.Render);
 								}
 								else
 								{
