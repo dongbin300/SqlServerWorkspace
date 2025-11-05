@@ -23,7 +23,15 @@ namespace SqlServerWorkspace.Views
 
 		private void OkButton_Click(object sender, RoutedEventArgs e)
 		{
-			NameText = NameTextBox.Text;
+			NameText = NameTextBox.Text?.Trim() ?? string.Empty;
+
+			// 유효성 검사: 빈 이름 허용 안함
+			if (string.IsNullOrWhiteSpace(NameText))
+			{
+				MessageBox.Show("이름을 입력해주세요.", "유효성 오류", MessageBoxButton.OK, MessageBoxImage.Warning);
+				NameTextBox.Focus();
+				return;
+			}
 
 			DialogResult = true;
 			Close();

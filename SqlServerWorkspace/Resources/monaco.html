@@ -80,7 +80,8 @@
             };
 
             window.setEditorText = function (text) {
-                text = text.replace(/\\n/g, '\n');
+                // 줄 바꿈 문자 정규화: JavaScript에서도 일관되게 처리
+                text = text.replace(/\\n/g, '\n').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
                 editor.setValue(text);
             };
 
@@ -89,7 +90,8 @@
             };
 
             window.appendEditorText = function (text) {
-                text = text.replace(/\\n/g, '\n');
+                // 줄 바꿈 문자 정규화: JavaScript에서도 일관되게 처리
+                text = text.replace(/\\n/g, '\n').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
                 var currentText = editor.getValue();
                 var newText = currentText + text;
                 editor.setValue(newText);

@@ -10,53 +10,63 @@
              d:DesignHeight="450" d:DesignWidth="1000" Loaded="UserControl_Loaded">
 
     <!--<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">-->
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="36"/>
-                <RowDefinition Height="Auto" MinHeight="60"/>
-                <RowDefinition Height="*" MinHeight="240"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="8*"/>
-            </Grid.RowDefinitions>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="36"/>
+            <RowDefinition Height="Auto" MinHeight="60"/>
+            <RowDefinition Height="*" MinHeight="240"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="8*"/>
+        </Grid.RowDefinitions>
 
+        <StackPanel Orientation="Horizontal">
+            <Button x:Name="RunButton" Width="80" Style="{StaticResource HorizontalButton}" Click="RunButton_Click">Run</Button>
+            <Button x:Name="SaveButton" Width="80" Style="{StaticResource HorizontalButton}" Click="SaveButton_Click">Save</Button>
+            <Button x:Name="MergeButton" Width="80" Style="{StaticResource HorizontalButton}" Click="MergeButton_Click">Merge</Button>
+            <Button x:Name="CreateButton" Width="80" Style="{StaticResource HorizontalButton}" Click="CreateButton_Click">Create</Button>
+            <Button x:Name="CopyButton" Width="80" Style="{StaticResource HorizontalButton}" Click="CopyButton_Click">Copy</Button>
+            <Button x:Name="EditButton" Width="80" Style="{StaticResource HorizontalButton}" Click="EditButton_Click">Edit</Button>
+            <Button x:Name="CopyStructureButton" Width="100" Style="{StaticResource HorizontalButton}" Click="CopyStructureButton_Click">Structure</Button>
+        </StackPanel>
+
+        <StackPanel Orientation="Vertical" Grid.Row="1">
             <StackPanel Orientation="Horizontal">
-                <Button x:Name="RunButton" Width="80" Style="{StaticResource HorizontalButton}" Click="RunButton_Click">Run</Button>
-                <Button x:Name="SaveButton" Width="80" Style="{StaticResource HorizontalButton}" Click="SaveButton_Click">Save</Button>
-                <Button x:Name="MergeButton" Width="80" Style="{StaticResource HorizontalButton}" Click="MergeButton_Click">Merge</Button>
-                <Button x:Name="CreateButton" Width="80" Style="{StaticResource HorizontalButton}" Click="CreateButton_Click">Create</Button>
-                <Button x:Name="CopyButton" Width="80" Style="{StaticResource HorizontalButton}" Click="CopyButton_Click">Copy</Button>
-                <Button x:Name="EditButton" Width="80" Style="{StaticResource HorizontalButton}" Click="EditButton_Click">Edit</Button>
+                <CheckBox x:Name="WhereCheckBox" Width="80" Style="{StaticResource SswCheckBox}" Checked="WhereCheckBox_Checked" Unchecked="WhereCheckBox_Unchecked">Where</CheckBox>
+                <Button x:Name="WhereAddButton" Width="32" Click="WhereAddButton_Click">+</Button>
             </StackPanel>
-
-            <StackPanel Orientation="Vertical" Grid.Row="1">
-                <StackPanel Orientation="Horizontal">
-                    <CheckBox x:Name="WhereCheckBox" Width="80" Style="{StaticResource SswCheckBox}" Checked="WhereCheckBox_Checked" Unchecked="WhereCheckBox_Unchecked">Where</CheckBox>
-                    <Button x:Name="WhereAddButton" Width="32" Click="WhereAddButton_Click">+</Button>
-                </StackPanel>
-                <StackPanel x:Name="WherePanel" Orientation="Vertical">
-                    <!--<StackPanel x:Name="WherePanel_1" Orientation="Horizontal">
+            <StackPanel x:Name="WherePanel" Orientation="Vertical">
+                <!--<StackPanel x:Name="WherePanel_1" Orientation="Horizontal">
                 <Button x:Name="WhereAndOrButton_1" Width="50" Click="WhereAndOrButton_1_Click">AND</Button>
                 <ComboBox x:Name="WhereColumnComboBox_1" Width="120"/>
                 <Button x:Name="WhereOperatorButton_1" Width="32" Click="WhereOperatorButton_1_Click">=</Button>
                 <TextBox x:Name="WhereValueTextBox_1" Width="120"/>
             </StackPanel>-->
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <CheckBox x:Name="OrderCheckBox" Width="80" Style="{StaticResource SswCheckBox}" Checked="OrderCheckBox_Checked" Unchecked="OrderCheckBox_Unchecked">Order By</CheckBox>
-                    <Button x:Name="OrderAddButton" Width="32" Click="OrderAddButton_Click">+</Button>
-                </StackPanel>
-                <StackPanel x:Name="OrderPanel" Orientation="Vertical">
-                    <!--<StackPanel x:Name="OrderPanel_1" Orientation="Horizontal">
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <CheckBox x:Name="OrderCheckBox" Width="80" Style="{StaticResource SswCheckBox}" Checked="OrderCheckBox_Checked" Unchecked="OrderCheckBox_Unchecked">Order By</CheckBox>
+                <Button x:Name="OrderAddButton" Width="32" Click="OrderAddButton_Click">+</Button>
+            </StackPanel>
+            <StackPanel x:Name="OrderPanel" Orientation="Vertical">
+                <!--<StackPanel x:Name="OrderPanel_1" Orientation="Horizontal">
                 <ComboBox x:Name="OrderColumnComboBox_1" Width="120"/>
                 <Button x:Name="OrderSortButton_1" Width="50" Click="OrderSortButton_1_Click">ASC</Button>
             </StackPanel>-->
-                </StackPanel>
             </StackPanel>
+        </StackPanel>
 
-            <wv:WebView2 Grid.Row="2" x:Name="WebView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" NavigationCompleted="WebView_NavigationCompleted" KeyDown="WebView_KeyDown"/>
-            <GridSplitter Grid.Row="3" Height="3" HorizontalAlignment="Stretch" Background="{StaticResource DarkBackground}"/>
-            <cc:AdvanceDataGrid Grid.Row="4" x:Name="TableDataGrid" Style="{StaticResource DarkDataGrid}"/>
+        <wv:WebView2 Grid.Row="2" x:Name="WebView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" NavigationCompleted="WebView_NavigationCompleted" KeyDown="WebView_KeyDown"/>
+        <GridSplitter Grid.Row="3" Height="3" HorizontalAlignment="Stretch" Background="{StaticResource DarkBackground}"/>
+        <Grid Grid.Row="4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <cc:AdvanceDataGrid Grid.Row="0" x:Name="TableDataGrid" Style="{StaticResource DarkDataGrid}"/>
+            <Border Grid.Row="1" Background="{StaticResource DarkBackground}" BorderBrush="{StaticResource DarkForeground}" BorderThickness="0,1,0,0" Padding="8,4">
+                <TextBlock x:Name="RowCountText" Text="총 0건" Foreground="{StaticResource DarkForeground}" FontSize="12" HorizontalAlignment="Right"/>
+            </Border>
         </Grid>
+    </Grid>
     <!--</ScrollViewer>-->
-    
+
 </UserControl>

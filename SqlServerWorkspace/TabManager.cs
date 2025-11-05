@@ -10,9 +10,11 @@ using SqlServerWorkspace.Extensions;
 using SqlServerWorkspace.Views.Controls;
 using SqlServerWorkspace.Views.CustomControls;
 
+using System.Data;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace SqlServerWorkspace
@@ -134,14 +136,8 @@ namespace SqlServerWorkspace
 										if (anchorables.Any())
 										{
 											var anchorable = anchorables.First();
-											var dataGrid = new AdvanceDataGrid()
-											{
-												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
-												ItemsSource = table.DefaultView
-											};
-											dataGrid.FillSqlDataTableSimple(table);
-
-											anchorable.Content = dataGrid;
+											var gridWithCount = CreateDataGridWithRowCount(table, "DarkDataGridSimple");
+											anchorable.Content = gridWithCount;
 										}
 										else
 										{
@@ -150,68 +146,103 @@ namespace SqlServerWorkspace
 												ContentId = "SPER",
 												Title = "Stored Procedure Execute Result"
 											};
-											var dataGrid = new AdvanceDataGrid()
-											{
-												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
-												ItemsSource = table.DefaultView
-											};
-											dataGrid.FillSqlDataTableSimple(table);
-
-											tablePanel.Content = dataGrid;
+											var gridWithCount = CreateDataGridWithRowCount(table, "DarkDataGridSimple");
+											tablePanel.Content = gridWithCount;
 											mainWindowStatusPanel.Children.Add(tablePanel);
 										}
 
 										Common.SetStatusPanelSelectedIndex("SPER");
 									}
-									else if (firstKeyword.Equals("select", StringComparison.OrdinalIgnoreCase))
-									{
-										var table = manager.Select(text);
-
-										var mainWindowStatusPanel = ((MainWindow)Common.MainWindow).StatusPanel;
-										var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == "SR");
-
-										if (anchorables.Any())
-										{
-											var anchorable = anchorables.First();
-											var dataGrid = new AdvanceDataGrid()
-											{
-												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
-												ItemsSource = table.DefaultView
-											};
-											dataGrid.FillSqlDataTableSimple(table);
-
-											anchorable.Content = dataGrid;
-										}
-										else
-										{
-											var tablePanel = new LayoutAnchorable()
-											{
-												ContentId = "SR",
-												Title = "Result"
-											};
-											var dataGrid = new AdvanceDataGrid()
-											{
-												Style = (Style)System.Windows.Application.Current.Resources["DarkDataGridSimple"],
-												ItemsSource = table.DefaultView
-											};
-											dataGrid.FillSqlDataTableSimple(table);
-
-											tablePanel.Content = dataGrid;
-											mainWindowStatusPanel.Children.Add(tablePanel);
-										}
-
-										Common.SetStatusPanelSelectedIndex("SR");
-									}
 									else
 									{
-										var result = manager.Execute(text);
-										if (!string.IsNullOrEmpty(result))
+										// 여러 쿼리 실행 (SELECT, PRINT 등 모두 처리)
+										var multipleResults = manager.ExecuteMultipleQueries(text);
+
+										if (multipleResults.HasError)
 										{
-											Common.Log(result, LogType.Error);
+											Common.Log(multipleResults.ErrorMessage, LogType.Error);
 											break;
 										}
 
-										Common.Log("Run Complete", LogType.Success);
+										var mainWindowStatusPanel = ((MainWindow)Common.MainWindow).StatusPanel;
+
+										// 모든 테이블 결과 표시
+										for (int i = 0; i < multipleResults.Tables.Count; i++)
+										{
+											var table = multipleResults.Tables[i];
+											var resultTitle = multipleResults.Tables.Count > 1 ? $"Result {i + 1}" : "Result";
+											var contentId = multipleResults.Tables.Count > 1 ? $"SR_{i}" : "SR";
+
+											var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == contentId);
+
+											if (anchorables.Any())
+											{
+												var anchorable = anchorables.First();
+												var gridWithCount = CreateDataGridWithRowCount(table, "DarkDataGridSimple");
+												anchorable.Content = gridWithCount;
+											}
+											else
+											{
+												var tablePanel = new LayoutAnchorable()
+												{
+													ContentId = contentId,
+													Title = resultTitle
+												};
+												var gridWithCount = CreateDataGridWithRowCount(table, "DarkDataGridSimple");
+												tablePanel.Content = gridWithCount;
+												mainWindowStatusPanel.Children.Add(tablePanel);
+											}
+										}
+
+										// PRINT 메시지를 Result 탭에 표시
+										if (multipleResults.HasMessages)
+										{
+											var messageTable = new DataTable();
+											messageTable.Columns.Add("Message");
+
+											foreach (var message in multipleResults.Messages)
+											{
+												messageTable.Rows.Add(message);
+											}
+
+											var messageTitle = multipleResults.HasTables ? "Messages" : "Result";
+											var messageId = multipleResults.HasTables ? $"MSG" : "SR";
+
+											var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == messageId);
+
+											if (anchorables.Any())
+											{
+												var anchorable = anchorables.First();
+												var gridWithCount = CreateDataGridWithRowCount(messageTable, "DarkDataGridSimple");
+												anchorable.Content = gridWithCount;
+											}
+											else
+											{
+												var tablePanel = new LayoutAnchorable()
+												{
+													ContentId = messageId,
+													Title = messageTitle
+												};
+												var gridWithCount = CreateDataGridWithRowCount(messageTable, "DarkDataGridSimple");
+												tablePanel.Content = gridWithCount;
+												mainWindowStatusPanel.Children.Add(tablePanel);
+											}
+										}
+
+										// 마지막 결과 탭을 선택
+										if (multipleResults.HasTables)
+										{
+											var lastContentId = multipleResults.Tables.Count > 1 ? $"SR_{multipleResults.Tables.Count - 1}" : "SR";
+											Common.SetStatusPanelSelectedIndex(lastContentId);
+										}
+										else if (multipleResults.HasMessages)
+										{
+											Common.SetStatusPanelSelectedIndex(multipleResults.HasTables ? "MSG" : "SR");
+										}
+										else
+										{
+											Common.Log("Run Complete (no results)", LogType.Success);
+										}
 									}
 								}
 								catch (Exception ex)
@@ -235,6 +266,8 @@ namespace SqlServerWorkspace
 						if (args.IsSuccess)
 						{
 							var text = manager.GetObject(nodeHeader);
+							// 줄 바꿈 문자 정규화: SQL Server에서 가져온 텍스트의 줄 바꿈을 통일
+							text = text.Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n");
 							text = CreateProcedureRegex().Replace(text, "ALTER PROCEDURE");
 							text = CreateFunctionRegex().Replace(text, "ALTER FUNCTION");
 							await layoutDocumentPane.SetEditorText(nodeHeader, text);
@@ -276,9 +309,15 @@ namespace SqlServerWorkspace
 
 		public static LayoutContent? GetLayoutContent(this LayoutDocumentPane layoutDocumentPane, string header)
 		{
+			if (string.IsNullOrWhiteSpace(header))
+				return null;
+
+			var normalizedHeader = header.Trim();
+
 			foreach (var layoutContent in layoutDocumentPane.Children)
 			{
-				if (layoutContent.Title == header)
+				// 대소문자 무시하고 공백 제거해서 비교
+				if (string.Equals(layoutContent.Title?.Trim(), normalizedHeader, StringComparison.OrdinalIgnoreCase))
 				{
 					return layoutContent;
 				}
@@ -318,6 +357,45 @@ namespace SqlServerWorkspace
 			}
 
 			await webView.SetAutocompleteData(items);
+		}
+
+		/// <summary>
+		/// 데이터그리드와 행 수 표시를 포함하는 컨테이너를 생성
+		/// </summary>
+		private static Grid CreateDataGridWithRowCount(DataTable table, string styleKey)
+		{
+			var grid = new Grid();
+			grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+			grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+			var dataGrid = new AdvanceDataGrid()
+			{
+				Style = (Style)System.Windows.Application.Current.Resources[styleKey],
+				ItemsSource = table.DefaultView
+			};
+			dataGrid.FillSqlDataTableSimple(table);
+			grid.Children.Add(dataGrid);
+
+			var rowCountBorder = new Border
+			{
+				Background = System.Windows.Application.Current.Resources["DarkBackground"] as System.Windows.Media.Brush,
+				BorderBrush = System.Windows.Application.Current.Resources["DarkForeground"] as System.Windows.Media.Brush,
+				BorderThickness = new Thickness(0, 1, 0, 0),
+				Padding = new Thickness(8, 4, 8, 4)
+			};
+			Grid.SetRow(rowCountBorder, 1);
+
+			var rowCountText = new TextBlock
+			{
+				Text = $"총 {table.Rows.Count:N0}건",
+				Foreground = System.Windows.Application.Current.Resources["DarkForeground"] as System.Windows.Media.Brush,
+				FontSize = 12,
+				HorizontalAlignment = HorizontalAlignment.Right
+			};
+			rowCountBorder.Child = rowCountText;
+
+			grid.Children.Add(rowCountBorder);
+			return grid;
 		}
 
 		[GeneratedRegex(@"\bcreate\s+procedure\b", RegexOptions.IgnoreCase)]

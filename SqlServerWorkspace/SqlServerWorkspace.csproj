@@ -2,11 +2,17 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net9.0-windows7.0</TargetFramework>
+		<TargetFramework>net10.0-windows7.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
 		<ApplicationIcon>ssw.ico</ApplicationIcon>
+
+		<!-- 자동 버전 관리 설정 -->
+		<AssemblyVersion>1.0.0.0</AssemblyVersion>
+		<FileVersion>1.0.0.0</FileVersion>
+		<Version>1.0.0</Version>
+		<AssemblyFileVersion>1.0.0.0</AssemblyFileVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -32,5 +38,50 @@
 	  <PackageReference Include="ML592.AvalonDock" Version="4.72.1" />
 	  <PackageReference Include="ML592.AvalonDock.Themes.VS2022" Version="4.72.1" />
 	</ItemGroup>
+
+	<!-- 자동 버전 증가 타겟 -->
+	<Target Name="AutoIncrementBuildNumber" BeforeTargets="BeforeBuild">
+		<!-- 빌드 카운터 파일 경로 -->
+		<PropertyGroup>
+			<BuildCounterFile>$(MSBuildProjectDirectory)\build.counter</BuildCounterFile>
+		</PropertyGroup>
+
+		<!-- 빌드 카운터 읽기 -->
+		<ReadLinesFromFile File="$(BuildCounterFile)">
+			<Output TaskParameter="Lines" ItemName="BuildCounter" />
+		</ReadLinesFromFile>
+
+		<!-- 카운터 증가 또는 초기화 -->
+		<PropertyGroup Condition="'@(BuildCounter)' == ''">
+			<CurrentBuildCount>1</CurrentBuildCount>
+		</PropertyGroup>
+		<PropertyGroup Condition="'@(BuildCounter)' != ''">
+			<CurrentBuildCount>$([MSBuild]::Add(%(BuildCounter.Identity), 1))</CurrentBuildCount>
+		</PropertyGroup>
+
+		<!-- 새로운 버전 생성: 1.0.0.빌드카운터 -->
+		<PropertyGroup>
+			<AutoVersion>1.0.0.$(CurrentBuildCount)</AutoVersion>
+			<AutoFileVersion>1.0.0.$(CurrentBuildCount)</AutoFileVersion>
+		</PropertyGroup>
+
+		<!-- 버전 정보 업데이트 -->
+		<PropertyGroup>
+			<AssemblyVersion>$(AutoVersion)</AssemblyVersion>
+			<FileVersion>$(AutoFileVersion)</FileVersion>
+			<Version>$(AutoVersion)</Version>
+			<AssemblyFileVersion>$(AutoFileVersion)</AssemblyFileVersion>
+		</PropertyGroup>
+
+		<!-- 빌드 카운터 파일에 쓰기 -->
+		<WriteLinesToFile File="$(BuildCounterFile)" Lines="$(CurrentBuildCount)" Overwrite="true" />
+
+		<!-- 빌드 시 버전 정보 출력 -->
+		<Message Text="=== Auto Version Increment ===" Importance="high" />
+		<Message Text="Build Count: $(CurrentBuildCount)" Importance="high" />
+		<Message Text="Assembly Version: $(AssemblyVersion)" Importance="high" />
+		<Message Text="File Version: $(FileVersion)" Importance="high" />
+		<Message Text="===============================" Importance="high" />
+	</Target>
 
 </Project>

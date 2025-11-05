@@ -5,6 +5,7 @@ using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
 
 using System.Drawing;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -28,12 +29,50 @@ namespace SqlServerWorkspace
 		{
 			InitializeComponent();
 
+			// 버전 정보를 가져와서 창 제목에 추가
+			var version = Assembly.GetExecutingAssembly().GetName().Version;
+			Title = $"SQL Server Workspace v{version}";
+
 			ResourceManager.Init();
 			var windowPosition = ResourceManager.Settings.WindowPosition;
-			Top = windowPosition.X == 0 ? Top : windowPosition.X;
-			Left = windowPosition.Y == 0 ? Left : windowPosition.Y;
-			Width = windowPosition.Width == 0 ? Width : windowPosition.Width;
-			Height = windowPosition.Height == 0 ? Height : windowPosition.Height;
+
+			// 윈도우 상태 및 위치 복원
+			if (windowPosition.Width > 0 && windowPosition.Height > 0)
+			{
+				var screenWidth = SystemParameters.PrimaryScreenWidth;
+				var screenHeight = SystemParameters.PrimaryScreenHeight;
+
+				// 최종 적용될 크기 계산 (최소 크기 보장)
+				var finalWidth = Math.Max(windowPosition.Width, 800);
+				var finalHeight = Math.Max(windowPosition.Height, 600);
+
+				// 저장된 위치 그대로 복원
+				var restoredLeft = windowPosition.X;
+				var restoredTop = windowPosition.Y;
+
+				// 화면 범위 확인 (최종 크기 기준)
+				if (restoredLeft < 0 || restoredLeft + finalWidth > screenWidth)
+					restoredLeft = (int)((screenWidth - finalWidth) / 2);
+				if (restoredTop < 0 || restoredTop + finalHeight > screenHeight)
+					restoredTop = (int)((screenHeight - finalHeight) / 2);
+
+				// 음수 좌표 방지
+				restoredLeft = Math.Max(0, restoredLeft);
+				restoredTop = Math.Max(0, restoredTop);
+
+				// 위치 및 크기 적용
+				Left = restoredLeft;
+				Top = restoredTop;
+				Width = finalWidth;
+				Height = finalHeight;
+
+				// 창 상태 복원
+				if (Enum.TryParse<WindowState>(ResourceManager.Settings.WindowState, out var savedState))
+				{
+					// 최소화 상태는 복원하지 않음
+					WindowState = savedState == WindowState.Minimized ? WindowState.Normal : savedState;
+				}
+			}
 
 			Refresh();
 
@@ -64,7 +103,7 @@ namespace SqlServerWorkspace
 				Application.Current.Dispatcher.BeginInvoke(new Action(() =>
 				{
 					RestoreExpandedState(DatabaseTreeView, expandedPaths);
-				}), System.Windows.Threading.DispatcherPriority.Background);
+				}), DispatcherPriority.Background);
 			}
 		}
 
@@ -105,7 +144,9 @@ namespace SqlServerWorkspace
 
 		private void SaveSettingsTimer_Tick(object? sender, EventArgs e)
 		{
-			ResourceManager.Settings.WindowPosition = new Rectangle((int)Top, (int)Left, (int)Width, (int)Height);
+			// 창 위치 및 상태 저장
+			ResourceManager.Settings.WindowPosition = new Rectangle((int)Left, (int)Top, (int)Width, (int)Height);
+			ResourceManager.Settings.WindowState = WindowState.ToString();
 			ResourceManager.SaveSettings();
 		}
 
@@ -157,6 +198,7 @@ namespace SqlServerWorkspace
 			RemoveKeywordCard(keyword);
 			Refresh();
 		}
+
 
 		private void CreateKeywordCard(string keyword)
 		{

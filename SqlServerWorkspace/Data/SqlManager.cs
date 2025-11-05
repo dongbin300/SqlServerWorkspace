@@ -1063,6 +1063,88 @@ namespace SqlServerWorkspace.Data
 
 			return builder.ToString();
 		}
+
+		/// <summary>
+		/// 여러 SQL 쿼리를 실행하고 모든 결과셋과 메시지를 반환
+		/// </summary>
+		public MultipleQueryResult ExecuteMultipleQueries(string query)
+		{
+			var results = new MultipleQueryResult();
+
+			try
+			{
+				using var connection = new SqlConnection(GetConnectionString());
+
+				// InfoMessage 이벤트 핸들러 설정
+				connection.InfoMessage += (sender, e) =>
+				{
+					if (e.Errors != null)
+					{
+						foreach (SqlError error in e.Errors)
+						{
+							results.Messages.Add(error.Message);
+						}
+					}
+				};
+
+				using var command = new SqlCommand(query, connection);
+				command.CommandType = CommandType.Text;
+
+				connection.Open();
+
+				using var reader = command.ExecuteReader();
+
+				// 모든 결과셋 처리
+				do
+				{
+					var table = new DataTable();
+
+					// 각 결과셋을 수동으로 처리
+					if (!reader.IsClosed && reader.FieldCount > 0)
+					{
+						// 컬럼 정보 추가
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							var columnName = reader.GetName(i);
+							var columnType = reader.GetFieldType(i);
+							table.Columns.Add(columnName, columnType);
+						}
+
+						// 데이터 행 추가
+						while (reader.Read())
+						{
+							var row = table.NewRow();
+							for (int i = 0; i < reader.FieldCount; i++)
+							{
+								row[i] = reader.IsDBNull(i) ? DBNull.Value : reader.GetValue(i);
+							}
+							table.Rows.Add(row);
+						}
+					}
+
+					results.Tables.Add(table);
+				} while (!reader.IsClosed && reader.NextResult());
+			}
+			catch (Exception ex)
+			{
+				results.ErrorMessage = ex.Message;
+			}
+
+			return results;
+		}
 		#endregion
+	}
+
+	/// <summary>
+	/// 여러 쿼리 실행 결과를 담는 클래스
+	/// </summary>
+	public class MultipleQueryResult
+	{
+		public List<DataTable> Tables { get; set; } = new();
+		public List<string> Messages { get; set; } = new();
+		public string ErrorMessage { get; set; } = string.Empty;
+		public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+		public bool HasTables => Tables.Any();
+		public bool HasMessages => Messages.Any();
 	}
 }

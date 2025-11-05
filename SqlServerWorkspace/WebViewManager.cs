@@ -19,6 +19,10 @@ namespace SqlServerWorkspace
 
 		public static async Task SetEditorText(this WebView2 webView, string text)
 		{
+			// 줄 바꿈 문자 정규화: 모든 줄 바꿈 문자를 \r\n으로 통일
+			text = text.Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n");
+
+			// JavaScript 문자열 이스케이프 처리
 			text = text.Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");
 			var script = $"setEditorText('{text}');";
 			await webView.CoreWebView2.ExecuteScriptAsync(script);
@@ -26,6 +30,10 @@ namespace SqlServerWorkspace
 
 		public static async Task AppendEditorText(this WebView2 webView, string text)
 		{
+			// 줄 바꿈 문자 정규화: 모든 줄 바꿈 문자를 \r\n으로 통일
+			text = text.Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n");
+
+			// JavaScript 문자열 이스케이프 처리
 			text = text.Replace("\r\n", "\\n").Replace("'", "\\'").Replace("\"", "\\\"");
 			var script = $"appendEditorText('{text}');";
 			await webView.CoreWebView2.ExecuteScriptAsync(script);
