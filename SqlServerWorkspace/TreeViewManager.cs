@@ -206,43 +206,6 @@ namespace SqlServerWorkspace
 			}
 		}
 
-		public static async Task MakeTableTreeAsync(SqlManager manager, TreeNode tableTitleNode)
-		{
-			try
-			{
-				var databaseName = tableTitleNode.GetParentName();
-				var parentNode = manager.Nodes[0].Children.First(x => x.Name.Equals(databaseName)).Children.First(x => x.Name.Equals(tableTitleNode.Name));
-				manager.Database = databaseName;
-
-				// 캐시 확인
-				var cacheKey = DatabaseCache.GetCacheKey(databaseName, "tables");
-				var tableNames = DatabaseCache.Get<List<string>>(cacheKey, databaseName);
-
-				if (tableNames == null)
-				{
-					// 데이터 비동기 로드
-					tableNames = await manager.SelectTableNamesAsync();
-					DatabaseCache.Set(cacheKey, tableNames, databaseName);
-				}
-
-				// UI 업데이트는 UI 스레드에서 실행
-				Application.Current.Dispatcher.Invoke(() =>
-				{
-					parentNode.Children.Clear();
-					foreach (var tableName in tableNames)
-					{
-						var node = new TreeNode(tableName, TreeNodeType.TableNode, parentNode.Path.CombinePath(tableName), ResourceManager.TableIcon, ResourceManager.TableIconColor);
-						parentNode.Children.Add(node);
-					}
-					parentNode.IsExpanded = true;
-				});
-			}
-			catch (Exception ex)
-			{
-				Common.Log(ex.Message, LogType.Error);
-			}
-		}
-
 		public static void MakeViewTree(SqlManager manager, TreeNode viewTitleNode)
 		{
 			try
@@ -260,41 +223,6 @@ namespace SqlServerWorkspace
 				}
 
 				parentNode.IsExpanded = true;
-			}
-			catch (Exception ex)
-			{
-				Common.Log(ex.Message, LogType.Error);
-			}
-		}
-
-		public static async Task MakeViewTreeAsync(SqlManager manager, TreeNode viewTitleNode)
-		{
-			try
-			{
-				var databaseName = viewTitleNode.GetParentName();
-				var parentNode = manager.Nodes[0].Children.First(x => x.Name.Equals(databaseName)).Children.First(x => x.Name.Equals(viewTitleNode.Name));
-				manager.Database = databaseName;
-
-				// 캐시 확인
-				var cacheKey = DatabaseCache.GetCacheKey(databaseName, "views");
-				var viewNames = DatabaseCache.Get<List<string>>(cacheKey, databaseName);
-
-				if (viewNames == null)
-				{
-					viewNames = await manager.SelectViewNamesAsync();
-					DatabaseCache.Set(cacheKey, viewNames, databaseName);
-				}
-
-				Application.Current.Dispatcher.Invoke(() =>
-				{
-					parentNode.Children.Clear();
-					foreach (var viewName in viewNames)
-					{
-						var node = new TreeNode(viewName, TreeNodeType.ViewNode, parentNode.Path.CombinePath(viewName), ResourceManager.ViewIcon, ResourceManager.ViewIconColor);
-						parentNode.Children.Add(node);
-					}
-					parentNode.IsExpanded = true;
-				});
 			}
 			catch (Exception ex)
 			{
@@ -326,41 +254,6 @@ namespace SqlServerWorkspace
 			}
 		}
 
-		public static async Task MakeFunctionTreeAsync(SqlManager manager, TreeNode functionTitleNode)
-		{
-			try
-			{
-				var databaseName = functionTitleNode.GetParentName();
-				var parentNode = manager.Nodes[0].Children.First(x => x.Name.Equals(databaseName)).Children.First(x => x.Name.Equals(functionTitleNode.Name));
-				manager.Database = databaseName;
-
-				// 캐시 확인
-				var cacheKey = DatabaseCache.GetCacheKey(databaseName, "functions");
-				var functionNames = DatabaseCache.Get<List<string>>(cacheKey, databaseName);
-
-				if (functionNames == null)
-				{
-					functionNames = await manager.SelectFunctionNamesAsync();
-					DatabaseCache.Set(cacheKey, functionNames, databaseName);
-				}
-
-				Application.Current.Dispatcher.Invoke(() =>
-				{
-					parentNode.Children.Clear();
-					foreach (var functionName in functionNames)
-					{
-						var node = new TreeNode(functionName, TreeNodeType.FunctionNode, parentNode.Path.CombinePath(functionName), ResourceManager.FunctionIcon, ResourceManager.FunctionIconColor);
-						parentNode.Children.Add(node);
-					}
-					parentNode.IsExpanded = true;
-				});
-			}
-			catch (Exception ex)
-			{
-				Common.Log(ex.Message, LogType.Error);
-			}
-		}
-
 		public static void MakeProcedureTree(SqlManager manager, TreeNode procedureTitleNode)
 		{
 			try
@@ -378,41 +271,6 @@ namespace SqlServerWorkspace
 				}
 
 				parentNode.IsExpanded = true;
-			}
-			catch (Exception ex)
-			{
-				Common.Log(ex.Message, LogType.Error);
-			}
-		}
-
-		public static async Task MakeProcedureTreeAsync(SqlManager manager, TreeNode procedureTitleNode)
-		{
-			try
-			{
-				var databaseName = procedureTitleNode.GetParentName();
-				var parentNode = manager.Nodes[0].Children.First(x => x.Name.Equals(databaseName)).Children.First(x => x.Name.Equals(procedureTitleNode.Name));
-				manager.Database = databaseName;
-
-				// 캐시 확인
-				var cacheKey = DatabaseCache.GetCacheKey(databaseName, "procedures");
-				var procedureNames = DatabaseCache.Get<List<string>>(cacheKey, databaseName);
-
-				if (procedureNames == null)
-				{
-					procedureNames = await manager.SelectProcedureNamesAsync();
-					DatabaseCache.Set(cacheKey, procedureNames, databaseName);
-				}
-
-				Application.Current.Dispatcher.Invoke(() =>
-				{
-					parentNode.Children.Clear();
-					foreach (var procedureName in procedureNames)
-					{
-						var node = new TreeNode(procedureName, TreeNodeType.ProcedureNode, parentNode.Path.CombinePath(procedureName), ResourceManager.ProcedureIcon, ResourceManager.ProcedureIconColor);
-						parentNode.Children.Add(node);
-					}
-					parentNode.IsExpanded = true;
-				});
 			}
 			catch (Exception ex)
 			{

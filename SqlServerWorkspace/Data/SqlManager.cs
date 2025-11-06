@@ -102,39 +102,6 @@ namespace SqlServerWorkspace.Data
 			return Select(query);
 		}
 
-		public async Task<List<string>> SelectAsync(string fieldName, string tableName, string condition = "", string order = "")
-		{
-			var query = $"SELECT {fieldName} FROM {tableName}";
-			if (condition != string.Empty)
-			{
-				query += $" WHERE {condition}";
-			}
-			if (order != string.Empty)
-			{
-				query += $" ORDER BY {order}";
-			}
-
-			var results = new List<string>();
-			try
-			{
-				using var connection = new SqlConnection(GetConnectionString());
-				using var command = new SqlCommand(query, connection);
-				await connection.OpenAsync();
-
-				using var reader = await command.ExecuteReaderAsync();
-				while (await reader.ReadAsync())
-				{
-					results.Add(reader.GetString(0));
-				}
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine($"Error in SelectAsync: {ex.Message}");
-			}
-
-			return results;
-		}
-
 		public string Insert(string query)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
@@ -503,11 +470,6 @@ namespace SqlServerWorkspace.Data
 			return Select("table_name", "INFORMATION_SCHEMA.TABLES", "TABLE_TYPE = 'BASE TABLE'", "table_name").Field("table_name");
 		}
 
-		public async Task<List<string>> SelectTableNamesAsync()
-		{
-			return await SelectAsync("table_name", "INFORMATION_SCHEMA.TABLES", "TABLE_TYPE = 'BASE TABLE'", "table_name");
-		}
-
 		public List<string> GetTableColumns(string tableName)
 		{
 			var columns = new List<string>();
@@ -873,11 +835,6 @@ namespace SqlServerWorkspace.Data
 			return Select("table_name", "INFORMATION_SCHEMA.VIEWS").Field("table_name");
 		}
 
-		public async Task<List<string>> SelectViewNamesAsync()
-		{
-			return await SelectAsync("table_name", "INFORMATION_SCHEMA.VIEWS");
-		}
-
 		public string CopyView(string source, string destination)
 		{
 			try
@@ -914,11 +871,6 @@ namespace SqlServerWorkspace.Data
 			return Select("name", "sys.objects", "type IN ('FN', 'IF', 'TF', 'FS', 'FT')", "name").Field("name");
 		}
 
-		public async Task<List<string>> SelectFunctionNamesAsync()
-		{
-			return await SelectAsync("name", "sys.objects", "type IN ('FN', 'IF', 'TF', 'FS', 'FT')", "name");
-		}
-
 		public string CopyFunction(string source, string destination)
 		{
 			try
@@ -953,11 +905,6 @@ namespace SqlServerWorkspace.Data
 		public IEnumerable<string> SelectProcedureNames()
 		{
 			return Select("routine_name", "INFORMATION_SCHEMA.ROUTINES", "ROUTINE_TYPE = 'PROCEDURE'", "routine_name").Field("routine_name");
-		}
-
-		public async Task<List<string>> SelectProcedureNamesAsync()
-		{
-			return await SelectAsync("routine_name", "INFORMATION_SCHEMA.ROUTINES", "ROUTINE_TYPE = 'PROCEDURE'", "routine_name");
 		}
 
 		public IEnumerable<string> GetProcedureParameterNames(string procedureName)

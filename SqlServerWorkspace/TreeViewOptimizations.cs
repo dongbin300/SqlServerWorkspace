@@ -18,7 +18,7 @@ namespace SqlServerWorkspace
 			treeView.AddHandler(TreeViewItem.ExpandedEvent, new RoutedEventHandler(TreeViewItem_Expanded));
 		}
 
-		private static async void TreeViewItem_Expanded(object sender, RoutedEventArgs e)
+		private static void TreeViewItem_Expanded(object sender, RoutedEventArgs e)
 		{
 			if (e.OriginalSource is not TreeViewItem item || item.DataContext is not TreeNode node)
 				return;
@@ -32,16 +32,16 @@ namespace SqlServerWorkspace
 				switch (node.Type)
 				{
 					case TreeNodeType.TableTitleNode:
-						await LoadTablesAsync(node);
+						LoadTables(node);
 						break;
 					case TreeNodeType.ViewTitleNode:
-						await LoadViewsAsync(node);
+						LoadViews(node);
 						break;
 					case TreeNodeType.FunctionTitleNode:
-						await LoadFunctionsAsync(node);
+						LoadFunctions(node);
 						break;
 					case TreeNodeType.ProcedureTitleNode:
-						await LoadProceduresAsync(node);
+						LoadProcedures(node);
 						break;
 				}
 			}
@@ -51,7 +51,7 @@ namespace SqlServerWorkspace
 			}
 		}
 
-		private static async Task LoadTablesAsync(TreeNode titleNode)
+		private static void LoadTables(TreeNode titleNode)
 		{
 			var databaseName = titleNode.GetParentName();
 			var manager = GetSqlManagerForDatabase(databaseName);
@@ -59,11 +59,11 @@ namespace SqlServerWorkspace
 			if (manager != null)
 			{
 				manager.Database = databaseName;
-				await TreeViewManager.MakeTableTreeAsync(manager, titleNode);
+				TreeViewManager.MakeTableTree(manager, titleNode);
 			}
 		}
 
-		private static async Task LoadViewsAsync(TreeNode titleNode)
+		private static void LoadViews(TreeNode titleNode)
 		{
 			var databaseName = titleNode.GetParentName();
 			var manager = GetSqlManagerForDatabase(databaseName);
@@ -71,11 +71,11 @@ namespace SqlServerWorkspace
 			if (manager != null)
 			{
 				manager.Database = databaseName;
-				await TreeViewManager.MakeViewTreeAsync(manager, titleNode);
+				TreeViewManager.MakeViewTree(manager, titleNode);
 			}
 		}
 
-		private static async Task LoadFunctionsAsync(TreeNode titleNode)
+		private static void LoadFunctions(TreeNode titleNode)
 		{
 			var databaseName = titleNode.GetParentName();
 			var manager = GetSqlManagerForDatabase(databaseName);
@@ -83,11 +83,11 @@ namespace SqlServerWorkspace
 			if (manager != null)
 			{
 				manager.Database = databaseName;
-				await TreeViewManager.MakeFunctionTreeAsync(manager, titleNode);
+				TreeViewManager.MakeFunctionTree(manager, titleNode);
 			}
 		}
 
-		private static async Task LoadProceduresAsync(TreeNode titleNode)
+		private static void LoadProcedures(TreeNode titleNode)
 		{
 			var databaseName = titleNode.GetParentName();
 			var manager = GetSqlManagerForDatabase(databaseName);
@@ -95,7 +95,7 @@ namespace SqlServerWorkspace
 			if (manager != null)
 			{
 				manager.Database = databaseName;
-				await TreeViewManager.MakeProcedureTreeAsync(manager, titleNode);
+				TreeViewManager.MakeProcedureTree(manager, titleNode);
 			}
 		}
 
