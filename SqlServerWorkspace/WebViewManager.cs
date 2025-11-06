@@ -47,9 +47,34 @@ namespace SqlServerWorkspace
 
 		public static async Task SetAutocompleteData(this WebView2 webView, List<AutocompletionItem> items)
 		{
-			var json = JsonSerializer.Serialize(items);
-			var script = $"setAutocompleteData('{json}');";
-			await webView.CoreWebView2.ExecuteScriptAsync(script);
+			try
+				{
+				var json = JsonSerializer.Serialize(items);
+				// JSON 문자열을 안전하게 이스케이프
+				var escapedJson = json.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\n", "\\n");
+				var script = $"setAutocompleteData('{escapedJson}');";
+				await webView.CoreWebView2.ExecuteScriptAsync(script);
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"Error setting autocomplete data: {ex.Message}");
+			}
+		}
+
+		public static async Task SetTableColumns(this WebView2 webView, string tableName, List<string> columns)
+		{
+			try
+			{
+				var json = JsonSerializer.Serialize(columns);
+				// JSON 문자열을 안전하게 이스케이프
+				var escapedJson = json.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\n", "\\n");
+				var script = $"setTableColumns('{tableName}', JSON.parse('{escapedJson}'));";
+				await webView.CoreWebView2.ExecuteScriptAsync(script);
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"Error setting table columns: {ex.Message}");
+			}
 		}
 
 		public static void AddReferenceAnalysisKeyBinding(this WebView2 webView, LayoutDocumentPane layoutDocumentPane, SqlManager manager, string procedureName)

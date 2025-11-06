@@ -1,5 +1,6 @@
 ﻿using AvalonDock.Layout;
 
+using SqlServerWorkspace.Data;
 using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
@@ -74,10 +75,19 @@ namespace SqlServerWorkspace
 				}
 			}
 
-			Refresh();
+			// TreeView 성능 최적화 적용
+			DatabaseTreeView.OptimizeTreeView();
+
+			// 비동기로 데이터 로드
+			Task.Run(async () =>
+			{
+				await Application.Current.Dispatcher.InvokeAsync(async () =>
+				{
+					await RefreshAsync();
+				});
+			});
 
 			DataContext = this;
-			DatabaseTreeView.ExpandAll(DatabaseTreeView);
 
 			SaveSettingsTimer.Interval = TimeSpan.FromSeconds(3);
 			SaveSettingsTimer.Tick += SaveSettingsTimer_Tick;
@@ -105,6 +115,36 @@ namespace SqlServerWorkspace
 					RestoreExpandedState(DatabaseTreeView, expandedPaths);
 				}), DispatcherPriority.Background);
 			}
+		}
+
+		public async Task RefreshAsync(bool isTitleExpand = false)
+		{
+			// 현재 확장된 아이템들의 경로를 저장
+			var expandedPaths = new HashSet<string>();
+			if (DatabaseTreeView.ItemsSource != null)
+			{
+				SaveExpandedState(DatabaseTreeView, expandedPaths);
+			}
+
+			// 데이터 소스 설정
+			DatabaseTreeView.ItemsSource = isTitleExpand || FilterKeywords.Count == 0 ?
+				ResourceManager.ConnectionsNodes :
+				FilterWithKeywords(ResourceManager.ConnectionsNodes, FilterKeywords);
+
+			// 비동기로 확장 상태 복원
+			if (expandedPaths.Count > 0)
+			{
+				await Task.Run(() =>
+				{
+					Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+					{
+						RestoreExpandedState(DatabaseTreeView, expandedPaths);
+					}), DispatcherPriority.Background);
+				});
+			}
+
+			// 정기적으로 만료된 캐시 항목 정리
+			DatabaseCache.CleanExpiredItems();
 		}
 
 		private void SaveExpandedState(ItemsControl itemsControl, HashSet<string> expandedPaths)

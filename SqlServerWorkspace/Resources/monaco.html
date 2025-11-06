@@ -63,7 +63,18 @@
                 fontFamily: 'Consolas, 맑은 고딕, monospace',
                 letterSpacing: -0.6,
                 wordWrap: "on",
-                quickSuggestions: { other: true, comments: true, strings: true }
+                // IntelliSense 설정 강화
+                quickSuggestions: true,
+                suggestOnTriggerCharacters: true,
+                acceptSuggestionOnEnter: "on",
+                tabCompletion: "on",
+                suggestSelection: "first",
+                wordBasedSuggestions: true,
+                parameterHints: { enabled: true },
+                autoClosingBrackets: "always",
+                autoClosingQuotes: "always",
+                formatOnType: true,
+                formatOnPaste: true
             });
 
             window.onresize = () => {
@@ -106,69 +117,240 @@
 
             // 자동완성 {
             let autocompleteItems = [];
+            let tableColumns = {}; // 테이블별 컬럼 정보 캐싱
 
             window.setAutocompleteData = function (jsonData) {
-                autocompleteItems = JSON.parse(jsonData);
+                try {
+                    autocompleteItems = JSON.parse(jsonData);
+                } catch (e) {
+                    console.error('Error parsing autocomplete data:', e);
+                    autocompleteItems = [];
+                }
             };
+
+            // 테이블 컬럼 정보 설정
+            window.setTableColumns = function (tableName, columns) {
+                try {
+                    tableColumns[tableName] = columns;
+                    console.log(`Table columns loaded for ${tableName}:`, columns);
+                } catch (e) {
+                    console.error('Error setting table columns:', e);
+                }
+            };
+
+            // 현재 라인의 FROM 절에서 테이블명 추출
+            function extractTableFromFromClause(line, position) {
+                // 라인 전체에서 FROM 절의 테이블명 추출
+                const fromRegex = /\bFROM\s+([a-zA-Z_][a-zA-Z0-9_]*)/gi;
+                const matches = [...line.matchAll(fromRegex)];
+
+                if (matches.length > 0) {
+                    // 커서 위치와 가장 가까운 FROM 절의 테이블명을 찾음
+                    let closestMatch = null;
+                    let closestDistance = Infinity;
+
+                    for (const match of matches) {
+                        const matchEnd = match.index + match[0].length;
+                        const distance = Math.abs(position.column - matchEnd);
+
+                        if (distance < closestDistance) {
+                            closestDistance = distance;
+                            closestMatch = match;
+                        }
+                    }
+
+                    if (closestMatch) {
+                        return closestMatch[1];
+                    }
+                }
+                return null;
+            }
+
+            // 전체 쿼리에서 FROM 절 테이블명 추출 (여러 라인 지원)
+            function extractTableFromFullQuery(model, position) {
+                const currentLine = model.getLineContent(position.lineNumber);
+                const lineCount = model.getLineCount();
+
+                // 현재 라인과 이전 라인들을 검사하여 FROM 절 찾기
+                for (let lineNum = position.lineNumber; lineNum >= 1; lineNum--) {
+                    const line = model.getLineContent(lineNum);
+                    const tableName = extractTableFromFromClause(line, position);
+
+                    if (tableName) {
+                        return tableName;
+                    }
+
+                    // SELECT 문이 시작되면 검색 중단
+                    if (line.trim().toUpperCase().startsWith('SELECT') && lineNum < position.lineNumber) {
+                        break;
+                    }
+                }
+
+                return null;
+            }
+
+            // 테이블 컬럼 자동완성 항목 생성
+            function createTableColumnCompletions(tableName) {
+                const columns = tableColumns[tableName];
+                if (!columns) return [];
+
+                return columns.map(column => ({
+                    label: column,
+                    kind: monaco.languages.CompletionItemKind.Field,
+                    insertText: column,
+                    detail: `Column of ${tableName}`,
+                    documentation: `Column from table ${tableName}`
+                }));
+            }
+
+            // SQL 키워드 기본 자동완성 항목
+            const sqlKeywords = [
+                { label: 'SELECT', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'SELECT' },
+                { label: 'FROM', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'FROM' },
+                { label: 'WHERE', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'WHERE' },
+                { label: 'INSERT', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'INSERT' },
+                { label: 'INTO', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'INTO' },
+                { label: 'VALUES', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'VALUES' },
+                { label: 'UPDATE', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'UPDATE' },
+                { label: 'SET', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'SET' },
+                { label: 'DELETE', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'DELETE' },
+                { label: 'CREATE', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'CREATE' },
+                { label: 'TABLE', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'TABLE' },
+                { label: 'ALTER', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'ALTER' },
+                { label: 'DROP', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'DROP' },
+                { label: 'INDEX', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'INDEX' },
+                { label: 'JOIN', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'JOIN' },
+                { label: 'INNER', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'INNER' },
+                { label: 'LEFT', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'LEFT' },
+                { label: 'RIGHT', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'RIGHT' },
+                { label: 'OUTER', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'OUTER' },
+                { label: 'ON', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'ON' },
+                { label: 'AND', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'AND' },
+                { label: 'OR', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'OR' },
+                { label: 'NOT', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'NOT' },
+                { label: 'IN', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'IN' },
+                { label: 'EXISTS', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'EXISTS' },
+                { label: 'LIKE', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'LIKE' },
+                { label: 'BETWEEN', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'BETWEEN' },
+                { label: 'IS', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'IS' },
+                { label: 'NULL', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'NULL' },
+                { label: 'ORDER', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'ORDER' },
+                { label: 'BY', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'BY' },
+                { label: 'GROUP', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'GROUP' },
+                { label: 'HAVING', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'HAVING' },
+                { label: 'UNION', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'UNION' },
+                { label: 'ALL', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'ALL' },
+                { label: 'DISTINCT', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'DISTINCT' },
+                { label: 'TOP', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'TOP' },
+                { label: 'ASC', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'ASC' },
+                { label: 'DESC', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'DESC' },
+                { label: 'CASE', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'CASE' },
+                { label: 'WHEN', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'WHEN' },
+                { label: 'THEN', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'THEN' },
+                { label: 'ELSE', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'ELSE' },
+                { label: 'END', kind: monaco.languages.CompletionItemKind.Keyword, insertText: 'END' }
+            ];
 
             const snippetItems = [
                 {
-                    label: 'SELECT',
+                    label: 'SELECT * FROM...',
                     kind: monaco.languages.CompletionItemKind.Snippet,
-                    insertText: 'SELECT * FROM ${1:table_name} WHERE ${2:condition}',
+                    insertText: 'SELECT * FROM ${1:table_name} WHERE ${2:condition};',
                     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                    documentation: 'SELECT 문 자동완성'
+                    documentation: 'SELECT 전체 쿼리 자동완성'
                 },
                 {
-                    label: 'INSERT',
+                    label: 'INSERT INTO...',
                     kind: monaco.languages.CompletionItemKind.Snippet,
-                    insertText: 'INSERT INTO ${1:table_name} (${2:columns}) VALUES (${3:values})',
+                    insertText: 'INSERT INTO ${1:table_name} (${2:column1, column2})\\nVALUES (${3:value1, value2});',
                     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                     documentation: 'INSERT 문 자동완성'
                 },
                 {
-                    label: 'UPDATE',
+                    label: 'UPDATE SET...',
                     kind: monaco.languages.CompletionItemKind.Snippet,
-                    insertText: 'UPDATE ${1:table_name} SET ${2:column} = ${3:value} WHERE ${4:condition}',
+                    insertText: 'UPDATE ${1:table_name}\\nSET ${2:column} = ${3:value}\\nWHERE ${4:condition};',
                     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                     documentation: 'UPDATE 문 자동완성'
                 },
                 {
-                    label: 'DELETE',
+                    label: 'DELETE FROM...',
                     kind: monaco.languages.CompletionItemKind.Snippet,
-                    insertText: 'DELETE FROM ${1:table_name} WHERE ${2:condition}',
+                    insertText: 'DELETE FROM ${1:table_name}\\nWHERE ${2:condition};',
                     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                     documentation: 'DELETE 문 자동완성'
                 },
                 {
-                    label: 'IF',
+                    label: 'CREATE TABLE...',
                     kind: monaco.languages.CompletionItemKind.Snippet,
-                    insertText: 'IF ${1:condition} \nBEGIN\n    ${2:statement}\nEND',
+                    insertText: 'CREATE TABLE ${1:table_name} (\\n    ${2:id} INT PRIMARY KEY,\\n    ${3:name} VARCHAR(100)\\n);',
+                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    documentation: 'CREATE TABLE 문 자동완성'
+                },
+                {
+                    label: 'IF...BEGIN...END',
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertText: 'IF ${1:condition}\\nBEGIN\\n    ${2:statement}\\nEND',
                     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                     documentation: 'IF 문 자동완성'
                 },
                 {
-                    label: 'IF ELSE',
+                    label: 'IF...ELSE...BEGIN...END',
                     kind: monaco.languages.CompletionItemKind.Snippet,
-                    insertText: 'IF ${1:condition} \nBEGIN\n    ${2:statement}\nEND\nELSE\nBEGIN\n    ${3:else_statement}\nEND',
+                    insertText: 'IF ${1:condition}\\nBEGIN\\n    ${2:statement}\\nEND\\nELSE\\nBEGIN\\n    ${3:else_statement}\\nEND',
                     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                     documentation: 'IF ELSE 문 자동완성'
-                },
-                {
-                    label: 'IF ELSE IF',
-                    kind: monaco.languages.CompletionItemKind.Snippet,
-                    insertText: 'IF ${1:condition} \nBEGIN\n    ${2:statement}\nEND\nELSE IF ${3:condition2} \nBEGIN\n    ${4:statement2}\nEND\nELSE\nBEGIN\n    ${5:else_statement}\nEND',
-                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                    documentation: 'IF ELSE IF 문 자동완성'
                 }
             ];
 
+            // 향상된 자동완성 공급자
             monaco.languages.registerCompletionItemProvider('sql', {
                 provideCompletionItems: function (model, position) {
-                    return {
-                        suggestions: [...autocompleteItems, ...snippetItems]
-                    };
-                }
+                    var suggestions = [];
+
+                    // 현재 커서 위치의 단어 가져오기
+                    var word = model.getWordUntilPosition(position);
+
+                    // 현재 라인 텍스트 가져오기
+                    var currentLine = model.getLineContent(position.lineNumber);
+
+                    // 기본 SQL 키워드 추가
+                    suggestions.push(...sqlKeywords);
+
+                    // 스니펫 추가
+                    suggestions.push(...snippetItems);
+
+                    // FROM 절에서 테이블명 추출 및 해당 테이블 컬럼 추가
+                    var tableName = extractTableFromFullQuery(model, position);
+                    if (tableName) {
+                        var tableColumnSuggestions = createTableColumnCompletions(tableName);
+                        suggestions.push(...tableColumnSuggestions);
+
+                        // 테이블 컬럼이 없으면 데이터 로드 시도
+                        if (tableColumnSuggestions.length === 0) {
+                            console.log(`No columns cached for table ${tableName}, attempting to load...`);
+                            // C#으로부터 테이블 컬럼 데이터 요청
+                            if (window.external && window.external.loadTableColumns) {
+                                window.external.loadTableColumns(tableName);
+                            }
+                        }
+                    }
+
+                    // 동적 자동완성 항목 추가
+                    if (autocompleteItems && autocompleteItems.length > 0) {
+                        var dynamicSuggestions = autocompleteItems.map(item => ({
+                            label: item.text || item.label,
+                            kind: monaco.languages.CompletionItemKind.Variable,
+                            insertText: item.text || item.label,
+                            detail: item.detail || '',
+                            documentation: item.documentation || item.text || item.label
+                        }));
+                        suggestions.push(...dynamicSuggestions);
+                    }
+
+                    return { suggestions: suggestions };
+                },
+                triggerCharacters: [' ', '.', '(', '"', "'", '[', ','] // 자동완성 트리거 문자
             });
             // } 자동완성
 

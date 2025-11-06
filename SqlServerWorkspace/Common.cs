@@ -84,7 +84,26 @@ namespace SqlServerWorkspace
 		{
             if (MainWindow is MainWindow mainWindow)
 			{
-				mainWindow.StatusPanel.SelectedContentIndex = mainWindow.StatusPanel.Children.OfType<LayoutAnchorable>().ToList().FindIndex(x => x.ContentId == contentId);
+				var anchorables = mainWindow.StatusPanel.Children.OfType<LayoutAnchorable>().ToList();
+				var targetIndex = anchorables.FindIndex(x => x.ContentId == contentId);
+
+				if (targetIndex >= 0 && targetIndex < anchorables.Count)
+				{
+					var targetAnchorable = anchorables[targetIndex];
+
+					// 탭을 활성화 상태로 변경
+					targetAnchorable.IsActive = true;
+					targetAnchorable.IsSelected = true;
+
+					// MainDockingManager로 ActiveContent 설정
+					if (mainWindow.MainDockingManager != null)
+					{
+						mainWindow.MainDockingManager.ActiveContent = targetAnchorable;
+					}
+
+					// Fallback: SelectedContentIndex 사용
+					mainWindow.StatusPanel.SelectedContentIndex = targetIndex;
+				}
 			}
 		}
 	}
