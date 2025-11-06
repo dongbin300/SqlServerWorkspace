@@ -967,27 +967,170 @@ namespace SqlServerWorkspace.Data
 
 		public DataTable ExecuteStoredProcedure(string procedureName, Dictionary<string, string>? parameters = null)
 		{
-			var dataTable = new DataTable();
+			using var connection = new SqlConnection(GetConnectionString());
+			using var command = new SqlCommand(procedureName, connection);
+			command.CommandType = CommandType.StoredProcedure;
 
-			using (var connection = new SqlConnection(GetConnectionString()))
+			if (parameters != null)
 			{
-				using var command = new SqlCommand(procedureName, connection);
-				command.CommandType = CommandType.StoredProcedure;
-
-				if (parameters != null)
+				foreach (var parameter in parameters)
 				{
-					foreach (var parameter in parameters)
-					{
-						command.Parameters.AddWithValue(parameter.Key, parameter.Value);
-					}
+					command.Parameters.AddWithValue(parameter.Key, parameter.Value);
 				}
-
-				using var adapter = new SqlDataAdapter(command);
-				connection.Open();
-				adapter.Fill(dataTable);
 			}
 
-			return dataTable;
+			try
+			{
+				connection.Open();
+
+				// 디버깅 정보 추가
+				System.Diagnostics.Debug.WriteLine($"=== Executing stored procedure: {procedureName} ===");
+				System.Diagnostics.Debug.WriteLine($"Database: {connection.Database}");
+
+				var reader = command.ExecuteReader();
+
+				var dataTable = new DataTable();
+				var resultCount = 0;
+
+				// SET NOCOUNT ON이 있을 경우 첫 번째 결과셋이 비어있을 수 있음
+				// 실제 데이터가 있는 결과셋을 찾을 때까지 이동
+				do
+				{
+					resultCount++;
+					System.Diagnostics.Debug.WriteLine($"=== Processing result set {resultCount} ===");
+					System.Diagnostics.Debug.WriteLine($"HasRows: {reader.HasRows}");
+					System.Diagnostics.Debug.WriteLine($"FieldCount: {reader.FieldCount}");
+
+					// 현재 결과셋에 데이터가 있는지 확인
+					if (reader.HasRows)
+					{
+						// 컬럼 정보 확인 및 출력
+						System.Diagnostics.Debug.WriteLine($"Columns:");
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							var columnName = reader.GetName(i);
+							var columnType = reader.GetFieldType(i);
+							System.Diagnostics.Debug.WriteLine($"  [{i}]: {columnName} ({columnType?.Name})");
+						}
+
+						// 컬럼 정보 확인
+						if (reader.FieldCount > 0)
+						{
+							// 수동으로 컬럼 정보 추가
+							System.Diagnostics.Debug.WriteLine("Creating DataTable schema manually...");
+							for (int i = 0; i < reader.FieldCount; i++)
+							{
+								var columnName = reader.GetName(i);
+								var columnType = reader.GetFieldType(i);
+								var isNullable = reader.IsDBNull(i);
+
+								// 컬럼명이 비어있으면 기본 이름 사용
+								if (string.IsNullOrEmpty(columnName))
+								{
+									columnName = $"Column{i + 1}";
+								}
+
+								// 컬럼 타입이 null이면 string으로 기본 설정
+								var dataType = columnType ?? typeof(string);
+
+								var dataColumn = new DataColumn(columnName, dataType);
+								dataTable.Columns.Add(dataColumn);
+
+								System.Diagnostics.Debug.WriteLine($"  Added column: {columnName} ({dataType?.Name})");
+							}
+
+							// 데이터 수동으로 읽기
+							var rowCount = 0;
+							while (reader.Read())
+							{
+								var row = dataTable.NewRow();
+								for (int i = 0; i < reader.FieldCount; i++)
+								{
+									try
+									{
+										if (reader.IsDBNull(i))
+										{
+											row[i] = DBNull.Value;
+										}
+										else
+										{
+											// 타입에 따라 적절하게 변환
+											var value = reader.GetValue(i);
+											if (value != null && value != DBNull.Value)
+											{
+												row[i] = value;
+											}
+											else
+											{
+												row[i] = DBNull.Value;
+											}
+										}
+									}
+									catch (Exception ex)
+									{
+										System.Diagnostics.Debug.WriteLine($"Error reading column {i}: {ex.Message}");
+										row[i] = DBNull.Value;
+									}
+								}
+								dataTable.Rows.Add(row);
+								rowCount++;
+							}
+
+							System.Diagnostics.Debug.WriteLine($"DataTable manually populated with {rowCount} rows");
+							System.Diagnostics.Debug.WriteLine($"Final columns: {string.Join(", ", dataTable.Columns.Cast<DataColumn>().Select(c => c.ColumnName))}");
+
+							// 데이터 샘플 출력
+							if (rowCount > 0 && rowCount <= 5)
+							{
+								System.Diagnostics.Debug.WriteLine("Sample data:");
+								for (int row = 0; row < Math.Min(3, rowCount); row++)
+								{
+									var rowData = string.Join(", ",
+										dataTable.Columns.Cast<DataColumn>().Select(col =>
+											dataTable.Rows[row][col]?.ToString() ?? "NULL"));
+									System.Diagnostics.Debug.WriteLine($"  Row {row}: {rowData}");
+								}
+							}
+							else if (rowCount > 5)
+							{
+								System.Diagnostics.Debug.WriteLine($"Too many rows ({rowCount}), showing first 3 rows only");
+								for (int row = 0; row < 3; row++)
+								{
+									var rowData = string.Join(", ",
+										dataTable.Columns.Cast<DataColumn>().Select(col =>
+											dataTable.Rows[row][col]?.ToString() ?? "NULL"));
+									System.Diagnostics.Debug.WriteLine($"  Row {row}: {rowData}");
+								}
+							}
+
+							break; // 데이터를 찾았으므로 루프 종료
+						}
+					}
+					else
+					{
+						System.Diagnostics.Debug.WriteLine($"Result set {resultCount} has no rows");
+					}
+				} while (reader.NextResult()); // 다음 결과셋으로 이동
+
+				reader.Close();
+
+				System.Diagnostics.Debug.WriteLine($"=== Final result: {dataTable.Rows.Count} rows, {dataTable.Columns.Count} columns ===");
+				if (dataTable.Columns.Count > 0)
+				{
+					System.Diagnostics.Debug.WriteLine($"Columns: {string.Join(", ", dataTable.Columns.Cast<DataColumn>().Select(c => c.ColumnName))}");
+				}
+				System.Diagnostics.Debug.WriteLine("=====================================");
+
+				return dataTable;
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"=== Error executing stored procedure {procedureName} ===");
+				System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
+				System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+				System.Diagnostics.Debug.WriteLine("=====================================");
+				throw;
+			}
 		}
 
 		public string CopyProcedure(string source, string destination)
@@ -1168,7 +1311,13 @@ namespace SqlServerWorkspace.Data
 				connection.Open();
 
 				// SELECT 쿼리인 경우 컬럼명 중복 방지를 위해 쿼리 수정
-				var modifiedQuery = ProcessSelectQueryForColumnNames(query, connection);
+				var modifiedQuery = query;
+
+				// SELECT 쿼리인 경우에만 컬럼명 중복 방지 적용 (EXEC 문은 그대로 사용)
+				if (IsSelectQuery(query))
+				{
+					modifiedQuery = ProcessSelectQueryForColumnNames(query, connection);
+				}
 
 				using var command = new SqlCommand(modifiedQuery, connection);
 				command.CommandType = CommandType.Text;
@@ -1184,10 +1333,45 @@ namespace SqlServerWorkspace.Data
 					// 각 결과셋을 수동으로 처리
 					if (!reader.IsClosed && reader.FieldCount > 0)
 					{
-						// 수정된 쿼리에서 컬럼명 추출
-						var columnNames = ExtractColumnNamesFromModifiedQuery(modifiedQuery);
+						List<string> columnNames;
 
-						// 컬럼 정보 추가 (수정된 쿼리의 컬럼명 사용)
+						// SELECT 쿼리인 경우 수정된 컬럼명 사용, 그 외에는 원래 컬럼명 사용
+						if (IsSelectQuery(query))
+						{
+							// 수정된 쿼리에서 컬럼명 추출 (JOIN 쿼리용)
+							columnNames = ExtractColumnNamesFromModifiedQuery(modifiedQuery);
+
+							// 컬럼명 추출 실패시 원래 컬럼명 사용
+							if (columnNames.Count == 0)
+							{
+								columnNames = new List<string>();
+								for (int i = 0; i < reader.FieldCount; i++)
+								{
+									var columnName = reader.GetName(i);
+									if (string.IsNullOrEmpty(columnName))
+									{
+										columnName = $"Column{i + 1}";
+									}
+									columnNames.Add(columnName);
+								}
+							}
+						}
+						else
+						{
+							// EXEC 문 등은 원래 SqlDataReader에서 컬럼명 가져오기
+							columnNames = new List<string>();
+							for (int i = 0; i < reader.FieldCount; i++)
+							{
+								var columnName = reader.GetName(i);
+								if (string.IsNullOrEmpty(columnName))
+								{
+									columnName = $"Column{i + 1}";
+								}
+								columnNames.Add(columnName);
+							}
+						}
+
+						// 컬럼 정보 추가
 						for (int i = 0; i < reader.FieldCount && i < columnNames.Count; i++)
 						{
 							var columnType = reader.GetFieldType(i);
@@ -1326,6 +1510,24 @@ namespace SqlServerWorkspace.Data
 			}
 
 			return columns;
+		}
+
+		/// <summary>
+		/// 쿼리가 SELECT 구문인지 확인 (EXEC 문 제외)
+		/// </summary>
+		private static bool IsSelectQuery(string query)
+		{
+			if (string.IsNullOrWhiteSpace(query))
+				return false;
+
+			var trimmedQuery = query.Trim().ToUpperInvariant();
+
+			// EXEC으로 시작하면 SELECT 쿼리가 아님
+			if (trimmedQuery.StartsWith("EXEC") || trimmedQuery.StartsWith("EXECUTE"))
+				return false;
+
+			// SELECT로 시작하면 SELECT 쿼리
+			return trimmedQuery.StartsWith("SELECT");
 		}
 
 		/// <summary>
@@ -1530,11 +1732,14 @@ namespace SqlServerWorkspace.Data
 
 			System.Diagnostics.Debug.WriteLine($"=== Getting columns from database: {currentDatabase} ===");
 
+			// 단일 테이블인지 확인
+			var isSingleTable = tables.Count == 1;
+
 			foreach (var table in tables)
 			{
 				try
 				{
-					System.Diagnostics.Debug.WriteLine($"Processing table: {table.TableName} with alias: {table.Alias}");
+					System.Diagnostics.Debug.WriteLine($"Processing table: {table.TableName} with alias: {table.Alias} (Single: {isSingleTable})");
 
 					// 현재 데이터베이스의 테이블 컬럼 조회
 					var columnQuery = $"SELECT COLUMN_NAME FROM {currentDatabase}.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table.TableName}' ORDER BY ORDINAL_POSITION";
@@ -1548,7 +1753,14 @@ namespace SqlServerWorkspace.Data
 					while (reader.Read())
 					{
 						var columnName = reader.GetString(0);
-						var fullColumnName = !string.IsNullOrEmpty(table.Alias) ? $"{table.Alias}.{columnName}" : columnName;
+
+						// 단일 테이블인 경우 접두사를 붙이지 않음
+						var fullColumnName = columnName;
+						if (!isSingleTable && !string.IsNullOrEmpty(table.Alias))
+						{
+							fullColumnName = $"{table.Alias}.{columnName}";
+						}
+
 						columns.Add(fullColumnName);
 						tableColumns.Add(columnName);
 						System.Diagnostics.Debug.WriteLine($"  Column: {columnName} -> {fullColumnName}");
@@ -1568,7 +1780,11 @@ namespace SqlServerWorkspace.Data
 					var sampleColumns = new[] { "id", "name", "test1", "test2", "test3" };
 					foreach (var col in sampleColumns)
 					{
-						var fullColumnName = !string.IsNullOrEmpty(table.Alias) ? $"{table.Alias}.{col}" : col;
+						var fullColumnName = col;
+						if (!isSingleTable && !string.IsNullOrEmpty(table.Alias))
+						{
+							fullColumnName = $"{table.Alias}.{col}";
+						}
 						columns.Add(fullColumnName);
 						System.Diagnostics.Debug.WriteLine($"  Fallback column: {col} -> {fullColumnName}");
 					}
