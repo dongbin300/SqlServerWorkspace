@@ -1099,6 +1099,11 @@ namespace SqlServerWorkspace.Data
 				{
 					var table = new DataTable();
 
+					if (reader.FieldCount == 0)
+					{
+						continue;
+					}
+
 					// 각 결과셋을 수동으로 처리
 					if (!reader.IsClosed && reader.FieldCount > 0)
 					{

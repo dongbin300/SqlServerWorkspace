@@ -55,9 +55,9 @@ namespace SqlServerWorkspace
 		{
 			var references = new SPReferences();
 			var allTables = manager.SelectTableNames();
-			var allViews = manager.SelectViewNames();
-			var allFunctions = manager.SelectFunctionNames();
-			var allProcedures = manager.SelectProcedureNames();
+			//var allViews = manager.SelectViewNames();
+			//var allFunctions = manager.SelectFunctionNames();
+			//var allProcedures = manager.SelectProcedureNames();
 
 			// 주석을 제거한 SQL 텍스트
 			string cleanedSpText = RemoveComments(spText).ToLower();
@@ -70,30 +70,30 @@ namespace SqlServerWorkspace
 				}
 			}
 
-			foreach (var view in allViews)
-			{
-				if (IsObjectReferenced(cleanedSpText, view.ToLower()))
-				{
-					references.Views.Add(view);
-				}
-			}
+			//foreach (var view in allViews)
+			//{
+			//	if (IsObjectReferenced(cleanedSpText, view.ToLower()))
+			//	{
+			//		references.Views.Add(view);
+			//	}
+			//}
 
-			foreach (var function in allFunctions)
-			{
-				if (IsFunctionReferenced(cleanedSpText, function.ToLower()))
-				{
-					references.Functions.Add(function);
-				}
-			}
+			//foreach (var function in allFunctions)
+			//{
+			//	if (IsFunctionReferenced(cleanedSpText, function.ToLower()))
+			//	{
+			//		references.Functions.Add(function);
+			//	}
+			//}
 
-			foreach (var procedure in allProcedures)
-			{
-				if (!procedure.Equals(currentProcedureName, StringComparison.OrdinalIgnoreCase) &&
-					   IsProcedureReferenced(cleanedSpText, procedure.ToLower()))
-				{
-					references.Procedures.Add(procedure);
-				}
-			}
+			//foreach (var procedure in allProcedures)
+			//{
+			//	if (!procedure.Equals(currentProcedureName, StringComparison.OrdinalIgnoreCase) &&
+			//		   IsProcedureReferenced(cleanedSpText, procedure.ToLower()))
+			//	{
+			//		references.Procedures.Add(procedure);
+			//	}
+			//}
 
 			return references;
 		}
