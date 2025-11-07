@@ -131,7 +131,7 @@ namespace SqlServerWorkspace
 										var table = manager.ExecuteStoredProcedure(procedureName, parameters);
 
 										var mainWindowStatusPanel = ((MainWindow)Common.MainWindow).StatusPanel;
-										var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == "SPER");
+										var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == "RESULT_0");
 
 										if (anchorables.Any())
 										{
@@ -143,15 +143,15 @@ namespace SqlServerWorkspace
 										{
 											var tablePanel = new LayoutAnchorable()
 											{
-												ContentId = "SPER",
-												Title = "Stored Procedure Execute Result"
+												ContentId = "RESULT_0",
+												Title = "Result 1"
 											};
 											var gridWithCount = CreateDataGridWithRowCount(table, "DarkDataGridSimple");
 											tablePanel.Content = gridWithCount;
 											mainWindowStatusPanel.Children.Add(tablePanel);
 										}
 
-										Common.SetStatusPanelSelectedIndex("SPER");
+										Common.SetStatusPanelSelectedIndex("RESULT_0");
 									}
 									else
 									{
@@ -170,8 +170,8 @@ namespace SqlServerWorkspace
 										for (int i = 0; i < multipleResults.Tables.Count; i++)
 										{
 											var table = multipleResults.Tables[i];
-											var resultTitle = multipleResults.Tables.Count > 1 ? $"Result {i + 1}" : "Result";
-											var contentId = multipleResults.Tables.Count > 1 ? $"SR_{i}" : "SR";
+											var resultTitle = $"Result {i + 1}";
+											var contentId = $"RESULT_{i}";
 
 											var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == contentId);
 
@@ -205,8 +205,8 @@ namespace SqlServerWorkspace
 												messageTable.Rows.Add(message);
 											}
 
-											var messageTitle = multipleResults.HasTables ? "Messages" : "Result";
-											var messageId = multipleResults.HasTables ? $"MSG" : "SR";
+											var messageTitle = multipleResults.HasTables ? "Messages" : "Result 1";
+											var messageId = multipleResults.HasTables ? $"MSG" : "RESULT_0";
 
 											var anchorables = mainWindowStatusPanel.Children.OfType<LayoutAnchorable>().Where(a => a.ContentId == messageId);
 
@@ -232,12 +232,12 @@ namespace SqlServerWorkspace
 										// 마지막 결과 탭을 선택
 										if (multipleResults.HasTables)
 										{
-											var lastContentId = multipleResults.Tables.Count > 1 ? $"SR_{multipleResults.Tables.Count - 1}" : "SR";
+											var lastContentId = $"RESULT_{multipleResults.Tables.Count - 1}";
 											Common.SetStatusPanelSelectedIndex(lastContentId);
 										}
 										else if (multipleResults.HasMessages)
 										{
-											Common.SetStatusPanelSelectedIndex(multipleResults.HasTables ? "MSG" : "SR");
+											Common.SetStatusPanelSelectedIndex(multipleResults.HasTables ? "MSG" : "RESULT_0");
 										}
 										else
 										{
