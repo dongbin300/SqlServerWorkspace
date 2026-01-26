@@ -127,13 +127,13 @@ namespace SqlServerWorkspace.Views.Controls
 				var currentTable = TableDataGrid.ToDataTable();
 				var result = Manager.TableTransactionV2(SelectTableName, SelectTable, currentTable);
 
-				if (!string.IsNullOrEmpty(result))
+				if (!result.StartsWith("I:"))
 				{
 					Common.Log(result, LogType.Error);
 					return;
 				}
 
-				Common.Log("Changes saved successfully.", LogType.Success);
+				Common.Log("Affected, " + result, LogType.Success);
 			}
 			catch (Exception ex)
 			{
@@ -141,23 +141,23 @@ namespace SqlServerWorkspace.Views.Controls
 			}
 		}
 
-		private async void MergeButton_Click(object sender, RoutedEventArgs e)
+		private void MergeButton_Click(object sender, RoutedEventArgs e)
 		{
 			var mergeQuery = Manager.GetMergeQuery(SelectTableName);
-			await WebView.AppendEditorText($"{Environment.NewLine}{mergeQuery}");
+			Clipboard.SetText(mergeQuery);
 
 			Common.Log($"{SelectTableName} MERGE", LogType.Info);
 		}
 
-		private async void CreateButton_Click(object sender, RoutedEventArgs e)
+		private void CreateButton_Click(object sender, RoutedEventArgs e)
 		{
 			var createTableQuery = Manager.GetCreateTableQuery(SelectTableName);
-			await WebView.AppendEditorText($"{Environment.NewLine}{createTableQuery}");
+			Clipboard.SetText(createTableQuery);
 
 			Common.Log($"{SelectTableName} CREATE", LogType.Info);
 		}
 
-		private async void CopyButton_Click(object sender, RoutedEventArgs e)
+		private void CopyButton_Click(object sender, RoutedEventArgs e)
 		{
 			var inputTableNameView = new NameView
 			{
@@ -168,7 +168,7 @@ namespace SqlServerWorkspace.Views.Controls
 			{
 				var destinationTableName = inputTableNameView.NameText;
 				var copyDataQuery = Manager.GetCopyDataQuery(SelectTableName, destinationTableName);
-				await WebView.AppendEditorText($"{Environment.NewLine}{copyDataQuery}");
+				Clipboard.SetText(copyDataQuery);
 
 				Common.Log($"{SelectTableName} -> {destinationTableName} COPY", LogType.Info);
 			}

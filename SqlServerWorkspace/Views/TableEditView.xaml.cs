@@ -32,7 +32,7 @@ namespace SqlServerWorkspace.Views
 		public SqlManager Manager = default!;
 		public string TableName = string.Empty;
 		private bool isModify = false;
-		private DataTable columnDataTable = new DataTable();
+		private DataTable columnDataTable = new();
 
 		public TableEditView()
 		{
@@ -176,79 +176,64 @@ namespace SqlServerWorkspace.Views
 
 		private void ColumnSaveButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (sender is not Button button)
-			{
+			if (sender is not Button button || button.FindParent<DataGridRow>()?.DataContext is not DataRowView rowView)
 				return;
-			}
 
 			var row = button.FindParent<DataGridRow>();
-			if (row?.DataContext is not DataRowView rowView)
-			{
-				return;
-			}
-
-			var isNotNull = ColumnDataGrid.Columns[3].GetCellContent(row).Parent.FindVisualChildren<CheckBox>().First().IsChecked;
+			var isNotNull = rowView["NotNull"] is bool b && b;
 
 			var name = rowView["Name"]?.ToString() ?? string.Empty;
 			var dataType = rowView["DataType"]?.ToString() ?? string.Empty;
 
-			if (name == string.Empty || dataType == string.Empty)
+			if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(dataType))
 			{
 				MessageBox.Show("No column name or data type");
 				return;
 			}
 
-			/* Constraint */
 			List<string> checkedKeyNames = [];
 			foreach (DataRowView item in columnDataTable.DefaultView)
 			{
-				var itemRow = (DataGridRow)ColumnDataGrid.ItemContainerGenerator.ContainerFromItem(item);
-				if (itemRow == null)
+				if (item["Key"] is bool isKey && isKey)
 				{
-					continue;
-				}
-
-				var cell = (DataGridCell)ColumnDataGrid.Columns[4].GetCellContent(itemRow).Parent;
-				if (cell == null)
-				{
-					continue;
-				}
-
-				var checkBox = cell.FindVisualChildren<CheckBox>().First();
-				if (checkBox != null)
-				{
-					if (checkBox.IsChecked ?? false)
-					{
-						checkedKeyNames.Add(item["NamePrev"]?.ToString() ?? string.Empty);
-					}
+					checkedKeyNames.Add(item["Name"]?.ToString() ?? string.Empty);
 				}
 			}
-			var primaryKeyNames = Manager.GetTablePrimaryKeyNames(TableName);
 
-			string? result;
+			var primaryKeyNames = Manager.GetTablePrimaryKeyNames(TableName);
 			var namePrev = rowView["NamePrev"]?.ToString() ?? string.Empty;
 			var description = rowView["Description"]?.ToString() ?? string.Empty;
 			var descriptionPrev = rowView["DescriptionPrev"]?.ToString() ?? string.Empty;
 
-			if (namePrev == string.Empty) // 새로운 컬럼 추가
+			string? result = string.Empty;
+
+			bool isPkChange = !checkedKeyNames.SequenceEqual(primaryKeyNames);
+			bool isCurrentColumnPk = primaryKeyNames.Contains(namePrev);
+
+			if (namePrev == string.Empty) // 신규 컬럼
 			{
 				result = Manager.AddColumn(TableName, name, dataType, description, isNotNull);
 			}
-			else // 기존 컬럼 변경
+			else // 기존 컬럼 수정
 			{
 				var descriptionToUpdate = description == descriptionPrev ? null : description;
 				result = Manager.ModifyColumn(TableName, namePrev, name, dataType, descriptionToUpdate, isNotNull);
 			}
 
-			if (!checkedKeyNames.SequenceEqual(primaryKeyNames)) // 기본 키 변경
+			if (result == string.Empty && isPkChange)
 			{
 				result = Manager.ModifyConstraint(TableName, checkedKeyNames);
 			}
 
-			if (result != string.Empty)
+			if (!string.IsNullOrEmpty(result))
 			{
 				MessageBox.Show(result);
-				return;
+			}
+			else
+			{
+				rowView["NamePrev"] = name;
+				rowView["DataTypePrev"] = dataType;
+				rowView["DescriptionPrev"] = description;
 			}
 		}
 
@@ -345,6 +330,29 @@ namespace SqlServerWorkspace.Views
 								rowView["NamePrev"] = prev;
 							break;
 						case "Data Type":
+							string input = textBox.Text.Trim().ToLower();
+							string convertedType = input;
+
+							if (input == "i")
+							{
+								convertedType = "int";
+							}
+							else if (input == "d")
+							{
+								convertedType = "datetime";
+							}
+							else if (DecimalLengthRegex().IsMatch(input))
+							{
+								convertedType = $"decimal({input})";
+							}
+							else if (int.TryParse(input, out _))
+							{
+								convertedType = $"varchar({input})";
+							}
+
+							textBox.Text = convertedType;
+							rowView["DataType"] = convertedType;
+
 							if (string.IsNullOrEmpty(rowView["DataTypePrev"]?.ToString()))
 								rowView["DataTypePrev"] = prev;
 							break;
@@ -399,5 +407,8 @@ namespace SqlServerWorkspace.Views
 				}
 			}), System.Windows.Threading.DispatcherPriority.Background);
 		}
+
+		[System.Text.RegularExpressions.GeneratedRegex(@"^\d+,\d+$")]
+		private static partial System.Text.RegularExpressions.Regex DecimalLengthRegex();
 	}
 }

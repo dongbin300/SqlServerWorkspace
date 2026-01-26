@@ -299,6 +299,10 @@ namespace SqlServerWorkspace.Data
 			connection.Open();
 			using var transaction = connection.BeginTransaction();
 
+			int insertCount = 0;
+			int updateCount = 0;
+			int deleteCount = 0;
+
 			try
 			{
 				// 1. INSERT: modifiedTable에 있고 originalTable에 없는 행
@@ -338,6 +342,7 @@ namespace SqlServerWorkspace.Data
 						}
 
 						cmd.ExecuteNonQuery();
+						insertCount++;
 					}
 				}
 
@@ -383,6 +388,7 @@ namespace SqlServerWorkspace.Data
 							}
 
 							cmd.ExecuteNonQuery();
+							updateCount++;
 						}
 					}
 				}
@@ -408,11 +414,14 @@ namespace SqlServerWorkspace.Data
 						}
 
 						cmd.ExecuteNonQuery();
+						deleteCount++;
 					}
 				}
 
 				transaction.Commit();
-				return string.Empty;
+
+
+				return $"I: {insertCount}, U: {updateCount}, D: {deleteCount}";
 			}
 			catch (Exception ex)
 			{

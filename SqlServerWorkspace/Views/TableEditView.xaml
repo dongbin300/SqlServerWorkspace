@@ -80,9 +80,29 @@
                 </Style>
             </DataGridComboBoxColumn.EditingElementStyle>
         </DataGridComboBoxColumn>-->
-                    <DataGridCheckBoxColumn Header="Not Null" Width="60" Binding="{Binding NotNull}" ElementStyle="{StaticResource SswCheckBox}" EditingElementStyle="{StaticResource SswCheckBox}"/>
-                    <DataGridCheckBoxColumn Header="Key" Width="60" Binding="{Binding Key}" ElementStyle="{StaticResource SswCheckBox}" EditingElementStyle="{StaticResource SswCheckBox}"/>
+                    <!--<DataGridCheckBoxColumn Header="Not Null" Width="60" Binding="{Binding NotNull}" ElementStyle="{StaticResource SswCheckBox}" EditingElementStyle="{StaticResource SswCheckBox}"/>
+                    <DataGridCheckBoxColumn Header="Key" Width="60" Binding="{Binding Key}" ElementStyle="{StaticResource SswCheckBox}" EditingElementStyle="{StaticResource SswCheckBox}"/>-->
 
+                    <DataGridTemplateColumn Header="Not Null" Width="60">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding NotNull, UpdateSourceTrigger=PropertyChanged}" 
+                      Style="{StaticResource SswCheckBox}"
+                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Key" Width="60">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding Key, UpdateSourceTrigger=PropertyChanged}" 
+                      Style="{StaticResource SswCheckBox}"
+                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    
                     <DataGridTemplateColumn x:Name="SaveColumn" Header="" Width="60" CellStyle="{StaticResource ButtonCell}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

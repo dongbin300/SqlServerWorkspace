@@ -215,7 +215,7 @@ namespace SqlServerWorkspace
 			var textBlock = new TextBlock
 			{
 				Text = keyword,
-				Foreground = Brushes.White,
+				Foreground = System.Windows.Media.Brushes.White,
 				FontSize = 12,
 				VerticalAlignment = VerticalAlignment.Center
 			};

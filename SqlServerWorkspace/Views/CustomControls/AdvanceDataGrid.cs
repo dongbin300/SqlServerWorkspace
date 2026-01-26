@@ -374,7 +374,7 @@ namespace SqlServerWorkspace.Views.CustomControls
 			if (value is DateTime dateTime)
 				return dateTime.ToString("yyyy-MM-dd HH:mm:ss");
 
-			return value.ToString();
+			return value.ToString()!;
 		}
 
 
@@ -434,7 +434,7 @@ namespace SqlServerWorkspace.Views.CustomControls
 						var value = row[i];
 						values[i] = value == DBNull.Value ? "" :
 							value is DateTime dateTime ? dateTime.ToString("yyyy-MM-dd HH:mm:ss") :
-							value.ToString();
+							value.ToString()!;
 					}
 					clipboardText.AppendLine(string.Join("\t", values));
 				}
