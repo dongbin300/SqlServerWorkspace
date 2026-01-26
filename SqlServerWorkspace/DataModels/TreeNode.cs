@@ -2,15 +2,113 @@
 
 namespace SqlServerWorkspace.DataModels
 {
-	public class TreeNode(string name, TreeNodeType type, string path, string? svgData = null, string? svgColor = null, bool isExpanded = false)
+	using System.Collections.ObjectModel;
+	using System.ComponentModel;
+	using System.Runtime.CompilerServices;
+
+	public class TreeNode(string name, TreeNodeType type, string path, string? svgData = null, string? svgColor = null, bool isExpanded = false) : INotifyPropertyChanged
 	{
-		public string Name { get; set; } = name;
-		public TreeNodeType Type { get; set; } = type;
-		public List<TreeNode> Children { get; set; } = [];
-		public string Path { get; set; } = path;
-		public string SvgData { get; set; } = svgData ?? string.Empty;
-		public string SvgColor { get; set; } = svgColor ?? string.Empty;
-		public bool IsExpanded { get; set; } = isExpanded;
+		private string _svgData = svgData ?? string.Empty;
+		private string _svgColor = svgColor ?? string.Empty;
+		private ObservableCollection<TreeNode> _children = [];
+
+		public string Name
+		{
+			get => name;
+			set
+			{
+				if (name != value)
+				{
+					name = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public TreeNodeType Type
+		{
+			get => type;
+			set
+			{
+				if (type != value)
+				{
+					type = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public ObservableCollection<TreeNode> Children
+		{
+			get => _children;
+			set
+			{
+				if (_children != value)
+				{
+					_children = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public string Path
+		{
+			get => path;
+			set
+			{
+				if (path != value)
+				{
+					path = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public string SvgData
+		{
+			get => _svgData;
+			set
+			{
+				if (_svgData != value)
+				{
+					_svgData = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public string SvgColor
+		{
+			get => _svgColor;
+			set
+			{
+				if (_svgColor != value)
+				{
+					_svgColor = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public bool IsExpanded
+		{
+			get => isExpanded;
+			set
+			{
+				if (isExpanded != value)
+				{
+					isExpanded = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public event PropertyChangedEventHandler? PropertyChanged;
+
+		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
 
 		public string GetParentName()
 		{
@@ -32,7 +130,6 @@ namespace SqlServerWorkspace.DataModels
 		public List<TreeNode> Search(string keyword)
 		{
 			List<TreeNode> results = [];
-
 			var keywords = keyword.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 			bool ContainsKeyword(TreeNode node) =>

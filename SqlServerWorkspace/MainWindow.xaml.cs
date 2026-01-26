@@ -4,6 +4,8 @@ using SqlServerWorkspace.DataModels;
 using SqlServerWorkspace.Enums;
 using SqlServerWorkspace.Views;
 
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
 using System.Windows;
@@ -86,58 +88,50 @@ namespace SqlServerWorkspace
 
 		public void Refresh(bool isTitleExpand = false)
 		{
-			// 현재 확장된 아이템들의 경로를 저장
-			var expandedPaths = new HashSet<string>();
-			if (DatabaseTreeView.ItemsSource != null)
+			// ItemsSource가 ObservableCollection이면 재할당 불필요
+			if (DatabaseTreeView.ItemsSource == null)
 			{
-				SaveExpandedState(DatabaseTreeView, expandedPaths);
+				DatabaseTreeView.ItemsSource = ResourceManager.ConnectionsNodes;
 			}
 
-			DatabaseTreeView.ItemsSource = isTitleExpand || FilterKeywords.Count == 0 ?
-				ResourceManager.ConnectionsNodes :
-				FilterWithKeywords(ResourceManager.ConnectionsNodes, FilterKeywords);
-
-			// 확장 상태를 복원
-			if (expandedPaths.Count > 0)
+			// 필터링이 필요한 경우에만 ItemsSource 변경
+			if (FilterKeywords.Count > 0 && !isTitleExpand)
 			{
-				Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-				{
-					RestoreExpandedState(DatabaseTreeView, expandedPaths);
-				}), DispatcherPriority.Background);
+				DatabaseTreeView.ItemsSource = FilterWithKeywords(
+					ResourceManager.ConnectionsNodes, FilterKeywords);
+			}
+			else if (DatabaseTreeView.ItemsSource != ResourceManager.ConnectionsNodes)
+			{
+				DatabaseTreeView.ItemsSource = ResourceManager.ConnectionsNodes;
+			}
+
+			// CollectionView를 사용한 갱신 (재생성 없이)
+			if (DatabaseTreeView.ItemsSource is ICollectionView view)
+			{
+				view.Refresh();
 			}
 		}
 
 		private void SaveExpandedState(ItemsControl itemsControl, HashSet<string> expandedPaths)
 		{
-			for (int i = 0; i < itemsControl.Items.Count; i++)
+			// ContainerFromIndex는 가상화된 항목에서 null 반환 가능
+			foreach (var item in itemsControl.Items)
 			{
-				var container = itemsControl.ItemContainerGenerator.ContainerFromIndex(i) as TreeViewItem;
-				if (container?.IsExpanded == true && container.Tag is string path)
+				if (item is TreeNode node && node.IsExpanded) // TreeNode에 IsExpanded 속성 추가
 				{
-					expandedPaths.Add(path);
-				}
-				
-				if (container != null)
-				{
-					SaveExpandedState(container, expandedPaths);
+					expandedPaths.Add(node.Path);
 				}
 			}
 		}
 
 		private void RestoreExpandedState(ItemsControl itemsControl, HashSet<string> expandedPaths)
 		{
-			for (int i = 0; i < itemsControl.Items.Count; i++)
+			// UI 컨테이너 대신 데이터 모델에서 복원
+			foreach (var item in itemsControl.Items)
 			{
-				var container = itemsControl.ItemContainerGenerator.ContainerFromIndex(i) as TreeViewItem;
-				if (container?.Tag is string path && expandedPaths.Contains(path))
+				if (item is TreeNode node && expandedPaths.Contains(node.Path))
 				{
-					container.IsExpanded = true;
-					container.UpdateLayout();
-				}
-				
-				if (container != null)
-				{
-					RestoreExpandedState(container, expandedPaths);
+					node.IsExpanded = true;
 				}
 			}
 		}
@@ -168,18 +162,14 @@ namespace SqlServerWorkspace
 
 		private IEnumerable<TreeNode> FilterWithKeywords(IEnumerable<IEnumerable<TreeNode>> items, List<string> keywords)
 		{
-			List<TreeNode> filteredItems = [];
-			foreach (var item in items)
-			{
-				foreach (var topNode in item)
-				{
-					var combinedKeyword = string.Join(";", keywords);
-					var nodes = topNode.Search(combinedKeyword);
-					filteredItems.AddRange(nodes);
-				}
-			}
+			var combinedKeyword = string.Join(";", keywords);
 
-			return filteredItems;
+			// 병렬 처리로 속도 향상
+			return items
+				.AsParallel()
+				.SelectMany(item => item)
+				.SelectMany(topNode => topNode.Search(combinedKeyword))
+				.ToList(); // 한 번만 열거
 		}
 
 		private void AddKeyword(string keyword)
@@ -282,13 +272,13 @@ namespace SqlServerWorkspace
 							case TreeNodeType.FunctionNode:
 								await EntryDocumentPane.CreateNewOrOpenTab(manager, node);
 								break;
-								
+
 							case TreeNodeType.ProcedureNode:
 								await EntryDocumentPane.CreateNewOrOpenTab(manager, node);
-								
+
 								// 이미 참조 항목이 있는지 확인
 								bool hasReferences = node.Children.Count > 0;
-								
+
 								if (hasReferences)
 								{
 									// 참조 항목이 있으면 expand 상태를 토글
@@ -298,7 +288,7 @@ namespace SqlServerWorkspace
 										bool currentExpandState = item.IsExpanded;
 										item.IsExpanded = !currentExpandState;
 										item.UpdateLayout();
-										
+
 										// 확실한 토글을 위해 한 번 더 체크
 										Application.Current.Dispatcher.BeginInvoke(new Action(() =>
 										{
