@@ -10,7 +10,8 @@
         xmlns:custom="clr-namespace:SqlServerWorkspace.Views.CustomControls"
         mc:Ignorable="d"
         Title="SQL Server Workspace" Height="800" Width="1200"
-        Icon="/Resources/Icons/ssw.png">
+        Icon="/Resources/Icons/ssw.png"
+        PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

@@ -102,6 +102,36 @@ namespace SqlServerWorkspace.Data
 			return Select(query);
 		}
 
+		public DataTable Select(string query, params SqlParameter[] parameters)
+		{
+			var dataTable = new DataTable();
+
+			using var connection = new SqlConnection(GetConnectionString());
+			using var command = new SqlCommand(query, connection);
+
+			if (parameters is { Length: > 0 })
+			{
+				command.Parameters.AddRange(parameters);
+			}
+
+			try
+			{
+				connection.Open();
+				using var reader = command.ExecuteReader();
+				dataTable.Load(reader);
+				return dataTable;
+			}
+			catch (SqlException ex)
+			{
+				string msg = $"SQL 오류\nQuery: {query}\nParams: {string.Join(", ", parameters?.Select(p => $"{p.ParameterName}={p.Value ?? "null"}") ?? Array.Empty<string>())}\n{ex.Message}";
+				throw new Exception(msg, ex);
+			}
+			catch (Exception ex)
+			{
+				throw new Exception($"Select 실패\nQuery: {query}\n{ex.Message}", ex);
+			}
+		}
+
 		public string Insert(string query)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
@@ -290,9 +320,14 @@ namespace SqlServerWorkspace.Data
 		{
 			var table = GetTableInfo(tableName);
 			var primaryKeyNames = GetTablePrimaryKeyNames(tableName);
-			var columnNames = table.Columns.Select(x => x.Name);
-			var nonKeyColumnNames = columnNames.Except(primaryKeyNames);
-			var columnNameSequence = string.Join(',', columnNames);
+
+			var allColumns = table.Columns.ToList();
+
+			var insertTargetColumns = allColumns.Where(x => !x.IsIdentity).ToList();
+			var insertColumnNames = string.Join(",", insertTargetColumns.Select(x => x.Name));
+			var insertParameterNames = string.Join(",", insertTargetColumns.Select(x => $"@{x.Name}"));
+
+			var nonKeyColumnNames = allColumns.Select(x => x.Name).Except(primaryKeyNames).ToList();
 			var primaryKeyCondition = string.Join(" AND ", primaryKeyNames.Select(x => $"{x} = @{x}"));
 
 			using var connection = new SqlConnection(GetConnectionString());
@@ -305,39 +340,33 @@ namespace SqlServerWorkspace.Data
 
 			try
 			{
-				// 1. INSERT: modifiedTable에 있고 originalTable에 없는 행
+				// 1. INSERT
 				foreach (DataRow modifiedRow in modifiedTable.Rows)
 				{
 					var primaryKeyFilter = string.Join(" AND ", primaryKeyNames.Select(key => $"{key} = '{modifiedRow[key]}'"));
 					var foundRows = originalTable.Select(primaryKeyFilter);
 
-					// originalTable에 해당 키가 없으면 새로 추가된 행 (INSERT)
 					if (foundRows.Length == 0)
 					{
 						var insertQuery = new StringBuilder();
-						insertQuery.AppendLine($"INSERT INTO {tableName} ({columnNameSequence})");
-						insertQuery.AppendLine($"VALUES ({string.Join(",", columnNames.Select(x => $"@{x}"))})");
+						insertQuery.AppendLine($"INSERT INTO {tableName} ({insertColumnNames})");
+						insertQuery.AppendLine($"VALUES ({insertParameterNames})");
 
 						using var cmd = new SqlCommand(insertQuery.ToString(), connection, transaction);
-						foreach (var columnName in columnNames)
-						{
-							var value = modifiedRow[columnName];
-							var column = table.GetColumn(columnName);
 
-							if (column.TrueType == SqlDbType.Binary ||
-								column.TrueType == SqlDbType.Image ||
-								column.TrueType == SqlDbType.Timestamp ||
-								column.TrueType == SqlDbType.VarBinary ||
+						// Identity가 아닌 컬럼만 파라미터 추가
+						foreach (var column in insertTargetColumns)
+						{
+							var value = modifiedRow[column.Name];
+							if (column.TrueType == SqlDbType.Binary || column.TrueType == SqlDbType.Image ||
+								column.TrueType == SqlDbType.Timestamp || column.TrueType == SqlDbType.VarBinary ||
 								column.TrueType == SqlDbType.NVarChar)
 							{
-								cmd.Parameters.Add(new SqlParameter($"@{columnName}", column.TrueType)
-								{
-									Value = value == DBNull.Value ? DBNull.Value : value
-								});
+								cmd.Parameters.Add(new SqlParameter($"@{column.Name}", column.TrueType) { Value = value ?? DBNull.Value });
 							}
 							else
 							{
-								cmd.Parameters.Add(new SqlParameter($"@{columnName}", value == DBNull.Value ? DBNull.Value : value));
+								cmd.Parameters.Add(new SqlParameter($"@{column.Name}", value ?? DBNull.Value));
 							}
 						}
 
@@ -346,18 +375,18 @@ namespace SqlServerWorkspace.Data
 					}
 				}
 
-				// 2. UPDATE: modifiedTable과 originalTable의 행이 일치하지만, 데이터가 변경된 경우
+				// 2. UPDATE (수정 시에는 Identity 컬럼이 WHERE절의 PK로 쓰일 수 있으므로 그대로 둡니다)
 				foreach (DataRow modifiedRow in modifiedTable.Rows)
 				{
 					var primaryKeyFilter = string.Join(" AND ", primaryKeyNames.Select(key => $"{key} = '{modifiedRow[key]}'"));
 					var foundRows = originalTable.Select(primaryKeyFilter);
 
-					if (foundRows.Length == 1) // 수정된 행이 있는 경우
+					if (foundRows.Length == 1)
 					{
 						var originalRow = foundRows[0];
 						var isModified = nonKeyColumnNames.Any(col => !Equals(originalRow[col], modifiedRow[col]));
 
-						if (isModified) // 수정된 컬럼이 있으면 UPDATE
+						if (isModified)
 						{
 							var updateQuery = new StringBuilder();
 							var updateSet = string.Join(", ", nonKeyColumnNames.Select(x => $"{x} = @{x}"));
@@ -365,25 +394,20 @@ namespace SqlServerWorkspace.Data
 							updateQuery.AppendLine($"WHERE {primaryKeyCondition}");
 
 							using var cmd = new SqlCommand(updateQuery.ToString(), connection, transaction);
-							foreach (var columnName in columnNames)
-							{
-								var value = modifiedRow[columnName];
-								var column = table.GetColumn(columnName);
 
-								if (column.TrueType == SqlDbType.Binary ||
-									column.TrueType == SqlDbType.Image ||
-									column.TrueType == SqlDbType.Timestamp ||
-									column.TrueType == SqlDbType.VarBinary ||
+							// UPDATE는 WHERE절 때문에 모든 컬럼 정보를 파라미터로 넘김
+							foreach (var column in allColumns)
+							{
+								var value = modifiedRow[column.Name];
+								if (column.TrueType == SqlDbType.Binary || column.TrueType == SqlDbType.Image ||
+									column.TrueType == SqlDbType.Timestamp || column.TrueType == SqlDbType.VarBinary ||
 									column.TrueType == SqlDbType.NVarChar)
 								{
-									cmd.Parameters.Add(new SqlParameter($"@{columnName}", column.TrueType)
-									{
-										Value = value == DBNull.Value ? DBNull.Value : value
-									});
+									cmd.Parameters.Add(new SqlParameter($"@{column.Name}", column.TrueType) { Value = value ?? DBNull.Value });
 								}
 								else
 								{
-									cmd.Parameters.Add(new SqlParameter($"@{columnName}", value == DBNull.Value ? DBNull.Value : value));
+									cmd.Parameters.Add(new SqlParameter($"@{column.Name}", value ?? DBNull.Value));
 								}
 							}
 
@@ -393,24 +417,21 @@ namespace SqlServerWorkspace.Data
 					}
 				}
 
-				// 3. DELETE: originalTable에 있고 modifiedTable에 없는 행
+				// 3. DELETE (기존과 동일)
 				foreach (DataRow originalRow in originalTable.Rows)
 				{
 					var primaryKeyFilter = string.Join(" AND ", primaryKeyNames.Select(key => $"{key} = '{originalRow[key]}'"));
 					var foundRows = modifiedTable.Select(primaryKeyFilter);
 
-					// modifiedTable에 해당 키가 없으면 삭제된 행 (DELETE)
 					if (foundRows.Length == 0)
 					{
 						var deleteQuery = new StringBuilder();
-						deleteQuery.AppendLine($"DELETE FROM {tableName}");
-						deleteQuery.AppendLine($"WHERE {primaryKeyCondition}");
+						deleteQuery.AppendLine($"DELETE FROM {tableName} WHERE {primaryKeyCondition}");
 
 						using var cmd = new SqlCommand(deleteQuery.ToString(), connection, transaction);
 						foreach (var primaryKey in primaryKeyNames)
 						{
-							var value = originalRow[primaryKey];
-							cmd.Parameters.AddWithValue($"@{primaryKey}", value);
+							cmd.Parameters.AddWithValue($"@{primaryKey}", originalRow[primaryKey]);
 						}
 
 						cmd.ExecuteNonQuery();
@@ -419,8 +440,6 @@ namespace SqlServerWorkspace.Data
 				}
 
 				transaction.Commit();
-
-
 				return $"I: {insertCount}, U: {updateCount}, D: {deleteCount}";
 			}
 			catch (Exception ex)
@@ -482,9 +501,24 @@ namespace SqlServerWorkspace.Data
 		public TableInfo GetTableInfo(string tableName)
 		{
 			using var connection = new SqlConnection(GetConnectionString());
-			string query = $"SELECT TABLE_NAME, TABLE_CATALOG, TABLE_SCHEMA, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{tableName}'";
+
+			// COLUMNPROPERTY를 사용하여 Identity 여부를 추가로 조회합니다.
+			string query = $@"
+        SELECT 
+            TABLE_NAME, TABLE_CATALOG, TABLE_SCHEMA, COLUMN_NAME, DATA_TYPE, 
+            CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, IS_NULLABLE,
+            COLUMNPROPERTY(OBJECT_ID(TABLE_SCHEMA + '.' + TABLE_NAME), COLUMN_NAME, 'IsIdentity') AS IS_IDENTITY
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_NAME = '{tableName}'";
+
 			var command = new SqlCommand(query, connection);
-			string query2 = $"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1 AND TABLE_NAME = '{tableName}'";
+
+			string query2 = $@"
+        SELECT COLUMN_NAME 
+        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+        WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1 
+        AND TABLE_NAME = '{tableName}'";
+
 			var command2 = new SqlCommand(query2, connection);
 
 			try
@@ -496,6 +530,7 @@ namespace SqlServerWorkspace.Data
 				var _tableName = string.Empty;
 				var tableCatalog = string.Empty;
 				var tableSchema = string.Empty;
+
 				while (reader.Read())
 				{
 					_tableName = reader["TABLE_NAME"].ToString() ?? string.Empty;
@@ -505,7 +540,8 @@ namespace SqlServerWorkspace.Data
 					var columnName = reader["COLUMN_NAME"].ToString() ?? string.Empty;
 					var dataType = reader["DATA_TYPE"].ToString() ?? string.Empty;
 					var maxLength = reader["CHARACTER_MAXIMUM_LENGTH"].ToString() ?? string.Empty;
-					if (maxLength == string.Empty)
+
+					if (string.IsNullOrEmpty(maxLength))
 					{
 						maxLength = $"{reader["NUMERIC_PRECISION"]},{reader["NUMERIC_SCALE"]}";
 					}
@@ -513,47 +549,47 @@ namespace SqlServerWorkspace.Data
 					{
 						maxLength = string.Empty;
 					}
+
 					var isNotNull = (reader["IS_NULLABLE"].ToString() ?? string.Empty) == "NO";
 
-					columns.Add(new TableColumnInfo(columnName, dataType, maxLength, isNotNull));
+					// IsIdentity 정보 추출 (1이면 true, 0이면 false)
+					var isIdentity = Convert.ToInt32(reader["IS_IDENTITY"]) == 1;
+
+					var colInfo = new TableColumnInfo(columnName, dataType, maxLength, isNotNull)
+					{
+						IsIdentity = isIdentity
+					};
+					columns.Add(colInfo);
 				}
 				reader.Close();
 
+				// Primary Key 정보 설정
 				var reader2 = command2.ExecuteReader();
 				while (reader2.Read())
 				{
 					var value = reader2["COLUMN_NAME"].ToString();
-					if (string.IsNullOrEmpty(value))
-					{
-						continue;
-					}
+					if (string.IsNullOrEmpty(value)) continue;
 
 					var column = columns.Find(x => x.Name.Equals(value));
-					if (column == null)
+					if (column != null)
 					{
-						continue;
+						column.IsKey = true;
 					}
-
-					column.IsKey = true;
 				}
 				reader2.Close();
 
-				/* Description */
+				/* Description 설정 */
 				var descriptions = GetDescription(tableName).ToList();
-				for (var i = 0; i < columns.Count; i++)
+				foreach (var col in columns)
 				{
-					var description = descriptions.Find(x => x.ColumnName.Equals(columns[i].Name));
-					if (description == null)
+					var description = descriptions.Find(x => x.ColumnName.Equals(col.Name));
+					if (description != null)
 					{
-						continue;
+						col.Description = description.Description;
 					}
-
-					columns[i].Description = description.Description;
 				}
 
-				var tableInfo = new TableInfo(_tableName, tableCatalog, tableSchema, columns);
-
-				return tableInfo;
+				return new TableInfo(_tableName, tableCatalog, tableSchema, columns);
 			}
 			catch
 			{
@@ -671,20 +707,43 @@ namespace SqlServerWorkspace.Data
 		#endregion
 
 		#region Constraint
-		public string ModifyConstraint(string tableName, IEnumerable<string> primaryKeyColumnNames)
+		/// <summary>
+		/// 테이블의 Primary Key를 완전히 새로 지정합니다. (기존 PK 있으면 삭제 후 생성)
+		/// </summary>
+		/// <param name="tableName">테이블 이름</param>
+		/// <param name="primaryKeyColumnNames">새로운 PK로 사용할 컬럼들</param>
+		/// <param name="clustered">클러스터드 여부 (기본값 false)</param>
+		/// <returns>성공 시 빈 문자열, 실패 시 오류 메시지</returns>
+		public string SetPrimaryKey(string tableName, IEnumerable<string> columnNames, bool clustered = false)
 		{
-			var result = string.Empty;
-			var columnStrings = string.Join(",", primaryKeyColumnNames.Select(x => $"{x} ASC"));
-
-			var constraintName = GetConstraintName(tableName);
-			if (constraintName != null)
+			// 1. 이 테이블(PK가 있는 테이블)이 다른 테이블에 의해 참조되고 있는지 확인 & FK 모두 Drop
+			var fkDropResult = DropAllReferencingForeignKeys(tableName);
+			if (!string.IsNullOrEmpty(fkDropResult))
 			{
-				result = Execute($"ALTER TABLE {tableName} DROP CONSTRAINT {constraintName}");
+				return fkDropResult;
 			}
 
-			result = Execute($"ALTER TABLE {tableName} ADD CONSTRAINT XPK_{tableName} PRIMARY KEY NONCLUSTERED ( {columnStrings} )");
+			// 2. 기존 PK Drop
+			var dropResult = DropPrimaryKeyIfExists(tableName);
+			if (!string.IsNullOrEmpty(dropResult))
+			{
+				return dropResult;
+			}
 
-			return result;
+			// 3. 새 PK가 필요하면 Create
+			if (columnNames?.Any() == true)
+			{
+				var createResult = CreatePrimaryKey(tableName, columnNames, clustered);
+				if (!string.IsNullOrEmpty(createResult))
+				{
+					return createResult;
+				}
+			}
+
+			// 참고: FK를 다시 살리고 싶다면 별도 로직 필요 (지금은 Drop만 함)
+			// → 나중에 데이터 무결성 복구를 원하면 FK 재생성 로직을 추가하세요
+
+			return string.Empty;
 		}
 
 		public string? GetConstraintName(string tableName)
@@ -692,6 +751,138 @@ namespace SqlServerWorkspace.Data
 			return Select("CONSTRAINT_NAME", "INFORMATION_SCHEMA.TABLE_CONSTRAINTS", $"TABLE_NAME = '{tableName}'").Field("CONSTRAINT_NAME").FirstOrDefault();
 		}
 
+		/// <summary>
+		/// 테이블의 기존 Primary Key 제약 조건을 삭제합니다. (존재하지 않으면 아무 일도 하지 않음)
+		/// </summary>
+		/// <returns>성공 시 빈 문자열, 실패 시 오류 메시지</returns>
+		public string DropPrimaryKeyIfExists(string tableName)
+		{
+			try
+			{
+				// 현재 PK 제약조건 이름 찾기
+				var pkName = GetPrimaryKeyConstraintName(tableName);
+				if (string.IsNullOrWhiteSpace(pkName))
+				{
+					return string.Empty; // PK가 애초에 없음 → 성공으로 간주
+				}
+
+				string sql = $@"
+IF EXISTS (SELECT * FROM sys.key_constraints 
+           WHERE name = '{pkName}' 
+           AND parent_object_id = OBJECT_ID('{tableName}'))
+BEGIN
+    ALTER TABLE [{tableName}] DROP CONSTRAINT [{pkName}];
+END";
+
+				return Execute(sql);
+			}
+			catch (Exception ex)
+			{
+				return $"Drop PK failed: {ex.Message}";
+			}
+		}
+
+		/// <summary>
+		/// 테이블의 Primary Key 제약조건 이름을 반환합니다. 없으면 null 또는 빈 문자열
+		/// </summary>
+		private string? GetPrimaryKeyConstraintName(string tableName)
+		{
+			string query = $@"
+SELECT name 
+FROM sys.key_constraints 
+WHERE [type] = 'PK' 
+  AND parent_object_id = OBJECT_ID('{tableName}')";
+
+			var dt = Select(query);
+			if (dt.Rows.Count == 0) return null;
+			return dt.Rows[0]["name"]?.ToString();
+		}
+
+		/// <summary>
+		/// 테이블에 새로운 Primary Key 제약 조건을 생성합니다.
+		/// </summary>
+		/// <param name="tableName">테이블 이름</param>
+		/// <param name="columns">PK로 사용할 컬럼 이름들 (순서 중요)</param>
+		/// <param name="clustered">클러스터드 인덱스로 만들지 여부 (기본값: false = NONCLUSTERED)</param>
+		/// <returns>성공 시 빈 문자열, 실패 시 오류 메시지</returns>
+		public string CreatePrimaryKey(string tableName, IEnumerable<string> columns, bool clustered = false)
+		{
+			if (columns == null || !columns.Any())
+				return "Primary key에 사용할 컬럼이 없습니다.";
+
+			var columnList = string.Join(", ", columns.Select(c => $"[{c.Trim()}] ASC"));
+
+			string clusteredOption = clustered ? "CLUSTERED" : "NONCLUSTERED";
+
+			string constraintName = $"XPK_{tableName}";
+
+			string sql = $@"
+ALTER TABLE [{tableName}]
+ADD CONSTRAINT [{constraintName}] PRIMARY KEY {clusteredOption} 
+(
+    {columnList}
+);";
+
+			return Execute(sql);
+		}
+
+		/// <summary>
+		/// 지정한 테이블을 참조하는 모든 외래키(FK)를 삭제합니다.
+		/// 성공 시 빈 문자열 반환, 실패 시 오류 메시지 반환
+		/// </summary>
+		public string DropAllReferencingForeignKeys(string referencedTableName)
+		{
+			// 1. 참조하는 FK 목록 가져오기
+			string query = @"
+SELECT 
+    fk.name AS FKName,
+    OBJECT_SCHEMA_NAME(fk.parent_object_id) + '.' + OBJECT_NAME(fk.parent_object_id) AS ReferencingTable
+FROM sys.foreign_keys fk
+WHERE fk.referenced_object_id = OBJECT_ID(@ReferencedTable)";
+
+			DataTable dt;
+			try
+			{
+				dt = Select(query, new SqlParameter("@ReferencedTable", referencedTableName));
+			}
+			catch (Exception ex)
+			{
+				return $"FK 목록 조회 실패: {ex.Message}";
+			}
+
+			if (dt.Rows.Count == 0)
+			{
+				return string.Empty;  // 참조하는 FK가 하나도 없음 → 성공
+			}
+
+			// 2. 각 FK 삭제 시도
+			foreach (DataRow row in dt.Rows)
+			{
+				string fkName = row["FKName"]?.ToString() ?? "";
+				string referencingTable = row["ReferencingTable"]?.ToString() ?? "";
+
+				if (string.IsNullOrWhiteSpace(fkName) || string.IsNullOrWhiteSpace(referencingTable))
+				{
+					continue;
+				}
+
+				string dropSql = $"ALTER TABLE {referencingTable} DROP CONSTRAINT [{fkName}];";
+
+				string result = Execute(dropSql);
+				if (!string.IsNullOrEmpty(result))
+				{
+					return $"FK 삭제 실패\n" +
+						   $"테이블: {referencingTable}\n" +
+						   $"제약조건: {fkName}\n" +
+						   $"오류: {result}";
+				}
+
+				// 로그용 (필요하면 나중에 로거로 변경)
+				// Console.WriteLine($"Dropped FK: {fkName} from {referencingTable}");
+			}
+
+			return string.Empty;
+		}
 		#endregion
 
 		#region Description

@@ -23,9 +23,11 @@ namespace SqlServerWorkspace
 	public partial class MainWindow : Window
 	{
 		private DispatcherTimer SaveSettingsTimer = new();
-		private List<string> FilterKeywords = new List<string>();
+		private List<string> FilterKeywords = [];
 
 		public bool IsFiltered => FilterKeywords.Count > 0;
+
+		public TreeNode CurrentDatabaseNode = default!;
 
 		public MainWindow()
 		{
@@ -88,28 +90,42 @@ namespace SqlServerWorkspace
 
 		public void Refresh(bool isTitleExpand = false)
 		{
-			// ItemsSource가 ObservableCollection이면 재할당 불필요
-			if (DatabaseTreeView.ItemsSource == null)
-			{
-				DatabaseTreeView.ItemsSource = ResourceManager.ConnectionsNodes;
-			}
-
-			// 필터링이 필요한 경우에만 ItemsSource 변경
 			if (FilterKeywords.Count > 0 && !isTitleExpand)
 			{
-				DatabaseTreeView.ItemsSource = FilterWithKeywords(
-					ResourceManager.ConnectionsNodes, FilterKeywords);
+				var filtered = FilterWithKeywords(ResourceManager.ConnectionsNodes, FilterKeywords);
+				if (!ReferenceEquals(DatabaseTreeView.ItemsSource, filtered))
+				{
+					DatabaseTreeView.ItemsSource = filtered;
+				}
 			}
-			else if (DatabaseTreeView.ItemsSource != ResourceManager.ConnectionsNodes)
+			// 필터링이 꺼져 있으면 원본 유지 (가장 중요!)
+			else if (!ReferenceEquals(DatabaseTreeView.ItemsSource, ResourceManager.ConnectionsNodes))
 			{
 				DatabaseTreeView.ItemsSource = ResourceManager.ConnectionsNodes;
 			}
 
-			// CollectionView를 사용한 갱신 (재생성 없이)
-			if (DatabaseTreeView.ItemsSource is ICollectionView view)
-			{
-				view.Refresh();
-			}
+			// ItemsSource가 ObservableCollection이면 재할당 불필요
+			//if (DatabaseTreeView.ItemsSource == null)
+			//{
+			//	DatabaseTreeView.ItemsSource = ResourceManager.ConnectionsNodes;
+			//}
+
+			//// 필터링이 필요한 경우에만 ItemsSource 변경
+			//if (FilterKeywords.Count > 0 && !isTitleExpand)
+			//{
+			//	DatabaseTreeView.ItemsSource = FilterWithKeywords(
+			//		ResourceManager.ConnectionsNodes, FilterKeywords);
+			//}
+			//else if (DatabaseTreeView.ItemsSource != ResourceManager.ConnectionsNodes)
+			//{
+			//	DatabaseTreeView.ItemsSource = ResourceManager.ConnectionsNodes;
+			//}
+
+			//// CollectionView를 사용한 갱신 (재생성 없이)
+			//if (DatabaseTreeView.ItemsSource is ICollectionView view)
+			//{
+			//	view.Refresh();
+			//}
 		}
 
 		private void SaveExpandedState(ItemsControl itemsControl, HashSet<string> expandedPaths)
@@ -311,7 +327,16 @@ namespace SqlServerWorkspace
 								if (node.Children.Count == 0)
 								{
 									TreeViewManager.MakeDatabaseTree(node);
-									Refresh(true);
+									if (IsFiltered)
+									{
+										Refresh();
+									}
+									else
+									{
+										item?.Items.Refresh();
+										item?.IsExpanded = true;
+									}
+									CurrentDatabaseNode = node;
 								}
 								break;
 
@@ -319,7 +344,15 @@ namespace SqlServerWorkspace
 								if (node.Children.Count == 0)
 								{
 									TreeViewManager.MakeTableTree(manager, node);
-									Refresh(true);
+									if (IsFiltered)
+									{
+										Refresh();
+									}
+									else
+									{
+										item?.Items.Refresh();
+										item?.IsExpanded = true;
+									}
 								}
 								break;
 
@@ -327,7 +360,15 @@ namespace SqlServerWorkspace
 								if (node.Children.Count == 0)
 								{
 									TreeViewManager.MakeViewTree(manager, node);
-									Refresh(true);
+									if (IsFiltered)
+									{
+										Refresh();
+									}
+									else
+									{
+										item?.Items.Refresh();
+										item?.IsExpanded = true;
+									}
 								}
 								break;
 
@@ -335,7 +376,15 @@ namespace SqlServerWorkspace
 								if (node.Children.Count == 0)
 								{
 									TreeViewManager.MakeFunctionTree(manager, node);
-									Refresh(true);
+									if (IsFiltered)
+									{
+										Refresh();
+									}
+									else
+									{
+										item?.Items.Refresh();
+										item?.IsExpanded = true;
+									}
 								}
 								break;
 
@@ -343,7 +392,15 @@ namespace SqlServerWorkspace
 								if (node.Children.Count == 0)
 								{
 									TreeViewManager.MakeProcedureTree(manager, node);
-									Refresh(true);
+									if (IsFiltered)
+									{
+										Refresh();
+									}
+									else
+									{
+										item?.Items.Refresh();
+										item?.IsExpanded = true;
+									}
 								}
 								break;
 
@@ -356,7 +413,7 @@ namespace SqlServerWorkspace
 						break;
 				}
 
-				if (item.HasItems)
+				if (item!.HasItems)
 				{
 					item.IsExpanded = !item.IsExpanded;
 				}
@@ -586,5 +643,31 @@ namespace SqlServerWorkspace
 			return new TextRange(StatusTextBlock.Document.ContentStart, StatusTextBlock.Document.ContentEnd).Text;
 		}
 		#endregion
+
+		private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.OemTilde) // `
+			{
+				var quickOpenView = new QuickOpenView
+				{
+					CurrentDatabaseNode = CurrentDatabaseNode,
+					DatabaseTreeView = DatabaseTreeView,
+					EntryDocumentPane = EntryDocumentPane,
+					Owner = this
+				};
+				if (quickOpenView.ShowDialog() ?? false)
+				{
+					var selectedNode = quickOpenView.SelectedNode;
+					if (selectedNode != null)
+					{
+						var manager = ResourceManager.GetSqlManager(selectedNode);
+						if (manager != null)
+						{
+							_ = EntryDocumentPane.CreateNewOrOpenTab(manager, selectedNode);
+						}
+					}
+				}
+			}
+		}
 	}
 }

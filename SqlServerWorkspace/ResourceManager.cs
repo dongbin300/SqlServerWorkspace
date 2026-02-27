@@ -27,7 +27,7 @@ namespace SqlServerWorkspace
 		public static List<SqlManager> Connections = [];
 		public static IEnumerable<IEnumerable<TreeNode>> ConnectionsNodes => Connections.Select(c => c.Nodes);
 		public static Settings Settings = default!;
-		private static Random random = new ();
+		private static Random random = new();
 		private static readonly string Code = "1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM";
 
 		/* Icon Resource */
@@ -84,6 +84,12 @@ namespace SqlServerWorkspace
 		public static SqlManager? GetSqlManager(string id)
 		{
 			return Connections.Find(x => x.Id.Equals(id));
+		}
+
+		public static SqlManager? GetSqlManager(TreeNode treeNode)
+		{
+			var id = treeNode.Path.Split('/')[0];
+			return GetSqlManager(id);
 		}
 
 		public static void LoadSettings()

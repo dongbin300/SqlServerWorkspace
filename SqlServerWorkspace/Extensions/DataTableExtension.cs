@@ -76,12 +76,20 @@ namespace SqlServerWorkspace.Extensions
 				}
 
 				var tableColumn = tableInfo.Columns.First(x => x.Name.Equals(column.ColumnName));
+
+				// Auto Increment(Identity) 타입은 뒤에 + 붙힘
+				string displayType = tableColumn.ToTypeString();
+				if (tableColumn.IsIdentity && displayType.Equals("int", StringComparison.OrdinalIgnoreCase))
+				{
+					displayType += "+";
+				}
+
 				var dataGridColumn = new DataGridTextColumn
 				{
 					Header = new string[]
 					{
 						column.ColumnName,				// Column Name
-						tableColumn.ToTypeString(),		// Column DataType
+						displayType,					// Column DataType
 						tableColumn.IsKey ? "*" : "",	// Column Key Flag
 						tableColumn.Description,		// Column Description
 					},

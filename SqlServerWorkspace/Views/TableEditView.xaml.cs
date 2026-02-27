@@ -181,7 +181,6 @@ namespace SqlServerWorkspace.Views
 
 			var row = button.FindParent<DataGridRow>();
 			var isNotNull = rowView["NotNull"] is bool b && b;
-
 			var name = rowView["Name"]?.ToString() ?? string.Empty;
 			var dataType = rowView["DataType"]?.ToString() ?? string.Empty;
 
@@ -191,12 +190,15 @@ namespace SqlServerWorkspace.Views
 				return;
 			}
 
-			List<string> checkedKeyNames = [];
+			// 현재 체크된 PK 컬럼들
+			List<string> checkedKeyNames = new();
 			foreach (DataRowView item in columnDataTable.DefaultView)
 			{
 				if (item["Key"] is bool isKey && isKey)
 				{
-					checkedKeyNames.Add(item["Name"]?.ToString() ?? string.Empty);
+					var colName = item["Name"]?.ToString() ?? string.Empty;
+					if (!string.IsNullOrWhiteSpace(colName))
+						checkedKeyNames.Add(colName);
 				}
 			}
 
@@ -206,10 +208,9 @@ namespace SqlServerWorkspace.Views
 			var descriptionPrev = rowView["DescriptionPrev"]?.ToString() ?? string.Empty;
 
 			string? result = string.Empty;
-
 			bool isPkChange = !checkedKeyNames.SequenceEqual(primaryKeyNames);
-			bool isCurrentColumnPk = primaryKeyNames.Contains(namePrev);
 
+			// 1. 컬럼 추가 / 수정
 			if (namePrev == string.Empty) // 신규 컬럼
 			{
 				result = Manager.AddColumn(TableName, name, dataType, description, isNotNull);
@@ -220,9 +221,16 @@ namespace SqlServerWorkspace.Views
 				result = Manager.ModifyColumn(TableName, namePrev, name, dataType, descriptionToUpdate, isNotNull);
 			}
 
+			// 2. PK 변경이 필요한 경우 → Drop 후 Create
 			if (result == string.Empty && isPkChange)
 			{
-				result = Manager.ModifyConstraint(TableName, checkedKeyNames);
+				result = Manager.SetPrimaryKey(TableName, checkedKeyNames);
+
+				if (!string.IsNullOrEmpty(result))
+				{
+					MessageBox.Show($"PK 변경 실패: {result}\n\n" +
+									"참고: 다른 테이블에서 이 테이블의 PK를 외래키로 참조하고 있을 수 있습니다.");
+				}
 			}
 
 			if (!string.IsNullOrEmpty(result))
@@ -231,9 +239,12 @@ namespace SqlServerWorkspace.Views
 			}
 			else
 			{
+				// 성공 시 Prev 값 업데이트
 				rowView["NamePrev"] = name;
 				rowView["DataTypePrev"] = dataType;
 				rowView["DescriptionPrev"] = description;
+				rowView["KeyPrev"] = rowView["Key"];
+				rowView["NotNullPrev"] = rowView["NotNull"];
 			}
 		}
 

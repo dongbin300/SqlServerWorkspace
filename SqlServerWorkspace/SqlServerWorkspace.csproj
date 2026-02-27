@@ -39,6 +39,12 @@
 	  <PackageReference Include="ML592.AvalonDock.Themes.VS2022" Version="4.72.1" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Compile Update="Views\QuickOpenView.xaml.cs">
+	    <SubType>Code</SubType>
+	  </Compile>
+	</ItemGroup>
+
 	<!-- 자동 버전 증가 타겟 -->
 	<Target Name="AutoIncrementBuildNumber" BeforeTargets="BeforeBuild">
 		<!-- 빌드 카운터 파일 경로 -->

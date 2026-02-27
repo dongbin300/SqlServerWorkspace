@@ -30,6 +30,7 @@ namespace SqlServerWorkspace.Data
 		public int TrueLength => int.Parse(Length);
 		public bool IsKey { get; set; } = false;
 		public bool IsNotNull { get; set; } = false;
+		public bool IsIdentity { get; set; } = false;
 		public string Description { get; set; } = string.Empty;
 
 		/// <summary>
