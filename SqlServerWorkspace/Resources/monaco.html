@@ -6,6 +6,13 @@
     <title>Monaco Editor in WebView2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs/loader.js"></script>
     <style>
+        @font-face {
+            font-family: 'ProximaNova-Regular';
+            src: url('./Resources/fonts/ProximaNova-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
         html,
         body,
         #editor {
@@ -60,7 +67,7 @@
                 language: "sql",
                 theme: "DarkTheme",
                 fontSize: 13.5,
-                fontFamily: 'Consolas, 맑은 고딕, monospace',
+                fontFamily: 'ProximaNova-Regular, Consolas, 맑은 고딕, monospace',
                 letterSpacing: -0.6,
                 wordWrap: "on",
                 // IntelliSense 설정 강화

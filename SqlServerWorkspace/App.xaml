@@ -25,8 +25,10 @@
         <SolidColorBrush x:Key="TitleBarMouseOver" Color="#777777"/>
         <SolidColorBrush x:Key="SelectedBackground" Color="#444D56"/>
 
-        <FontFamily x:Key="BaseFont">Meiryo UI</FontFamily>
-        <sys:Double x:Key="BaseFontSize">12.5</sys:Double>
+        <!--<FontFamily x:Key="BaseFont">Meiryo UI</FontFamily>-->
+        <FontFamily x:Key="BaseFont">pack://application:,,,/Resources/Fonts/ProximaNova-Regular.ttf</FontFamily>
+        <sys:Double x:Key="BaseFontSize">14.5</sys:Double>
+
 
         <!-- Gradient -->
         <LinearGradientBrush x:Key="PrimeGradientBrush" StartPoint="0,0" EndPoint="0,1">
@@ -54,7 +56,7 @@
         
         <Style TargetType="{x:Type TextBlock}" x:Key="TreeViewText">
             <Setter Property="FontFamily" Value="{StaticResource BaseFont}" />
-            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="Height" Value="20" />
             <Setter Property="Foreground" Value="#F1F1F1" />
             <Setter Property="Background" Value="Transparent" />
@@ -877,7 +879,7 @@
 
         <Style TargetType="{x:Type CheckBox}" x:Key="SswCheckBox">
             <Setter Property="Margin" Value="3,0" />
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Template">
@@ -943,7 +945,7 @@
         <Style TargetType="{x:Type ListBox}" x:Key="DarkListBox">
             <Setter Property="ItemContainerStyle" Value="{StaticResource DarkListBoxItem}" />
             <Setter Property="Margin" Value="3,2" />
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="{StaticResource BaseFontSize}" />
             <Setter Property="Background" Value="#121212" />
             <Setter Property="Foreground" Value="#EEEEEE" />
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />

@@ -22,7 +22,7 @@ namespace SqlServerWorkspace
 	public partial class MainWindow : Window
 	{
 		private DispatcherTimer SaveSettingsTimer = new();
-		private List<string> FilterKeywords = new List<string>();
+		private List<string> FilterKeywords = [];
 
 		public bool IsFiltered => FilterKeywords.Count > 0;
 
@@ -96,9 +96,7 @@ namespace SqlServerWorkspace
 
 		public void Refresh(bool isTitleExpand = false)
 		{
-			// 현재 확장된 아이템들의 경로를 저장
-			var expandedPaths = new HashSet<string>();
-			if (DatabaseTreeView.ItemsSource != null)
+			if (FilterKeywords.Count > 0 && !isTitleExpand)
 			{
 				SaveExpandedState(DatabaseTreeView, expandedPaths);
 			}
@@ -143,8 +141,11 @@ namespace SqlServerWorkspace
 				});
 			}
 
-			// 정기적으로 만료된 캐시 항목 정리
-			DatabaseCache.CleanExpiredItems();
+			//// CollectionView를 사용한 갱신 (재생성 없이)
+			//if (DatabaseTreeView.ItemsSource is ICollectionView view)
+			//{
+			//	view.Refresh();
+			//}
 		}
 
 		private void SaveExpandedState(ItemsControl itemsControl, HashSet<string> expandedPaths)
@@ -180,6 +181,17 @@ namespace SqlServerWorkspace
 					RestoreExpandedState(container, expandedPaths);
 				}
 			}
+		}
+
+		private void SaveExpandedState()
+		{
+			ExpandedPaths.Clear();
+			SaveExpandedState(DatabaseTreeView, ExpandedPaths);
+		}
+
+		private void RestoreExpandedState()
+		{
+			RestoreExpandedState(DatabaseTreeView, ExpandedPaths);
 		}
 
 		private void SaveSettingsTimer_Tick(object? sender, EventArgs e)
